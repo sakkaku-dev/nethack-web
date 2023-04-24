@@ -1,3 +1,16 @@
+diff --git a/include/global.h b/include/global.h
+index 1cdc6a168..c4be2b3ca 100644
+--- a/include/global.h
++++ b/include/global.h
+@@ -246,7 +246,7 @@ extern struct cross_target_s cross_target;
+ #endif
+ 
+ #if defined(X11_GRAPHICS) || defined(QT_GRAPHICS) || defined(GNOME_GRAPHICS) \
+-    || defined(WIN32)
++    || defined(WIN32) || defined(SHIM_GRAPHICS)
+ #ifndef USE_TILES
+ #define USE_TILES /* glyph2tile[] will be available */
+ #endif
 diff --git a/include/tradstdc.h b/include/tradstdc.h
 index 65fea90b0..fe355b0c8 100644
 --- a/include/tradstdc.h
@@ -12,7 +25,7 @@ index 65fea90b0..fe355b0c8 100644
  #endif
  #endif
 diff --git a/sys/unix/hints/include/cross-pre.2020 b/sys/unix/hints/include/cross-pre.2020
-index 6146c8143..7f6afb6c1 100644
+index 6146c8143..1ee28a102 100644
 --- a/sys/unix/hints/include/cross-pre.2020
 +++ b/sys/unix/hints/include/cross-pre.2020
 @@ -322,19 +322,19 @@ EMCC_LFLAGS += --embed-file $(WASM_DATA_DIR)@/
@@ -48,8 +61,36 @@ index 6146c8143..7f6afb6c1 100644
  override TARGET_CXX = emcc
  override TARGET_AR = emar
 -WASM_CFLAGS = -Wall -Wextra -Wno-missing-field-initializers
-+WASM_CFLAGS = -Wall 
++WASM_CFLAGS = -Wall -DUSE_TILES
 +#-Wextra -Wno-missing-field-initializers
  WASM_CFLAGS += -Wimplicit -Wreturn-type -Wunused -Wformat -Wswitch
  WASM_CFLAGS += -Wshadow
  # WASM_CFLAGS += -Wwrite-strings
+diff --git a/win/shim/winshim.c b/win/shim/winshim.c
+index b37da9b11..961f808fc 100644
+--- a/win/shim/winshim.c
++++ b/win/shim/winshim.c
+@@ -7,6 +7,8 @@
+ #include "hack.h"
+ #include <string.h>
+ 
++extern short glyph2tile[];
++
+ #ifdef SHIM_GRAPHICS
+ #include <stdarg.h>
+ /* for cross-compiling to WebAssembly (WASM) */
+@@ -129,7 +131,13 @@ VDECLCB(shim_mark_synch,(void), "v")
+ VDECLCB(shim_wait_synch,(void), "v")
+ VDECLCB(shim_cliparound,(int x, int y), "vii", A2P x, A2P y)
+ VDECLCB(shim_update_positionbar,(char *posbar), "vp", P2V posbar)
+-VDECLCB(shim_print_glyph,(winid w, int x, int y, int glyph, int bkglyph), "viiiii", A2P w, A2P x, A2P y, A2P glyph, A2P bkglyph)
++VDECLCB(shim_print_tile,(winid w, int x, int y, int tile), "viiii", A2P w, A2P x, A2P y, A2P tile)
++
++void shim_print_glyph(winid w, int x, int y, int glyph, int bkglyph) 
++{
++    shim_print_tile(w, x, y, glyph2tile[glyph]);
++}
++
+ VDECLCB(shim_raw_print,(const char *str), "vs", P2V str)
+ VDECLCB(shim_raw_print_bold,(const char *str), "vs", P2V str)
+ DECLCB(int, shim_nhgetch,(void), "i")
