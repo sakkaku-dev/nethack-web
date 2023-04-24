@@ -1,0 +1,55 @@
+diff --git a/include/tradstdc.h b/include/tradstdc.h
+index 65fea90b0..fe355b0c8 100644
+--- a/include/tradstdc.h
++++ b/include/tradstdc.h
+@@ -431,7 +431,7 @@ typedef genericptr genericptr_t; /* (void *) or (char *) */
+ #define NORETURN __attribute__((noreturn))
+ /* disable gcc's __attribute__((__warn_unused_result__)) since explicitly
+    discarding the result by casting to (void) is not accepted as a 'use' */
+-#define __warn_unused_result__ /*empty*/
++#define __warn_unused_result__ __unused__
+ #define warn_unused_result /*empty*/
+ #endif
+ #endif
+diff --git a/sys/unix/hints/include/cross-pre.2020 b/sys/unix/hints/include/cross-pre.2020
+index 6146c8143..7f6afb6c1 100644
+--- a/sys/unix/hints/include/cross-pre.2020
++++ b/sys/unix/hints/include/cross-pre.2020
+@@ -322,19 +322,19 @@ EMCC_LFLAGS += --embed-file $(WASM_DATA_DIR)@/
+ # https://github.com/emscripten-core/emscripten/blob/master/src/settings.js
+ #
+ # WASM C flags
+-EMCC_CFLAGS =
++EMCC_CFLAGS = -Wno-unused-but-set-variable
+ EMCC_CFLAGS += -Wall
+-EMCC_CFLAGS += -Werror
++#EMCC_CFLAGS += -Werror
+ EMCC_CFLAGS += -DNO_SIGNAL
+ #EMCC_CFLAGS += -s DISABLE_EXCEPTION_CATCHING=0
+ #EMCC_DEBUG_CFLAGS += -s ASSERTIONS=1
+-EMCC_DEBUG_CFLAGS += -s ASSERTIONS=2
+-EMCC_DEBUG_CFLAGS += -s STACK_OVERFLOW_CHECK=2
+-EMCC_DEBUG_CFLAGS += -s SAFE_HEAP=1
+-EMCC_DEBUG_CFLAGS += -s LLD_REPORT_UNDEFINED=1
+-EMCC_DEBUG_CFLAGS += -s EXCEPTION_DEBUG=1
++#EMCC_DEBUG_CFLAGS += -s ASSERTIONS=2
++#EMCC_DEBUG_CFLAGS += -s STACK_OVERFLOW_CHECK=2
++#EMCC_DEBUG_CFLAGS += -s SAFE_HEAP=1
++#EMCC_DEBUG_CFLAGS += -s LLD_REPORT_UNDEFINED=1
++#EMCC_DEBUG_CFLAGS += -s EXCEPTION_DEBUG=1
+ #EMCC_DEBUG_CFLAGS += -fsanitize=undefined -fsanitize=address -fsanitize=leak
+-EMCC_DEBUG_CFLAGS += -s NO_EXIT_RUNTIME
++#EMCC_DEBUG_CFLAGS += -s NO_EXIT_RUNTIME
+ # XXX: if --profiling isn't included then any error dumps 10MB of WASM to the screen rather than a useful message
+ EMCC_DEBUG_CFLAGS += --profiling
+ EMCC_PROD_CFLAGS += -O3
+@@ -349,7 +349,8 @@ endif
+ override TARGET_CC = emcc
+ override TARGET_CXX = emcc
+ override TARGET_AR = emar
+-WASM_CFLAGS = -Wall -Wextra -Wno-missing-field-initializers
++WASM_CFLAGS = -Wall 
++#-Wextra -Wno-missing-field-initializers
+ WASM_CFLAGS += -Wimplicit -Wreturn-type -Wunused -Wformat -Wswitch
+ WASM_CFLAGS += -Wshadow
+ # WASM_CFLAGS += -Wwrite-strings
