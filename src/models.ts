@@ -4,9 +4,10 @@ export interface NetHackJS {
   selectMenu: (items: any[]) => void; // TODO: param type
 }
 
+// In Godot all parameters will be in one array, so don't nest them
 export interface NetHackGodot {
-  openMenuAny: (items: MenuItem[]) => void;
-  openMenuOne: (items: MenuItem[]) => void;
+  openMenuAny: (prompt: string, ...items: MenuItem[]) => void;
+  openMenuOne: (prompt: string, ...items: MenuItem[]) => void;
   printTile: (x: number, y: number, tile: number) => void;
   moveCursor: (x: number, y: number) => void;
   centerView: (x: number, y: number) => void;
@@ -34,6 +35,7 @@ export enum Command {
   PRINT_TILE = "shim_print_tile",
   CURSOR = "shim_curs",
   CLIPAROUND = "shim_cliparound",
+  PUTSTR = "shim_putstr",
 }
 
 export interface MenuItem {

@@ -90,9 +90,9 @@ const commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     const selected = args[2] as any[];
     if (menu.length > 0 && select != MENU_SELECT.PICK_NONE) {
       if (select == MENU_SELECT.PICK_ANY) {
-        window.nethackGodot.openMenuAny(menu);
+        window.nethackGodot.openMenuAny(menu_prompt, ...menu);
       } else if (select == MENU_SELECT.PICK_ONE) {
-        window.nethackGodot.openMenuOne(menu);
+        window.nethackGodot.openMenuOne(menu_prompt, ...menu);
       }
 
       console.log(`Waiting for menu select (${select}): `, menu);
@@ -158,5 +158,4 @@ const Module: any = {
   },
 };
 
-console.log(window);
 nethackLib(Module);
