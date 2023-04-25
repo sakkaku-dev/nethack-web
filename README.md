@@ -19,6 +19,10 @@ Build nethack
 - `make fetch-lua`
 - `make CROSS_TO_WASM=1`
 
+### Generate
+
+To run `tools/generate.js`, remove `type: module` from `package.json`. To lazy to find a solution for it.
+
 ### Deploy
 
 Godot needs specific headers from the web server

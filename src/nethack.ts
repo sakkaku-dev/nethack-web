@@ -1,14 +1,7 @@
 // @ts-ignore
 import nethackLib from "../lib/nethack";
-import {
-  Command,
-  MenuItem,
-  Select,
-  NetHackGodot,
-  NetHackJS,
-  Status,
-  StatusType,
-} from "./models";
+import { MENU_SELECT, STATUS_FIELD } from "./generated";
+import { Command, MenuItem, NetHackGodot, NetHackJS, Status } from "./models";
 
 import { Subject, debounceTime, firstValueFrom, tap } from "rxjs";
 
@@ -47,28 +40,28 @@ window.nethackJS = {
   selectMenu: (items) => selectedMenu$.next(items),
 };
 
-const statusMap: Partial<Record<StatusType, (s: Status, v: any) => void>> = {
-  [StatusType.BL_TITLE]: (s, v) => (s.title = v),
-  [StatusType.BL_STR]: (s, v) => (s.str = v),
-  [StatusType.BL_DX]: (s, v) => (s.dex = v),
-  [StatusType.BL_CO]: (s, v) => (s.con = v),
-  [StatusType.BL_IN]: (s, v) => (s.int = v),
-  [StatusType.BL_WI]: (s, v) => (s.wis = v),
-  [StatusType.BL_CH]: (s, v) => (s.cha = v),
-  [StatusType.BL_ALIGN]: (s, v) => (s.align = v),
-  [StatusType.BL_SCORE]: (s, v) => (s.score = v),
-  [StatusType.BL_CAP]: (s, v) => (s.carryCap = v),
-  [StatusType.BL_GOLD]: (s, v) => (s.gold = v),
-  [StatusType.BL_ENE]: (s, v) => (s.power = v),
-  [StatusType.BL_ENEMAX]: (s, v) => (s.powerMax = v),
-  [StatusType.BL_XP]: (s, v) => (s.expLvl = v),
-  [StatusType.BL_AC]: (s, v) => (s.armor = v),
-  [StatusType.BL_HUNGER]: (s, v) => (s.hunger = v),
-  [StatusType.BL_HP]: (s, v) => (s.hp = v),
-  [StatusType.BL_HPMAX]: (s, v) => (s.hpMax = v),
-  [StatusType.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v),
-  [StatusType.BL_EXP]: (s, v) => (s.exp = v),
-  [StatusType.BL_CONDITION]: (s, v) => (s.condition = v),
+const statusMap: Partial<Record<STATUS_FIELD, (s: Status, v: any) => void>> = {
+  [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v),
+  [STATUS_FIELD.BL_STR]: (s, v) => (s.str = v),
+  [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = v),
+  [STATUS_FIELD.BL_CO]: (s, v) => (s.con = v),
+  [STATUS_FIELD.BL_IN]: (s, v) => (s.int = v),
+  [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = v),
+  [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = v),
+  [STATUS_FIELD.BL_ALIGN]: (s, v) => (s.align = v),
+  [STATUS_FIELD.BL_SCORE]: (s, v) => (s.score = v),
+  [STATUS_FIELD.BL_CAP]: (s, v) => (s.carryCap = v),
+  [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = v),
+  [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = v),
+  [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = v),
+  [STATUS_FIELD.BL_XP]: (s, v) => (s.expLvl = v),
+  [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = v),
+  [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = v),
+  [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = v),
+  [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = v),
+  [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v),
+  [STATUS_FIELD.BL_EXP]: (s, v) => (s.exp = v),
+  [STATUS_FIELD.BL_CONDITION]: (s, v) => (s.condition = v),
 };
 
 const commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
@@ -93,12 +86,12 @@ const commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     menu_prompt = args[1];
   },
   [Command.MENU_SELECT]: async (...args: any[]) => {
-    const select = args[1] as Select;
+    const select = args[1] as MENU_SELECT;
     const selected = args[2] as any[];
-    if (menu.length > 0 && select != Select.NONE) {
-      if (select == Select.ANY) {
+    if (menu.length > 0 && select != MENU_SELECT.PICK_NONE) {
+      if (select == MENU_SELECT.PICK_ANY) {
         window.nethackGodot.openMenuAny(menu);
-      } else if (select == Select.ONE) {
+      } else if (select == MENU_SELECT.PICK_ONE) {
         window.nethackGodot.openMenuOne(menu);
       }
 
@@ -120,7 +113,7 @@ const commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     window.nethackGodot.centerView(args[0], args[1]);
   },
   [Command.STATUS_UPDATE]: async (...args: any[]) => {
-    const mapper = statusMap[args[0] as StatusType];
+    const mapper = statusMap[args[0] as STATUS_FIELD];
     if (mapper) {
       mapper(status, args[1]);
       statusChange$.next(status);

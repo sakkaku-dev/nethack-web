@@ -1,0 +1,148 @@
+// This is a generated file. Do not edit.
+
+export enum WIN_TYPE {
+    NHW_MESSAGE = 1,
+    NHW_STATUS = 2,
+    NHW_MAP = 3,
+    NHW_MENU = 4,
+    NHW_TEXT = 5,
+}
+
+export enum STATUS_FIELD {
+    BL_CHARACTERISTICS = -3,
+    BL_RESET = -2,
+    BL_FLUSH = -1,
+    BL_TITLE = 0,
+    BL_STR = 1,
+    BL_DX = 2,
+    BL_CO = 3,
+    BL_IN = 4,
+    BL_WI = 5,
+    BL_CH = 6,
+    BL_ALIGN = 7,
+    BL_SCORE = 8,
+    BL_CAP = 9,
+    BL_GOLD = 10,
+    BL_ENE = 11,
+    BL_ENEMAX = 12,
+    BL_XP = 13,
+    BL_AC = 14,
+    BL_HD = 15,
+    BL_TIME = 16,
+    BL_HUNGER = 17,
+    BL_HP = 18,
+    BL_HPMAX = 19,
+    BL_LEVELDESC = 20,
+    BL_EXP = 21,
+    BL_CONDITION = 22,
+    MAXBLSTATS = 23,
+}
+
+export enum ATTR {
+    ATR_NONE = 0,
+    ATR_BOLD = 1,
+    ATR_DIM = 2,
+    ATR_ULINE = 4,
+    ATR_BLINK = 5,
+    ATR_INVERSE = 7,
+    ATR_URGENT = 16,
+    ATR_NOHISTORY = 32,
+}
+
+export enum CONDITION {
+    BL_MASK_BAREH = 1,
+    BL_MASK_BLIND = 2,
+    BL_MASK_BUSY = 4,
+    BL_MASK_CONF = 8,
+    BL_MASK_DEAF = 16,
+    BL_MASK_ELF_IRON = 32,
+    BL_MASK_FLY = 64,
+    BL_MASK_FOODPOIS = 128,
+    BL_MASK_GLOWHANDS = 256,
+    BL_MASK_GRAB = 512,
+    BL_MASK_HALLU = 1024,
+    BL_MASK_HELD = 2048,
+    BL_MASK_ICY = 4096,
+    BL_MASK_INLAVA = 8192,
+    BL_MASK_LEV = 16384,
+    BL_MASK_PARLYZ = 32768,
+    BL_MASK_RIDE = 65536,
+    BL_MASK_SLEEPING = 131072,
+    BL_MASK_SLIME = 262144,
+    BL_MASK_SLIPPERY = 524288,
+    BL_MASK_STONE = 1048576,
+    BL_MASK_STRNGL = 2097152,
+    BL_MASK_STUN = 4194304,
+    BL_MASK_SUBMERGED = 8388608,
+    BL_MASK_TERMILL = 16777216,
+    BL_MASK_TETHERED = 33554432,
+    BL_MASK_TRAPPED = 67108864,
+    BL_MASK_UNCONSC = 134217728,
+    BL_MASK_WOUNDEDL = 268435456,
+    BL_MASK_HOLDING = 536870912,
+}
+
+export enum MENU_SELECT {
+    PICK_NONE = 0,
+    PICK_ONE = 1,
+    PICK_ANY = 2,
+}
+
+export enum COPYRIGHT {
+    COPYRIGHT_BANNER_A = "NetHack, Copyright 1985-2020",
+    COPYRIGHT_BANNER_B = "By Stichting Mathematisch Centrum and M. Stephenson.",
+    COPYRIGHT_BANNER_D = "See license for details.",
+}
+
+export enum GLYPH {
+    GLYPH_MON_OFF = 0,
+    GLYPH_PET_OFF = 384,
+    GLYPH_INVIS_OFF = 768,
+    GLYPH_DETECT_OFF = 769,
+    GLYPH_BODY_OFF = 1153,
+    GLYPH_RIDDEN_OFF = 1537,
+    GLYPH_OBJ_OFF = 1921,
+    GLYPH_CMAP_OFF = 2377,
+    GLYPH_EXPLODE_OFF = 2464,
+    GLYPH_ZAP_OFF = 2527,
+    GLYPH_SWALLOW_OFF = 2559,
+    GLYPH_WARNING_OFF = 5631,
+    GLYPH_STATUE_OFF = 5637,
+    GLYPH_UNEXPLORED_OFF = 6021,
+    GLYPH_NOTHING_OFF = 6022,
+    MAX_GLYPH = 6023,
+    NO_GLYPH = 6023,
+    GLYPH_INVISIBLE = 768,
+    GLYPH_UNEXPLORED = 6021,
+    GLYPH_NOTHING = 6022,
+}
+
+export enum COLORS {
+    CLR_BLACK = 0,
+    CLR_RED = 1,
+    CLR_GREEN = 2,
+    CLR_BROWN = 3,
+    CLR_BLUE = 4,
+    CLR_MAGENTA = 5,
+    CLR_CYAN = 6,
+    CLR_GRAY = 7,
+    NO_COLOR = 8,
+    CLR_ORANGE = 9,
+    CLR_BRIGHT_GREEN = 10,
+    CLR_YELLOW = 11,
+    CLR_BRIGHT_BLUE = 12,
+    CLR_BRIGHT_MAGENTA = 13,
+    CLR_BRIGHT_CYAN = 14,
+    CLR_WHITE = 15,
+    CLR_MAX = 16,
+}
+
+export enum COLOR_ATTR {
+    HL_ATTCLR_DIM = 16,
+    HL_ATTCLR_BLINK = 17,
+    HL_ATTCLR_ULINE = 18,
+    HL_ATTCLR_INVERSE = 19,
+    HL_ATTCLR_BOLD = 20,
+    BL_ATTCLR_MAX = 21,
+}
+
