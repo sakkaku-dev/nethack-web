@@ -1,10 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://brhv4aw3lw0ba"]
+[gd_scene load_steps=5 format=3 uid="uid://1g3xahsibu80"]
 
-[ext_resource type="Script" path="res://game.gd" id="1_luoo3"]
-[ext_resource type="Texture2D" uid="uid://df8pfnja0bl6x" path="res://assets/tileset.jpg" id="2_bh5p0"]
+[ext_resource type="Script" path="res://src/game.gd" id="1_j1xl4"]
+[ext_resource type="Texture2D" uid="uid://df8pfnja0bl6x" path="res://assets/tileset.jpg" id="2_60jqp"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tr12v"]
-texture = ExtResource("2_bh5p0")
+texture = ExtResource("2_60jqp")
 texture_region_size = Vector2i(32, 32)
 0:0/0 = 0
 1:0/0 = 0
@@ -1212,7 +1212,7 @@ tile_size = Vector2i(32, 32)
 sources/1 = SubResource("TileSetAtlasSource_tr12v")
 
 [node name="Game" type="Node2D"]
-script = ExtResource("1_luoo3")
+script = ExtResource("1_j1xl4")
 
 [node name="TileMap" type="TileMap" parent="."]
 tile_set = SubResource("TileSet_0qjj2")
