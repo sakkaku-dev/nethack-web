@@ -4,3 +4,4 @@ build/*
 !build/.gitkeep
 
 *.import
+node_modules

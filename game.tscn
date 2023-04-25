@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" path="res://game.gd" id="1_luoo3"]
 [ext_resource type="Texture2D" uid="uid://df8pfnja0bl6x" path="res://assets/tileset.jpg" id="2_bh5p0"]
-[ext_resource type="Script" path="res://src/nethack.gd" id="3_5nyr1"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tr12v"]
 texture = ExtResource("2_bh5p0")
@@ -1215,14 +1214,8 @@ sources/1 = SubResource("TileSetAtlasSource_tr12v")
 [node name="Game" type="Node2D"]
 script = ExtResource("1_luoo3")
 
-[node name="NetHack" type="Node" parent="."]
-script = ExtResource("3_5nyr1")
-
 [node name="TileMap" type="TileMap" parent="."]
 tile_set = SubResource("TileSet_0qjj2")
 format = 2
 
 [node name="Camera2D" type="Camera2D" parent="TileMap"]
-
-[connection signal="center" from="NetHack" to="." method="_on_net_hack_center"]
-[connection signal="print_tile" from="NetHack" to="." method="_on_net_hack_print_tile"]
