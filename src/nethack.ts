@@ -1,8 +1,16 @@
 // @ts-ignore
 import nethackLib from "../lib/nethack";
-import { Command, MenuItem, Select, NetHackGodot, NetHackJS } from "./models";
+import {
+  Command,
+  MenuItem,
+  Select,
+  NetHackGodot,
+  NetHackJS,
+  Status,
+  StatusType,
+} from "./models";
 
-import { Subject, firstValueFrom } from "rxjs";
+import { Subject, debounceTime, firstValueFrom, tap } from "rxjs";
 
 declare global {
   interface Window {
@@ -24,10 +32,43 @@ let idCounter = 0;
 let menu: MenuItem[] = [];
 let menu_prompt = "";
 
+const status: Status = {};
 const selectedMenu$ = new Subject<any[]>();
+const statusChange$ = new Subject<Status>();
+
+statusChange$
+  .pipe(
+    debounceTime(300),
+    tap(() => console.log("Update status", status))
+  )
+  .subscribe(() => window.nethackGodot.updateStatus(status));
 
 window.nethackJS = {
   selectMenu: (items) => selectedMenu$.next(items),
+};
+
+const statusMap: Partial<Record<StatusType, (s: Status, v: any) => void>> = {
+  [StatusType.BL_TITLE]: (s, v) => (s.title = v),
+  [StatusType.BL_STR]: (s, v) => (s.str = v),
+  [StatusType.BL_DX]: (s, v) => (s.dex = v),
+  [StatusType.BL_CO]: (s, v) => (s.con = v),
+  [StatusType.BL_IN]: (s, v) => (s.int = v),
+  [StatusType.BL_WI]: (s, v) => (s.wis = v),
+  [StatusType.BL_CH]: (s, v) => (s.cha = v),
+  [StatusType.BL_ALIGN]: (s, v) => (s.align = v),
+  [StatusType.BL_SCORE]: (s, v) => (s.score = v),
+  [StatusType.BL_CAP]: (s, v) => (s.carryCap = v),
+  [StatusType.BL_GOLD]: (s, v) => (s.gold = v),
+  [StatusType.BL_ENE]: (s, v) => (s.power = v),
+  [StatusType.BL_ENEMAX]: (s, v) => (s.powerMax = v),
+  [StatusType.BL_XP]: (s, v) => (s.expLvl = v),
+  [StatusType.BL_AC]: (s, v) => (s.armor = v),
+  [StatusType.BL_HUNGER]: (s, v) => (s.hunger = v),
+  [StatusType.BL_HP]: (s, v) => (s.hp = v),
+  [StatusType.BL_HPMAX]: (s, v) => (s.hpMax = v),
+  [StatusType.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v),
+  [StatusType.BL_EXP]: (s, v) => (s.exp = v),
+  [StatusType.BL_CONDITION]: (s, v) => (s.condition = v),
 };
 
 const commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
@@ -74,6 +115,16 @@ const commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
   },
   [Command.CURSOR]: async (...args: any[]) => {
     window.nethackGodot.moveCursor(args[1], args[2]);
+  },
+  [Command.CLIPAROUND]: async (...args: any[]) => {
+    window.nethackGodot.centerView(args[0], args[1]);
+  },
+  [Command.STATUS_UPDATE]: async (...args: any[]) => {
+    const mapper = statusMap[args[0] as StatusType];
+    if (mapper) {
+      mapper(status, args[1]);
+      statusChange$.next(status);
+    }
   },
 };
 
