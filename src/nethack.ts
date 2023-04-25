@@ -1,6 +1,6 @@
 // @ts-ignore
 import nethackLib from "../lib/nethack";
-import { MENU_SELECT, STATUS_FIELD } from "./generated";
+import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 import { Command, MenuItem, NetHackGodot, NetHackJS, Status } from "./models";
 
 import { Subject, debounceTime, firstValueFrom, tap } from "rxjs";
@@ -11,12 +11,18 @@ declare global {
 
     nethackJS: NetHackJS;
     nethackGodot: NetHackGodot;
+
+    nethackGlobal: {
+      helpers: Record<string, Function>;
+    };
+
+    // For debugging
+    windows: any;
   }
 }
 
 const ignored = [
   Command.INIT_WINDOW,
-  Command.DISPLAY_WINDOW,
   Command.STATUS_INIT,
   Command.CLEAR_WINDOW,
 ];
@@ -24,10 +30,14 @@ const ignored = [
 let idCounter = 0;
 let menu: MenuItem[] = [];
 let menu_prompt = "";
+let putStr = "";
 
 const status: Status = {};
 const selectedMenu$ = new Subject<any[]>();
 const statusChange$ = new Subject<Status>();
+
+const windowTypes: Record<number, WIN_TYPE> = {};
+window.windows = windowTypes;
 
 statusChange$
   .pipe(
@@ -67,6 +77,9 @@ const statusMap: Partial<Record<STATUS_FIELD, (s: Status, v: any) => void>> = {
 const commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
   [Command.CREATE_WINDOW]: async (...args: any[]) => {
     const id = idCounter++;
+    const type = args[0];
+    windowTypes[id] = type;
+    console.log("Create new window of type", type, "with id", id);
     return id;
   },
   [Command.MENU_START]: async (...args: any[]) => {
@@ -113,10 +126,40 @@ const commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     window.nethackGodot.centerView(args[0], args[1]);
   },
   [Command.STATUS_UPDATE]: async (...args: any[]) => {
-    const mapper = statusMap[args[0] as STATUS_FIELD];
+    const type = args[0] as STATUS_FIELD;
+    const mapper = statusMap[type];
     if (mapper) {
-      mapper(status, args[1]);
+      const ptr = args[1];
+      let value;
+      if (type == STATUS_FIELD.BL_CONDITION) {
+        value = window.nethackGlobal.helpers.getPointerValue("", ptr, "n");
+      } else {
+        // console.log("Values for pointer", ptr, STATUS_FIELD[type]);
+        // ["s", "p", "c", "0", "1", "n", "f", "d", "o"].forEach((t) => {
+        //   console.log(window.nethackGlobal.helpers.getPointerValue("", ptr, t));
+        // });
+        value = window.nethackGlobal.helpers.getPointerValue("", ptr, "n");
+      }
+      mapper(status, value);
       statusChange$.next(status);
+    }
+  },
+  [Command.PUTSTR]: async (...args: any[]) => {
+    putStr += args[1];
+  },
+  [Command.DISPLAY_WINDOW]: async (...args: any[]) => {
+    if (putStr !== "") {
+      const type = windowTypes[args[0]];
+      if (type == WIN_TYPE.NHW_MENU) {
+        console.log("Show Menu Text", putStr);
+        window.nethackGodot.showMenuText(putStr);
+      } else if (type == WIN_TYPE.NHW_TEXT) {
+        console.log("Show Full Text", putStr);
+        window.nethackGodot.showFullText(putStr);
+      } else {
+        console.warn("There was data for window type", type, "but no handler");
+      }
+      putStr = "";
     }
   },
 };

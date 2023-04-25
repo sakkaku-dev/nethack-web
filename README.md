@@ -6,18 +6,26 @@ Nethack for the web using godot as the UI.
 
 Build NetHack for WASM by following steps in `Cross-compiling`.
 Emscripten should be installed. I needed the patch in `lib/fixes.diff`.
+
 Current build is from `db90e7907` and using emscripten v2.0.34
+
+Apply changes needed for build, if it still works
+
+- `npm run prepare:nethack` (only once)
 
 `tile.c` has to be generated using `tilemap.c`:
 
-- compile: `gcc tilemap.c -I ../../include -o ../tilemap.o`
-- run: `../tilemap.o`
+- `npm run build:nethack.tiles`
 
 Build nethack
 
-- `pushd sys/unix && ./setup.sh hints/linux.370 && popd`
-- `make fetch-lua`
-- `make CROSS_TO_WASM=1`
+- `npm run setup:nethack`
+- `npm run build:nethack`
+- `npm run copy:nethack`
+
+Build final application
+
+- `npm run build`
 
 ### Generate
 

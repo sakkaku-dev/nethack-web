@@ -12,6 +12,10 @@ export interface NetHackGodot {
   moveCursor: (x: number, y: number) => void;
   centerView: (x: number, y: number) => void;
   updateStatus: (status: Status) => void;
+
+  showMessage: (msg: string) => void;
+  showMenuText: (msg: string) => void;
+  showFullText: (msg: string) => void;
 }
 
 export enum Command {
