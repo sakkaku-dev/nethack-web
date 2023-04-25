@@ -1,7 +1,7 @@
 class_name NetHack
 extends Node
 
-signal print_glyph(x, y, glyph)
+signal print_tile(x, y, glyph)
 signal center(x, y)
 
 signal message(str)
@@ -25,7 +25,8 @@ const CMD = {
 	MENU_ADD = "shim_add_menu",
 	MENU_SELECT = "shim_select_menu",
 
-	PRINT_GLYPH = "shim_print_glyph",
+	PRINT_TILE = "shim_print_tile",
+	# PRINT_GLYPH = "shim_print_glyph",
 	CURSOR = "shim_curs",
 }
 
@@ -104,8 +105,8 @@ func _callback(args):
 	if cmd == CMD.MENU_SELECT:
 		return await _menu_select(args[1], args[2], args[3])
 	
-	if cmd == CMD.PRINT_GLYPH:
-		_print_glyph(args[1], args[2], args[3], args[4])
+	if cmd == CMD.PRINT_TILE:
+		_print_tile(args[1], args[2], args[3], args[4])
 		return
 	
 	if cmd == CMD.CURSOR:
@@ -166,8 +167,8 @@ func _menu_select(id, select, selected):
 	
 	return 0
 
-func _print_glyph(_id, x, y, glyph):
-	print_glyph.emit(x, y, glyph)
+func _print_tile(_id, x, y, tile):
+	print_tile.emit(x, y, tile)
 
 func _center_to(_id, x, y):
 	center.emit(x, y)

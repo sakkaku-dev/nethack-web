@@ -1225,4 +1225,4 @@ format = 2
 [node name="Camera2D" type="Camera2D" parent="TileMap"]
 
 [connection signal="center" from="NetHack" to="." method="_on_net_hack_center"]
-[connection signal="print_glyph" from="NetHack" to="." method="_on_net_hack_print_glyph"]
+[connection signal="print_tile" from="NetHack" to="." method="_on_net_hack_print_tile"]

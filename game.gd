@@ -7,10 +7,11 @@ const TILE_LAYER = 0
 @onready var camera := $TileMap/Camera2D
 
 
-func _on_net_hack_print_glyph(x, y, glyph):
-	map.set_cell(TILE_LAYER, Vector2(x, y), TILE_SOURCE, _glyph_to_tile(glyph))
+func _on_net_hack_print_tile(x, y, tile):
+	print(tile)
+	map.set_cell(TILE_LAYER, Vector2(x, y), TILE_SOURCE, _to_tilev(tile))
 
-func _glyph_to_tile(glyph: int) -> Vector2:
+func _to_tilev(tile: int) -> Vector2:
 	if glyph == 341:
 		return Vector2(28, 8)
 	

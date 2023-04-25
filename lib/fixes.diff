@@ -25,10 +25,10 @@ index 65fea90b0..fe355b0c8 100644
  #endif
  #endif
 diff --git a/sys/unix/hints/include/cross-pre.2020 b/sys/unix/hints/include/cross-pre.2020
-index 6146c8143..1ee28a102 100644
+index 6146c8143..898d31580 100644
 --- a/sys/unix/hints/include/cross-pre.2020
 +++ b/sys/unix/hints/include/cross-pre.2020
-@@ -322,19 +322,19 @@ EMCC_LFLAGS += --embed-file $(WASM_DATA_DIR)@/
+@@ -322,19 +322,21 @@ EMCC_LFLAGS += --embed-file $(WASM_DATA_DIR)@/
  # https://github.com/emscripten-core/emscripten/blob/master/src/settings.js
  #
  # WASM C flags
@@ -39,12 +39,15 @@ index 6146c8143..1ee28a102 100644
 +#EMCC_CFLAGS += -Werror
  EMCC_CFLAGS += -DNO_SIGNAL
  #EMCC_CFLAGS += -s DISABLE_EXCEPTION_CATCHING=0
- #EMCC_DEBUG_CFLAGS += -s ASSERTIONS=1
+-#EMCC_DEBUG_CFLAGS += -s ASSERTIONS=1
 -EMCC_DEBUG_CFLAGS += -s ASSERTIONS=2
 -EMCC_DEBUG_CFLAGS += -s STACK_OVERFLOW_CHECK=2
 -EMCC_DEBUG_CFLAGS += -s SAFE_HEAP=1
 -EMCC_DEBUG_CFLAGS += -s LLD_REPORT_UNDEFINED=1
 -EMCC_DEBUG_CFLAGS += -s EXCEPTION_DEBUG=1
++EMCC_CFLAGS += -s EXIT_RUNTIME
++EMCC_CFLAGS += -s ASSERTIONS=1
++
 +#EMCC_DEBUG_CFLAGS += -s ASSERTIONS=2
 +#EMCC_DEBUG_CFLAGS += -s STACK_OVERFLOW_CHECK=2
 +#EMCC_DEBUG_CFLAGS += -s SAFE_HEAP=1
@@ -56,7 +59,7 @@ index 6146c8143..1ee28a102 100644
  # XXX: if --profiling isn't included then any error dumps 10MB of WASM to the screen rather than a useful message
  EMCC_DEBUG_CFLAGS += --profiling
  EMCC_PROD_CFLAGS += -O3
-@@ -349,7 +349,8 @@ endif
+@@ -349,7 +351,8 @@ endif
  override TARGET_CC = emcc
  override TARGET_CXX = emcc
  override TARGET_AR = emar
@@ -66,8 +69,21 @@ index 6146c8143..1ee28a102 100644
  WASM_CFLAGS += -Wimplicit -Wreturn-type -Wunused -Wformat -Wswitch
  WASM_CFLAGS += -Wshadow
  # WASM_CFLAGS += -Wwrite-strings
+@@ -379,10 +382,12 @@ override TARGET_LFLAGS= $(EMCC_LFLAGS)
+ override SYSSRC = ../sys/libnh/libnhmain.c \
+ 		../sys/share/ioctl.c ../sys/share/unixtty.c \
+ 		../sys/unix/unixunix.c ../sys/unix/unixres.c \
++		../win/share/tileset.c \
+ 		../win/shim/winshim.c
+ override SYSOBJ= $(TARGETPFX)libnhmain.o \
+ 		$(TARGETPFX)ioctl.o $(TARGETPFX)unixtty.o \
+ 		$(TARGETPFX)unixunix.o $(TARGETPFX)unixres.o \
++		$(TARGETPFX)tileset.o $(TARGETPFX)tile.o \
+ 		$(TARGETPFX)winshim.o
+ override WINLIB = emranlib 
+ override LUALIB=
 diff --git a/win/shim/winshim.c b/win/shim/winshim.c
-index b37da9b11..961f808fc 100644
+index b37da9b11..9b525413b 100644
 --- a/win/shim/winshim.c
 +++ b/win/shim/winshim.c
 @@ -7,6 +7,8 @@
@@ -79,11 +95,12 @@ index b37da9b11..961f808fc 100644
  #ifdef SHIM_GRAPHICS
  #include <stdarg.h>
  /* for cross-compiling to WebAssembly (WASM) */
-@@ -129,7 +131,13 @@ VDECLCB(shim_mark_synch,(void), "v")
+@@ -129,7 +131,14 @@ VDECLCB(shim_mark_synch,(void), "v")
  VDECLCB(shim_wait_synch,(void), "v")
  VDECLCB(shim_cliparound,(int x, int y), "vii", A2P x, A2P y)
  VDECLCB(shim_update_positionbar,(char *posbar), "vp", P2V posbar)
 -VDECLCB(shim_print_glyph,(winid w, int x, int y, int glyph, int bkglyph), "viiiii", A2P w, A2P x, A2P y, A2P glyph, A2P bkglyph)
++
 +VDECLCB(shim_print_tile,(winid w, int x, int y, int tile), "viiii", A2P w, A2P x, A2P y, A2P tile)
 +
 +void shim_print_glyph(winid w, int x, int y, int glyph, int bkglyph) 
