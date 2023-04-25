@@ -25,10 +25,18 @@ index 65fea90b0..fe355b0c8 100644
  #endif
  #endif
 diff --git a/sys/unix/hints/include/cross-pre.2020 b/sys/unix/hints/include/cross-pre.2020
-index 6146c8143..898d31580 100644
+index 6146c8143..8da9f6172 100644
 --- a/sys/unix/hints/include/cross-pre.2020
 +++ b/sys/unix/hints/include/cross-pre.2020
-@@ -322,19 +322,21 @@ EMCC_LFLAGS += --embed-file $(WASM_DATA_DIR)@/
+@@ -29,6 +29,7 @@ endif
+ ifdef CROSS_TO_WASM
+ CROSS=1
+ BUILD_TARGET_LUA=1
++CROSS_SHARED=1
+ HACKDIR=/
+ PREFIX=
+ override TARGET = wasm
+@@ -322,19 +323,20 @@ EMCC_LFLAGS += --embed-file $(WASM_DATA_DIR)@/
  # https://github.com/emscripten-core/emscripten/blob/master/src/settings.js
  #
  # WASM C flags
@@ -37,6 +45,7 @@ index 6146c8143..898d31580 100644
  EMCC_CFLAGS += -Wall
 -EMCC_CFLAGS += -Werror
 +#EMCC_CFLAGS += -Werror
++#EMCC_CFLAGS += -s NO_EXIT_RUNTIME
  EMCC_CFLAGS += -DNO_SIGNAL
  #EMCC_CFLAGS += -s DISABLE_EXCEPTION_CATCHING=0
 -#EMCC_DEBUG_CFLAGS += -s ASSERTIONS=1
@@ -45,9 +54,7 @@ index 6146c8143..898d31580 100644
 -EMCC_DEBUG_CFLAGS += -s SAFE_HEAP=1
 -EMCC_DEBUG_CFLAGS += -s LLD_REPORT_UNDEFINED=1
 -EMCC_DEBUG_CFLAGS += -s EXCEPTION_DEBUG=1
-+EMCC_CFLAGS += -s EXIT_RUNTIME
-+EMCC_CFLAGS += -s ASSERTIONS=1
-+
++#EMCC_CFLAGS += -s ASSERTIONS=1
 +#EMCC_DEBUG_CFLAGS += -s ASSERTIONS=2
 +#EMCC_DEBUG_CFLAGS += -s STACK_OVERFLOW_CHECK=2
 +#EMCC_DEBUG_CFLAGS += -s SAFE_HEAP=1
