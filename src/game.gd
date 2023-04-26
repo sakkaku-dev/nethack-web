@@ -7,38 +7,11 @@ const TILE_SIZE_X = 40
 @export var map: TileMap
 @export var camera: Camera2D
 
-# reference needs to be stored until the callback is called
-var obj = JavaScriptBridge.create_object("Object")
-# obj.open_menu_any = JavaScriptBridge.create_callback(self._on_open_menu_any)
-# obj.open_menu_one = JavaScriptBridge.create_callback(self._on_open_menu_one)
-# obj.open_dialog = JavaScriptBridge.create_callback(self._on_open_dialog)
-# obj.open_question = JavaScriptBridge.create_callback(self._on_open_question)
-
-# obj.move_cursor = JavaScriptBridge.create_callback(self._on_move_cursor)
-# obj.center_view = JavaScriptBridge.create_callback(self._on_center_view)
-# obj.print_line = JavaScriptBridge.create_callback(self._on_print_line)
-
-# obj.update_status = JavaScriptBridge.create_callback(self._on_update_status)
-# obj.update_map = JavaScriptBridge.create_callback(self._on_update_map)
-# obj.update_inventory= JavaScriptBridge.create_callback(self._on_update_inventory)
-
+var link = NetHackLink.new()
 
 func _ready():
-	obj.openMenuAny = JavaScriptBridge.create_callback(self._on_open_menu_any)
-	obj.openMenuOne = JavaScriptBridge.create_callback(self._on_open_menu_one)
-	obj.openDialog = JavaScriptBridge.create_callback(self._on_open_dialog)
-	obj.openQuestion = JavaScriptBridge.create_callback(self._on_open_question)
-
-	obj.moveCursor = JavaScriptBridge.create_callback(self._on_move_cursor)
-	obj.centerView = JavaScriptBridge.create_callback(self._on_center_view)
-	obj.printLine = JavaScriptBridge.create_callback(self._on_print_line)
-
-	obj.updateStatus = JavaScriptBridge.create_callback(self._on_update_status)
-	obj.updateMap = JavaScriptBridge.create_callback(self._on_update_map)
-	obj.updateInventory= JavaScriptBridge.create_callback(self._on_update_inventory)
-	
 	var window = JavaScriptBridge.get_interface("window")
-	window.nethackGodot = obj
+	window.nethackGodot = link.init(self)
 
 	JavaScriptBridge.eval("import('./nethack.js')")
 	
@@ -84,6 +57,7 @@ func _on_update_inventory(args):
 
 func _on_update_map(args):
 	for tile in args:
+		print(tile.x, tile.y, tile.tile)
 		map.set_cell(TILE_LAYER, Vector2(tile.x, tile.y), TILE_SOURCE, _to_tilev(tile.tile))
 
 func _to_tilev(tile: int) -> Vector2:
