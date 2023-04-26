@@ -1,7 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://1g3xahsibu80"]
+[gd_scene load_steps=7 format=3 uid="uid://1g3xahsibu80"]
 
 [ext_resource type="Script" path="res://src/game.gd" id="1_j1xl4"]
+[ext_resource type="Script" path="res://src/Inventory.gd" id="2_0gtrk"]
 [ext_resource type="Texture2D" uid="uid://df8pfnja0bl6x" path="res://assets/tileset.jpg" id="2_60jqp"]
+[ext_resource type="PackedScene" uid="uid://22arn76lxqeq" path="res://src/item.tscn" id="4_jgnvq"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tr12v"]
 texture = ExtResource("2_60jqp")
@@ -1211,10 +1213,11 @@ texture_region_size = Vector2i(32, 32)
 tile_size = Vector2i(32, 32)
 sources/1 = SubResource("TileSetAtlasSource_tr12v")
 
-[node name="Game" type="Node" node_paths=PackedStringArray("map", "camera", "console")]
+[node name="Game" type="Node" node_paths=PackedStringArray("map", "camera", "inventory", "console")]
 script = ExtResource("1_j1xl4")
 map = NodePath("HBoxContainer/SubViewportContainer/SubViewport/TileMap")
 camera = NodePath("HBoxContainer/SubViewportContainer/SubViewport/TileMap/Camera2D")
+inventory = NodePath("HBoxContainer/Side/MarginContainer/SideBar/Inventory")
 console = NodePath("VBoxContainer/Messages/VBoxContainer/MarginContainer/RichTextLabel")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
@@ -1228,13 +1231,27 @@ grow_vertical = 2
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 
-[node name="SideBar" type="VBoxContainer" parent="HBoxContainer/Side"]
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer/Side"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="SideBar" type="VBoxContainer" parent="HBoxContainer/Side/MarginContainer"]
 layout_mode = 2
 
-[node name="Status" type="MarginContainer" parent="HBoxContainer/Side/SideBar"]
+[node name="Inventory" type="VBoxContainer" parent="HBoxContainer/Side/MarginContainer/SideBar"]
 layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("2_0gtrk")
 
-[node name="Inventory" type="MarginContainer" parent="HBoxContainer/Side/SideBar"]
+[node name="Item" parent="HBoxContainer/Side/MarginContainer/SideBar/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+tooltip_text = "Test"
+
+[node name="Status" type="VBoxContainer" parent="HBoxContainer/Side/MarginContainer/SideBar"]
 layout_mode = 2
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="HBoxContainer"]
@@ -1274,10 +1291,10 @@ layout_mode = 2
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Messages/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/margin_left = 5
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 5
-theme_override_constants/margin_bottom = 5
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
 [node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/Messages/VBoxContainer/MarginContainer"]
 layout_mode = 2

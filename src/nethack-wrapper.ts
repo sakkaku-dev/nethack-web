@@ -60,7 +60,7 @@ export class NetHackWrapper implements NetHackJS {
       str
     ) =>
       this.menu.items.push({
-        glyph,
+        glyph: window.nethackGlobal.helpers.mapglyphHelper(glyph, 0, 0, 0),
         identifier,
         accelerator,
         groupAcc,
@@ -77,9 +77,8 @@ export class NetHackWrapper implements NetHackJS {
       this.onQuestion$.next({ question, choices });
       return await firstValueFrom(this.input$);
     },
+    [Command.ASK_NAME]: async () => await firstValueFrom(this.input$),
   };
-
-  private inventoryId: number | null = null;
 
   private idCounter = 0;
   private menu: MenuSelect = { items: [] };
@@ -121,7 +120,7 @@ export class NetHackWrapper implements NetHackJS {
     this.inventory$
       .pipe(
         filter((x) => x.length > 0),
-        debounceTime(100),
+        debounceTime(300),
         tap((items) => this.onInventoryUpdate$.next(items))
       )
       .subscribe();
@@ -164,10 +163,6 @@ export class NetHackWrapper implements NetHackJS {
     this.idCounter++;
     const id = this.idCounter;
     console.log("Create new window of type", type, "with id", id);
-
-    if (type === WIN_TYPE.NHW_MENU && this.inventoryId == null) {
-      this.inventoryId = id;
-    }
     return id;
   }
 
@@ -182,7 +177,7 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async menuSelect(winid: number, select: MENU_SELECT, selected: any) {
-    if (winid === this.inventoryId) {
+    if (winid === window.nethackGlobal.globals.WIN_INVEN) {
       this.inventoryUpdate(this.menu.items);
       return 0;
     }
@@ -194,7 +189,7 @@ export class NetHackWrapper implements NetHackJS {
         this.onSingleMenu$.next(this.menu);
       }
 
-      console.log(`Waiting for menu select (${select}): `, this.menu);
+      // TODO: select
       const items = await firstValueFrom(this.selectedMenu$);
       items.forEach((x) => selected.push({ item: x, count: 1 }));
       return items.length;

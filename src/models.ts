@@ -33,6 +33,7 @@ export enum Command {
   YN_FUNCTION = "shim_yn_function",
   GET_CHAR = "shim_nhgetch",
   GET_POSKEY = "shim_nh_poskey",
+  ASK_NAME = "shim_askname",
 
   GET_HISTORY = "shim_getmsghistory",
   MESSAGE_MENU = "shim_message_menu",
@@ -66,7 +67,7 @@ export interface Item {
   groupAcc: string;
   attr: number;
   str: string;
-  identifier: string;
+  identifier: number;
 }
 
 // See botl.c

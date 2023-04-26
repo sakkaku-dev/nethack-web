@@ -23,6 +23,10 @@ Build nethack
 - `npm run build:nethack`
 - `npm run copy:nethack`
 
+Fix Problems
+
+- `npm run fix:nethack`
+
 Build final application
 
 - `npm run build`

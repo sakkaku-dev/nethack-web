@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://src/dialog.gd" id="1_nt7ts"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d48pq"]
-bg_color = Color(0.12, 0.12, 0.12, 0.784314)
+bg_color = Color(0.0823529, 0.0823529, 0.0823529, 0.862745)
 
 [node name="Dialog" type="CenterContainer" node_paths=PackedStringArray("text_node")]
 anchors_preset = 15

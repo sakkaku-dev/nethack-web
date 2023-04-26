@@ -13,6 +13,7 @@ declare global {
 
     nethackGlobal: {
       helpers: Record<string, Function>;
+      globals: Record<string, any>;
     };
 
     // For debugging
@@ -48,18 +49,22 @@ wrapper.onInventoryUpdate$.subscribe((items) =>
 window.nethackJS = wrapper;
 window.nethackCallback = wrapper.handle.bind(wrapper);
 
-const Module: any = {
-  onRuntimeInitialized: () => {
-    Module.ccall(
-      "shim_graphics_set_callback",
-      null,
-      ["string"],
-      ["nethackCallback"],
-      {
-        async: true,
-      }
-    );
-  },
+const Module: any = {};
+Module.onRuntimeInitialized = () => {
+  Module.ccall(
+    "shim_graphics_set_callback",
+    null,
+    ["string"],
+    ["nethackCallback"],
+    {
+      async: true,
+    }
+  );
 };
+Module.preRun = [
+  () => {
+    Module.ENV["USER"] = "web_user"; // TODO: get name
+  },
+];
 
 nethackLib(Module);

@@ -10,6 +10,7 @@ const DIALOG = preload("res://src/dialog.tscn")
 @export var map: TileMap
 @export var camera: Camera2D
 
+@export var inventory: Inventory
 @export var console: RichTextLabel
 
 var link = NetHackLink.new()
@@ -83,6 +84,7 @@ func updateStatus(args):
 
 func updateInventory(args):
 	print('Inventory: %s' % [args])
+	inventory.update(args)
 
 func updateMap(args):
 	for tile in args:
