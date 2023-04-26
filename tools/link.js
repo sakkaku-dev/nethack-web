@@ -9,6 +9,8 @@ const methods = [
   "openDialog",
   "openQuestion",
 
+  "closeDialog",
+
   "moveCursor",
   "centerView",
   "printLine",
@@ -18,7 +20,7 @@ const methods = [
   "updateInventory",
 ];
 
-let content = "# This is generated. Do not edit"
+let content = "# This is generated. Do not edit\n"
 content += "class_name NetHackLink\n\n";
 
 methods.forEach((m) => {

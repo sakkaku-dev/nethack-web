@@ -1,9 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://1g3xahsibu80"]
+[gd_scene load_steps=5 format=3 uid="uid://1g3xahsibu80"]
 
 [ext_resource type="Script" path="res://src/game.gd" id="1_j1xl4"]
 [ext_resource type="Texture2D" uid="uid://df8pfnja0bl6x" path="res://assets/tileset.jpg" id="2_60jqp"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_85s2n"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tr12v"]
 texture = ExtResource("2_60jqp")
@@ -1213,72 +1211,49 @@ texture_region_size = Vector2i(32, 32)
 tile_size = Vector2i(32, 32)
 sources/1 = SubResource("TileSetAtlasSource_tr12v")
 
-[node name="Game" type="Node" node_paths=PackedStringArray("map", "camera")]
+[node name="Game" type="Node" node_paths=PackedStringArray("map", "camera", "console")]
 script = ExtResource("1_j1xl4")
-map = NodePath("CanvasLayer/HBoxContainer/SubViewportContainer/SubViewport/TileMap")
-camera = NodePath("CanvasLayer/HBoxContainer/SubViewportContainer/SubViewport/TileMap/Camera2D")
+map = NodePath("HBoxContainer/SubViewportContainer/SubViewport/TileMap")
+camera = NodePath("HBoxContainer/SubViewportContainer/SubViewport/TileMap/Camera2D")
+console = NodePath("VBoxContainer/Messages/VBoxContainer/MarginContainer/RichTextLabel")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
-
-[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="PopupPanel" type="PopupPanel" parent="CanvasLayer/CenterContainer"]
-initial_position = 1
-size = Vector2i(500, 500)
-always_on_top = true
-theme_override_styles/panel = SubResource("StyleBoxFlat_85s2n")
-
-[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/CenterContainer/PopupPanel"]
-offset_right = 500.0
-offset_bottom = 500.0
-
-[node name="TextLabel" type="RichTextLabel" parent="CanvasLayer/CenterContainer/PopupPanel/MarginContainer"]
-layout_mode = 2
-text = "asd asdkjasldjsalkdjlasjdjasdlsa
-asldkjasljdasljd"
-
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Side" type="PanelContainer" parent="CanvasLayer/HBoxContainer"]
+[node name="Side" type="PanelContainer" parent="HBoxContainer"]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 
-[node name="SideBar" type="VBoxContainer" parent="CanvasLayer/HBoxContainer/Side"]
+[node name="SideBar" type="VBoxContainer" parent="HBoxContainer/Side"]
 layout_mode = 2
 
-[node name="Status" type="MarginContainer" parent="CanvasLayer/HBoxContainer/Side/SideBar"]
+[node name="Status" type="MarginContainer" parent="HBoxContainer/Side/SideBar"]
 layout_mode = 2
 
-[node name="Inventory" type="MarginContainer" parent="CanvasLayer/HBoxContainer/Side/SideBar"]
+[node name="Inventory" type="MarginContainer" parent="HBoxContainer/Side/SideBar"]
 layout_mode = 2
 
-[node name="SubViewportContainer" type="SubViewportContainer" parent="CanvasLayer/HBoxContainer"]
+[node name="SubViewportContainer" type="SubViewportContainer" parent="HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 stretch = true
 
-[node name="SubViewport" type="SubViewport" parent="CanvasLayer/HBoxContainer/SubViewportContainer"]
+[node name="SubViewport" type="SubViewport" parent="HBoxContainer/SubViewportContainer"]
 handle_input_locally = false
 size = Vector2i(948, 648)
 render_target_update_mode = 4
 
-[node name="TileMap" type="TileMap" parent="CanvasLayer/HBoxContainer/SubViewportContainer/SubViewport"]
+[node name="TileMap" type="TileMap" parent="HBoxContainer/SubViewportContainer/SubViewport"]
 tile_set = SubResource("TileSet_0qjj2")
 format = 2
 
-[node name="Camera2D" type="Camera2D" parent="CanvasLayer/HBoxContainer/SubViewportContainer/SubViewport/TileMap"]
+[node name="Camera2D" type="Camera2D" parent="HBoxContainer/SubViewportContainer/SubViewport/TileMap"]
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -1289,14 +1264,14 @@ size_flags_horizontal = 4
 size_flags_vertical = 3
 alignment = 2
 
-[node name="Messages" type="PanelContainer" parent="CanvasLayer/VBoxContainer"]
+[node name="Messages" type="PanelContainer" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/VBoxContainer/Messages"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/Messages"]
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/VBoxContainer/Messages/VBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Messages/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 5
@@ -1304,7 +1279,7 @@ theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 5
 theme_override_constants/margin_bottom = 5
 
-[node name="RichTextLabel" type="RichTextLabel" parent="CanvasLayer/VBoxContainer/Messages/VBoxContainer/MarginContainer"]
+[node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/Messages/VBoxContainer/MarginContainer"]
 layout_mode = 2
 text = "1
 2
@@ -1315,11 +1290,4 @@ text = "1
 7
 8
 9"
-
-[node name="Input" type="MarginContainer" parent="CanvasLayer/VBoxContainer/Messages/VBoxContainer"]
-visible = false
-layout_mode = 2
-
-[node name="LineEdit" type="LineEdit" parent="CanvasLayer/VBoxContainer/Messages/VBoxContainer/Input"]
-layout_mode = 2
-text = "test"
+scroll_following = true

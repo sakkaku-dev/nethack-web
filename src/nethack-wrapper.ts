@@ -1,4 +1,12 @@
-import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
+import {
+  BehaviorSubject,
+  Subject,
+  debounceTime,
+  filter,
+  firstValueFrom,
+  skip,
+  tap,
+} from "rxjs";
 import { Command, Item, NetHackJS, Status, Tile, statusMap } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
@@ -18,18 +26,22 @@ export interface Question {
 }
 
 export class NetHackWrapper implements NetHackJS {
-  private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
+  private commandMap: Partial<
+    Record<Command, (...args: any[]) => Promise<any>>
+  > = {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
+    [Command.DESTROY_WINDOW]: async (winid: number) =>
+      this.onCloseDialog$.next(winid),
 
     // Text / Dialog
-    [Command.PUTSTR]: async (winid, attr, str) => (this.putStr = str),
+    [Command.PUTSTR]: async (winid, attr, str) => (this.putStr += str + "\n"),
     [Command.RAW_PRINT]: async (str) => this.onPrint$.next(str),
     [Command.RAW_PRINT_BOLD]: async (str) => this.onPrint$.next(str),
 
     // Map
     [Command.PRINT_TILE]: async (winid, x, y, tile) =>
       this.printTile$.next([...this.printTile$.value, { x, y, tile }]),
-    [Command.CURSOR]: async (x, y) => this.onCursorMove$.next({ x, y }),
+    [Command.CURSOR]: async (winid, x, y) => this.onCursorMove$.next({ x, y }),
     [Command.CLIPAROUND]: async (x, y) => this.onMapCenter$.next({ x, y }),
 
     // Status
@@ -38,8 +50,23 @@ export class NetHackWrapper implements NetHackJS {
     // Menu
     [Command.MENU_START]: async () => (this.menu = { items: [] }),
     [Command.MENU_END]: async (winid, prompt) => (this.menu.prompt = prompt),
-    [Command.MENU_ADD]: async (winid, glyph, identifier, accelerator, groupAcc, attr, str) =>
-      this.menu.items.push({ glyph, identifier, accelerator, groupAcc, attr, str }),
+    [Command.MENU_ADD]: async (
+      winid,
+      glyph,
+      identifier,
+      accelerator,
+      groupAcc,
+      attr,
+      str
+    ) =>
+      this.menu.items.push({
+        glyph,
+        identifier,
+        accelerator,
+        groupAcc,
+        attr,
+        str,
+      }),
     [Command.MENU_SELECT]: this.menuSelect.bind(this),
 
     // Waiting input
@@ -52,6 +79,8 @@ export class NetHackWrapper implements NetHackJS {
     },
   };
 
+  private inventoryId: number | null = null;
+
   private idCounter = 0;
   private menu: MenuSelect = { items: [] };
   private putStr = "";
@@ -61,11 +90,14 @@ export class NetHackWrapper implements NetHackJS {
 
   private status$ = new BehaviorSubject<Status>({});
   private printTile$ = new BehaviorSubject<Tile[]>([]);
+  private inventory$ = new Subject<Item[]>();
 
   onSingleMenu$ = new Subject<MenuSelect>();
   onMultiMenu$ = new Subject<MenuSelect>();
-  onDialog$ = new Subject<string>();
+  onDialog$ = new Subject<{ id: number; text: string }>();
   onQuestion$ = new Subject<Question>();
+
+  onCloseDialog$ = new Subject<number>();
 
   onPrint$ = new Subject<string>();
   onCursorMove$ = new Subject<Coordinate>();
@@ -81,9 +113,16 @@ export class NetHackWrapper implements NetHackJS {
         skip(1),
         filter((x) => x.length > 0),
         debounceTime(100),
-        tap(() => console.log("Update map")),
         tap((tiles) => this.onMapUpdate$.next(tiles)),
         tap(() => this.printTile$.next([]))
+      )
+      .subscribe();
+
+    this.inventory$
+      .pipe(
+        filter((x) => x.length > 0),
+        debounceTime(100),
+        tap((items) => this.onInventoryUpdate$.next(items))
       )
       .subscribe();
 
@@ -91,9 +130,9 @@ export class NetHackWrapper implements NetHackJS {
       .pipe(
         skip(1),
         debounceTime(100),
-        tap((s) => console.log("Update status", s))
+        tap((s) => this.onStatusUpdate$.next(s))
       )
-      .subscribe((s) => this.onStatusUpdate$.next(s));
+      .subscribe();
   }
 
   public selectMenu(items: any[]) {
@@ -125,18 +164,29 @@ export class NetHackWrapper implements NetHackJS {
     this.idCounter++;
     const id = this.idCounter;
     console.log("Create new window of type", type, "with id", id);
+
+    if (type === WIN_TYPE.NHW_MENU && this.inventoryId == null) {
+      this.inventoryId = id;
+    }
     return id;
   }
 
   private async displayWindow(winid: number, blocking: number) {
     if (this.putStr !== "") {
-      this.onDialog$.next(this.putStr);
-      await firstValueFrom(this.input$);
+      this.onDialog$.next({ id: winid, text: this.putStr });
+      await firstValueFrom(
+        this.input$.pipe(filter((x) => " ".charCodeAt(0) === x))
+      );
       this.putStr = "";
     }
   }
 
   private async menuSelect(winid: number, select: MENU_SELECT, selected: any) {
+    if (winid === this.inventoryId) {
+      this.inventoryUpdate(this.menu.items);
+      return 0;
+    }
+
     if (this.menu.items.length > 0 && select != MENU_SELECT.PICK_NONE) {
       if (select == MENU_SELECT.PICK_ANY) {
         this.onMultiMenu$.next(this.menu);
@@ -151,6 +201,10 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     return 0;
+  }
+
+  private async inventoryUpdate(items: Item[]) {
+    this.inventory$.next(items);
   }
 
   private async statusUpdate(type: STATUS_FIELD, ptr: number) {

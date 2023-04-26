@@ -9,8 +9,10 @@ export interface NetHackJS {
 export interface NetHackGodot {
   openMenuAny: (prompt: string, ...items: Item[]) => void;
   openMenuOne: (prompt: string, ...items: Item[]) => void;
-  openDialog: (msg: string) => void;
+  openDialog: (id: number, msg: string) => void;
   openQuestion: (question: string, ...choices: string[]) => void;
+
+  closeDialog: (id: number) => void;
 
   moveCursor: (x: number, y: number) => void;
   centerView: (x: number, y: number) => void;
@@ -40,6 +42,7 @@ export enum Command {
 
   INIT_WINDOW = "shim_init_nhwindows",
   CREATE_WINDOW = "shim_create_nhwindow",
+  DESTROY_WINDOW = "shim_destroy_nhwindow",
   DISPLAY_WINDOW = "shim_display_nhwindow",
   CLEAR_WINDOW = "shim_clear_nhwindow",
 
@@ -101,7 +104,9 @@ interface StatusAll {
 
 export type Status = Partial<StatusAll>;
 
-export const statusMap: Partial<Record<STATUS_FIELD, (s: Status, v: any) => void>> = {
+export const statusMap: Partial<
+  Record<STATUS_FIELD, (s: Status, v: any) => void>
+> = {
   [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v),
   [STATUS_FIELD.BL_STR]: (s, v) => (s.str = v),
   [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = v),

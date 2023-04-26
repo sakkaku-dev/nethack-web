@@ -1,9 +1,11 @@
+# This is generated. Do not edit
 class_name NetHackLink
 
 var openMenuAny
 var openMenuOne
 var openDialog
 var openQuestion
+var closeDialog
 var moveCursor
 var centerView
 var printLine
@@ -24,6 +26,9 @@ func init(cb):
 
 	openQuestion = JavaScriptBridge.create_callback(cb.openQuestion)
 	obj.openQuestion = openQuestion
+
+	closeDialog = JavaScriptBridge.create_callback(cb.closeDialog)
+	obj.closeDialog = closeDialog
 
 	moveCursor = JavaScriptBridge.create_callback(cb.moveCursor)
 	obj.moveCursor = moveCursor
