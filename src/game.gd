@@ -1,6 +1,6 @@
 extends Node
 
-const TILE_SOURCE = 3
+const TILE_SOURCE = 2
 const TILE_LAYER = 0
 const TILE_SIZE_X = 40
 
