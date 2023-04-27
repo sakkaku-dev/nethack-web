@@ -1,12 +1,4 @@
-import {
-  BehaviorSubject,
-  Subject,
-  debounceTime,
-  filter,
-  firstValueFrom,
-  skip,
-  tap,
-} from "rxjs";
+import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
 import { Command, Item, NetHackJS, Status, Tile, statusMap } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
@@ -25,13 +17,14 @@ export interface Question {
   choices: string[];
 }
 
+export interface Window {
+  type: WIN_TYPE;
+}
+
 export class NetHackWrapper implements NetHackJS {
-  private commandMap: Partial<
-    Record<Command, (...args: any[]) => Promise<any>>
-  > = {
+  private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
-    [Command.DESTROY_WINDOW]: async (winid: number) =>
-      this.onCloseDialog$.next(winid),
+    [Command.DESTROY_WINDOW]: async (winid: number) => this.onCloseDialog$.next(winid),
 
     // Text / Dialog
     [Command.PUTSTR]: async (winid, attr, str) => (this.putStr += str + "\n"),
@@ -41,7 +34,8 @@ export class NetHackWrapper implements NetHackJS {
     // Map
     [Command.PRINT_TILE]: async (winid, x, y, tile) =>
       this.printTile$.next([...this.printTile$.value, { x, y, tile }]),
-    [Command.CURSOR]: async (winid, x, y) => this.onCursorMove$.next({ x, y }),
+    [Command.CURSOR]: async (winid, x, y) =>
+      winid == window.nethackGlobal.globals.WIN_MAP && this.onCursorMove$.next({ x, y }),
     [Command.CLIPAROUND]: async (x, y) => this.onMapCenter$.next({ x, y }),
 
     // Status
@@ -50,15 +44,7 @@ export class NetHackWrapper implements NetHackJS {
     // Menu
     [Command.MENU_START]: async () => (this.menu = { items: [] }),
     [Command.MENU_END]: async (winid, prompt) => (this.menu.prompt = prompt),
-    [Command.MENU_ADD]: async (
-      winid,
-      glyph,
-      identifier,
-      accelerator,
-      groupAcc,
-      attr,
-      str
-    ) =>
+    [Command.MENU_ADD]: async (winid, glyph, identifier, accelerator, groupAcc, attr, str) =>
       this.menu.items.push({
         glyph: window.nethackGlobal.helpers.mapglyphHelper(glyph, 0, 0, 0),
         identifier,
@@ -83,6 +69,7 @@ export class NetHackWrapper implements NetHackJS {
   private idCounter = 0;
   private menu: MenuSelect = { items: [] };
   private putStr = "";
+  private windows: Record<number, Window> = {};
 
   private input$ = new Subject<number>();
   private selectedMenu$ = new Subject<number[]>();
@@ -163,15 +150,15 @@ export class NetHackWrapper implements NetHackJS {
     this.idCounter++;
     const id = this.idCounter;
     console.log("Create new window of type", type, "with id", id);
+    this.windows[id] = { type };
     return id;
   }
 
   private async displayWindow(winid: number, blocking: number) {
     if (this.putStr !== "") {
       this.onDialog$.next({ id: winid, text: this.putStr });
-      await firstValueFrom(
-        this.input$.pipe(filter((x) => " ".charCodeAt(0) === x))
-      );
+      const acceptedCodes = [" ", "\n"].map((x) => x.charCodeAt(0));
+      await firstValueFrom(this.input$.pipe(filter((x) => acceptedCodes.includes(x))));
       this.putStr = "";
     }
   }
@@ -207,18 +194,19 @@ export class NetHackWrapper implements NetHackJS {
     if (mapper) {
       let value;
       if (type == STATUS_FIELD.BL_CONDITION) {
-        value = window.nethackGlobal.helpers.getPointerValue("", ptr, "n");
+        value = this.getPointerValue(ptr, "i");
       } else {
-        // console.log("Values for pointer", ptr, STATUS_FIELD[type]);
-        // ["s", "p", "c", "0", "1", "n", "f", "d", "o"].forEach((t) => {
-        //   console.log(window.nethackGlobal.helpers.getPointerValue("", ptr, t));
-        // });
-        value = window.nethackGlobal.helpers.getPointerValue("", ptr, "n");
+        value = this.getPointerValue(ptr, "s");
       }
 
       var status = this.status$.value;
       mapper(status, value);
       this.status$.next(status);
     }
+  }
+
+  private getPointerValue(ptr: number, type: string) {
+    const x = window.nethackGlobal.helpers.getPointerValue("nethack.pointerValue", ptr, "p");
+    return window.nethackGlobal.helpers.getPointerValue("nethack.pointerValue", x, type);
   }
 }

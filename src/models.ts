@@ -82,18 +82,18 @@ interface StatusAll {
   title: string;
   align: string;
 
-  score: number;
   gold: number;
-  carryCap: number;
   power: number;
   powerMax: number;
   exp: number;
   expLvl: number;
   armor: number;
-  hunger: number;
   hp: number;
   hpMax: number;
 
+  score: string;
+  carryCap: string;
+  hunger: string;
   dungeonLvl: string;
   experience: number;
   condition: CONDITION;
@@ -105,28 +105,26 @@ interface StatusAll {
 
 export type Status = Partial<StatusAll>;
 
-export const statusMap: Partial<
-  Record<STATUS_FIELD, (s: Status, v: any) => void>
-> = {
+export const statusMap: Partial<Record<STATUS_FIELD, (s: Status, v: string) => void>> = {
   [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v),
-  [STATUS_FIELD.BL_STR]: (s, v) => (s.str = v),
-  [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = v),
-  [STATUS_FIELD.BL_CO]: (s, v) => (s.con = v),
-  [STATUS_FIELD.BL_IN]: (s, v) => (s.int = v),
-  [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = v),
-  [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = v),
+  [STATUS_FIELD.BL_STR]: (s, v) => (s.str = parseInt(v)),
+  [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseInt(v)),
+  [STATUS_FIELD.BL_CO]: (s, v) => (s.con = parseInt(v)),
+  [STATUS_FIELD.BL_IN]: (s, v) => (s.int = parseInt(v)),
+  [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = parseInt(v)),
+  [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = parseInt(v)),
   [STATUS_FIELD.BL_ALIGN]: (s, v) => (s.align = v),
   [STATUS_FIELD.BL_SCORE]: (s, v) => (s.score = v),
   [STATUS_FIELD.BL_CAP]: (s, v) => (s.carryCap = v),
-  [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = v),
-  [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = v),
-  [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = v),
-  [STATUS_FIELD.BL_XP]: (s, v) => (s.expLvl = v),
-  [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = v),
+  [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v.split(":")[1])),
+  [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = parseInt(v)),
+  [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = parseInt(v)),
+  [STATUS_FIELD.BL_XP]: (s, v) => (s.expLvl = parseInt(v)),
+  [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = parseInt(v)),
   [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = v),
-  [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = v),
-  [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = v),
+  [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = parseInt(v)),
+  [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = parseInt(v)),
   [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v),
-  [STATUS_FIELD.BL_EXP]: (s, v) => (s.exp = v),
-  [STATUS_FIELD.BL_CONDITION]: (s, v) => (s.condition = v),
+  [STATUS_FIELD.BL_EXP]: (s, v) => (s.exp = parseInt(v)),
+  [STATUS_FIELD.BL_CONDITION]: (s, v) => (s.condition = parseInt(v)),
 };

@@ -27,6 +27,7 @@ func _unhandled_input(event: InputEvent):
 	if event is InputEventKey and event.is_pressed():
 		var code = event.keycode
 		if code >= KEY_SPACE and code <= KEY_ASCIITILDE: # only allow ASCII code
+			print(event)
 			var window = JavaScriptBridge.get_interface("window")
 			window.nethackJS.sendInput(event.keycode) # TODO: how to send modifiers?
 
