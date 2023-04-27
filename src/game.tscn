@@ -1,10 +1,12 @@
-[gd_scene load_steps=9 format=3 uid="uid://1g3xahsibu80"]
+[gd_scene load_steps=11 format=3 uid="uid://1g3xahsibu80"]
 
 [ext_resource type="Script" path="res://src/game.gd" id="1_j1xl4"]
 [ext_resource type="Script" path="res://src/Inventory.gd" id="2_0gtrk"]
 [ext_resource type="Texture2D" uid="uid://df8pfnja0bl6x" path="res://assets/tileset.jpg" id="2_60jqp"]
+[ext_resource type="Theme" uid="uid://b8t1beoo7xrs" path="res://theme.tres" id="2_gn1q7"]
 [ext_resource type="PackedScene" uid="uid://22arn76lxqeq" path="res://src/item.tscn" id="4_jgnvq"]
-[ext_resource type="Texture2D" uid="uid://b5odpnbh56sov" path="res://assets/tiles.bmp" id="5_q0kks"]
+[ext_resource type="PackedScene" uid="uid://uglnwq71fxxp" path="res://src/status.tscn" id="5_6j714"]
+[ext_resource type="Texture2D" uid="uid://c03uqshkfldfk" path="res://assets/tiles.bmp" id="5_q0kks"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tr12v"]
 texture = ExtResource("2_60jqp")
@@ -5097,12 +5099,13 @@ texture = ExtResource("5_q0kks")
 sources/1 = SubResource("TileSetAtlasSource_tr12v")
 sources/3 = SubResource("TileSetAtlasSource_pmgpt")
 
-[node name="Game" type="Node" node_paths=PackedStringArray("map", "camera", "inventory", "console")]
+[node name="Game" type="Node" node_paths=PackedStringArray("map", "camera", "status", "inventory", "console")]
 script = ExtResource("1_j1xl4")
-map = NodePath("HBoxContainer/SubViewportContainer/SubViewport/TileMap")
-camera = NodePath("HBoxContainer/SubViewportContainer/SubViewport/TileMap/Camera2D")
-inventory = NodePath("HBoxContainer/Side/MarginContainer/SideBar/Inventory")
-console = NodePath("VBoxContainer/Messages/VBoxContainer/MarginContainer/RichTextLabel")
+map = NodePath("HBoxContainer/VBoxContainer/SubViewportContainer/SubViewport/TileMap")
+camera = NodePath("HBoxContainer/VBoxContainer/SubViewportContainer/SubViewport/TileMap/Camera2D")
+status = NodePath("HBoxContainer/Side/MarginContainer/SideBar/Status")
+inventory = NodePath("HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory")
+console = NodePath("HBoxContainer/VBoxContainer/Messages/VBoxContainer/MarginContainer/RichTextLabel")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 anchors_preset = 15
@@ -5110,6 +5113,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_gn1q7")
+theme_override_constants/separation = 0
 
 [node name="Side" type="PanelContainer" parent="HBoxContainer"]
 custom_minimum_size = Vector2(200, 0)
@@ -5126,52 +5131,93 @@ theme_override_constants/margin_bottom = 10
 [node name="SideBar" type="VBoxContainer" parent="HBoxContainer/Side/MarginContainer"]
 layout_mode = 2
 
-[node name="Inventory" type="VBoxContainer" parent="HBoxContainer/Side/MarginContainer/SideBar"]
+[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/Side/MarginContainer/SideBar"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Inventory" type="VBoxContainer" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("2_0gtrk")
 
-[node name="Item" parent="HBoxContainer/Side/MarginContainer/SideBar/Inventory" instance=ExtResource("4_jgnvq")]
+[node name="Item" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
 layout_mode = 2
 
-[node name="Status" type="VBoxContainer" parent="HBoxContainer/Side/MarginContainer/SideBar"]
+[node name="Item2" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
 layout_mode = 2
 
-[node name="SubViewportContainer" type="SubViewportContainer" parent="HBoxContainer"]
+[node name="Item3" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Item4" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Item5" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Item6" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Item7" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Item8" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Item9" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Item10" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Item11" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Item12" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Item13" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Item14" parent="HBoxContainer/Side/MarginContainer/SideBar/ScrollContainer/Inventory" instance=ExtResource("4_jgnvq")]
+layout_mode = 2
+
+[node name="Status" parent="HBoxContainer/Side/MarginContainer/SideBar" instance=ExtResource("5_6j714")]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("2_gn1q7")
+alignment = 2
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 stretch = true
 
-[node name="SubViewport" type="SubViewport" parent="HBoxContainer/SubViewportContainer"]
+[node name="SubViewport" type="SubViewport" parent="HBoxContainer/VBoxContainer/SubViewportContainer"]
 handle_input_locally = false
-size = Vector2i(948, 648)
+size = Vector2i(952, 494)
 render_target_update_mode = 4
 
-[node name="TileMap" type="TileMap" parent="HBoxContainer/SubViewportContainer/SubViewport"]
+[node name="TileMap" type="TileMap" parent="HBoxContainer/VBoxContainer/SubViewportContainer/SubViewport"]
 tile_set = SubResource("TileSet_0qjj2")
 format = 2
 
-[node name="Camera2D" type="Camera2D" parent="HBoxContainer/SubViewportContainer/SubViewport/TileMap"]
+[node name="Camera2D" type="Camera2D" parent="HBoxContainer/VBoxContainer/SubViewportContainer/SubViewport/TileMap"]
+zoom = Vector2(1.5, 1.5)
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 200.0
-grow_horizontal = 2
-grow_vertical = 2
-size_flags_horizontal = 4
-size_flags_vertical = 3
-alignment = 2
-
-[node name="Messages" type="PanelContainer" parent="VBoxContainer"]
+[node name="Messages" type="PanelContainer" parent="HBoxContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/Messages"]
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/VBoxContainer/Messages"]
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Messages/VBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer/VBoxContainer/Messages/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 10
@@ -5179,7 +5225,7 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/Messages/VBoxContainer/MarginContainer"]
+[node name="RichTextLabel" type="RichTextLabel" parent="HBoxContainer/VBoxContainer/Messages/VBoxContainer/MarginContainer"]
 layout_mode = 2
 text = "1
 2

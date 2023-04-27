@@ -9,6 +9,7 @@ const DIALOG = preload("res://src/dialog.tscn")
 @export var map: TileMap
 @export var camera: Camera2D
 
+@export var status: Status
 @export var inventory: Inventory
 @export var console: RichTextLabel
 
@@ -28,11 +29,11 @@ func _unhandled_input(event: InputEvent):
 		if code >= KEY_SPACE and code <= KEY_ASCIITILDE: # only allow ASCII code
 			var is_ctrl = Input.is_key_pressed(KEY_CTRL)
 			var window = JavaScriptBridge.get_interface("window")
-			var code = event.unicode
-			# if is_ctrl:
-			# 	window.nethackJS.sendInput(KEY_CTRL & code)
-			# else:
-			window.nethackJS.sendInput(code)
+			var unicode = event.unicode
+			if is_ctrl:
+				window.nethackJS.sendInput(KEY_CTRL & code)
+			else:
+				window.nethackJS.sendInput(unicode)
 
 
 
@@ -43,7 +44,6 @@ func openMenuAny(args):
 	print('Menu Any: %s' % [args])
 
 func openDialog(args):
-	print('Dialog:  %s' % [args])
 	var dialog = DIALOG.instantiate()
 	add_child(dialog)
 	
@@ -53,16 +53,17 @@ func openDialog(args):
 	dialog.open(txt)
 	
 func openQuestion(args):
-	print('Question: %s' % [args])
 	var question = args[0]
 	var choices = []
 	for i in range(1, args.size()):
 		choices.append(args[i])
 
-	printLine([question + " %s" % [choices]])
+	var line = question
+	if choices.size() > 0:
+		line += " " + str(choices)
+	printLine(line)
 
 func closeDialog(args):
-	print('Close Dialog: %s' % [args])
 	var id = args[0]
 	if id in dialogs:
 		remove_child(dialogs[id])
@@ -77,23 +78,19 @@ func centerView(args):
 func _move_camera(x, y):
 	var pos = map.map_to_local(Vector2(x, y))
 	camera.position = pos
-	print("Move camera to %s" % pos)
 
 func printLine(args):
-	print('Print: %s' % [args])
 	console.text += args[0] + "\n"
 
 
 func updateStatus(args):
-	print('Status: %s' % [args])
+	status.update(args[0])
 
 func updateInventory(args):
-	print('Inventory: %s' % [args])
 	inventory.update(args)
 
 func updateMap(args):
 	for tile in args:
-		print("Tile: %s, %s - %s"  % [tile.x, tile.y, tile.tile])
 		map.set_cell(TILE_LAYER, Vector2(tile.x, tile.y), TILE_SOURCE, _to_tilev(tile.tile))
 
 func _to_tilev(tile: int) -> Vector2:
