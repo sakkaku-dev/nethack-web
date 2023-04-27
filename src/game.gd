@@ -1,9 +1,8 @@
 extends Node
 
-const TILE_SOURCE = 1
+const TILE_SOURCE = 3
 const TILE_LAYER = 0
 const TILE_SIZE_X = 40
-const TILE_SIZE_Y = 30
 
 const DIALOG = preload("res://src/dialog.tscn")
 
@@ -26,10 +25,10 @@ func _ready():
 func _unhandled_input(event: InputEvent):
 	if event is InputEventKey and event.is_pressed():
 		var code = event.keycode
-		if code >= KEY_SPACE and code <= KEY_ASCIITILDE: # only allow ASCII code
-			print(event)
-			var window = JavaScriptBridge.get_interface("window")
-			window.nethackJS.sendInput(event.keycode) # TODO: how to send modifiers?
+		# if code >= KEY_SPACE and code <= KEY_ASCIITILDE: # only allow ASCII code
+		print(event)
+		var window = JavaScriptBridge.get_interface("window")
+		window.nethackJS.sendInput(event.keycode) # TODO: how to send modifiers?
 
 
 func openMenuOne(args):
@@ -94,7 +93,8 @@ func updateMap(args):
 
 func _to_tilev(tile: int) -> Vector2:
 	# TODO: map correctly -> tileset needs to be updated for 3.7
+	# https://github.com/NullCGT/SpliceHack
 	var row = floor(tile / float(TILE_SIZE_X))
 	var col = tile % TILE_SIZE_X
-	return Vector2(min(col, TILE_SIZE_X), min(row, TILE_SIZE_Y))
+	return Vector2(col, row)
 

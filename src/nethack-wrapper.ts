@@ -190,6 +190,12 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async statusUpdate(type: STATUS_FIELD, ptr: number) {
+    const ignored = [STATUS_FIELD.BL_FLUSH, STATUS_FIELD.BL_RESET];
+
+    if (ignored.includes(type)) {
+      return;
+    }
+
     const mapper = statusMap[type];
     if (mapper) {
       let value;
@@ -202,6 +208,8 @@ export class NetHackWrapper implements NetHackJS {
       var status = this.status$.value;
       mapper(status, value);
       this.status$.next(status);
+    } else {
+      console.warn("Unhandled status type", STATUS_FIELD[type]);
     }
   }
 
