@@ -25,10 +25,15 @@ func _ready():
 func _unhandled_input(event: InputEvent):
 	if event is InputEventKey and event.is_pressed():
 		var code = event.keycode
-		# if code >= KEY_SPACE and code <= KEY_ASCIITILDE: # only allow ASCII code
-		print(event)
-		var window = JavaScriptBridge.get_interface("window")
-		window.nethackJS.sendInput(event.keycode) # TODO: how to send modifiers?
+		if code >= KEY_SPACE and code <= KEY_ASCIITILDE: # only allow ASCII code
+			var is_ctrl = Input.is_key_pressed(KEY_CTRL)
+			var window = JavaScriptBridge.get_interface("window")
+			var code = event.unicode
+			# if is_ctrl:
+			# 	window.nethackJS.sendInput(KEY_CTRL & code)
+			# else:
+			window.nethackJS.sendInput(code)
+
 
 
 func openMenuOne(args):

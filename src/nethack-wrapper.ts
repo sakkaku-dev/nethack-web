@@ -126,6 +126,7 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   public sendInput(key: number) {
+    console.log("Receiced input", key);
     this.input$.next(key);
   }
 
