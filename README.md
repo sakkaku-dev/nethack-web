@@ -15,7 +15,7 @@ Apply changes needed for build, if it still works
 
 `tile.c` has to be generated using `tilemap.c`:
 
-- `npm run build:nethack.tiles`
+- `npm run build:nethack:tiles`
 
 Build nethack
 
