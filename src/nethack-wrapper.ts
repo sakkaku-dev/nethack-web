@@ -83,6 +83,10 @@ export class NetHackWrapper implements NetHackJS {
     // TODO: message_menu
     // TODO: display_file
     // TODO: select_menu with yn_function
+
+    // TODO: character selection
+    // TODO: improve performance
+    // TODO: menu accelerators
   };
 
   private idCounter = 0;
