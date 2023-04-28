@@ -1,5 +1,5 @@
 import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
-import { Command, Item, NetHackJS, Status, Tile, statusMap } from "./models";
+import { Command, Item, ItemFlag, NetHackJS, Status, Tile, statusMap } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
 export interface MenuSelect {
@@ -44,15 +44,7 @@ export class NetHackWrapper implements NetHackJS {
     // Menu
     [Command.MENU_START]: async () => (this.menu = { items: [] }),
     [Command.MENU_END]: async (winid, prompt) => (this.menu.prompt = prompt),
-    [Command.MENU_ADD]: async (winid, glyph, identifier, accelerator, groupAcc, attr, str) =>
-      this.menu.items.push({
-        glyph: window.nethackGlobal.helpers.mapglyphHelper(glyph, 0, 0, 0),
-        identifier,
-        accelerator,
-        groupAcc,
-        attr,
-        str,
-      }),
+    [Command.MENU_ADD]: this.menuAdd.bind(this),
     [Command.MENU_SELECT]: this.menuSelect.bind(this),
 
     // Waiting input
@@ -164,7 +156,28 @@ export class NetHackWrapper implements NetHackJS {
     }
   }
 
-  private async menuSelect(winid: number, select: MENU_SELECT, selected: any) {
+  private async menuAdd(
+    winid: number,
+    glyph: number,
+    identifier: number,
+    accelerator: string,
+    groupAcc: string,
+    attr: number,
+    str: string,
+    flag: number
+  ) {
+    this.menu.items.push({
+      glyph: window.nethackGlobal.helpers.mapglyphHelper(glyph, 0, 0, 0),
+      identifier,
+      accelerator,
+      groupAcc,
+      attr,
+      str,
+      active: flag === ItemFlag.SELECTED,
+    });
+  }
+
+  private async menuSelect(winid: number, select: MENU_SELECT, selected: number) {
     if (winid === window.nethackGlobal.globals.WIN_INVEN) {
       this.inventoryUpdate(this.menu.items);
       return 0;
@@ -178,9 +191,9 @@ export class NetHackWrapper implements NetHackJS {
       }
 
       // TODO: select
-      const items = await firstValueFrom(this.selectedMenu$);
-      items.forEach((x) => selected.push({ item: x, count: 1 }));
-      return items.length;
+      const itemIds = await firstValueFrom(this.selectedMenu$);
+      // itemIds.forEach((x) => selected.push({ item: x, count: 1 }));
+      return itemIds.length;
     }
 
     return 0;
@@ -201,9 +214,9 @@ export class NetHackWrapper implements NetHackJS {
     if (mapper) {
       let value;
       if (type == STATUS_FIELD.BL_CONDITION) {
-        value = this.getPointerValue(ptr, "i");
+        value = this.getPointerValue(ptr, Type.INT);
       } else {
-        value = this.getPointerValue(ptr, "s");
+        value = this.getPointerValue(ptr, Type.STRING);
       }
 
       var status = this.status$.value;
@@ -215,7 +228,17 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private getPointerValue(ptr: number, type: string) {
-    const x = window.nethackGlobal.helpers.getPointerValue("nethack.pointerValue", ptr, "p");
+    const x = window.nethackGlobal.helpers.getPointerValue(
+      "nethack.pointerValue",
+      ptr,
+      Type.POINTER
+    );
     return window.nethackGlobal.helpers.getPointerValue("nethack.pointerValue", x, type);
   }
+}
+
+enum Type {
+  INT = "i",
+  STRING = "s",
+  POINTER = "p",
 }

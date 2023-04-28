@@ -41,6 +41,8 @@ func openMenuOne(args):
 	print('Menu One: %s' % [args])
 
 func openMenuAny(args):
+	var prompt = args[0]
+	var items = args[1]
 	print('Menu Any: %s' % [args])
 
 func openDialog(args):
@@ -49,14 +51,21 @@ func openDialog(args):
 	
 	var id = args[0]
 	var txt = args[1]
+
+	if id in dialogs:
+		print('removing existing dialog wih id %s' % id)
+		remove_child(dialogs[id])
+
 	dialogs[id] = dialog
 	dialog.open(txt)
 	
 func openQuestion(args):
 	var question = args[0]
-	var choices = []
-	for i in range(1, args.size()):
-		choices.append(args[i])
+
+	# Choices is contained in question?
+	# var choices = []
+	# for i in range(1, args.size()):
+	# 	choices.append(args[i])
 
 	var line = question
 	if choices.size() > 0:

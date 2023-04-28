@@ -56,7 +56,7 @@ func update(status):
 	if status.hunger:
 		hunger.text = status.hunger
 
-func _update_exp(status_exp: int, lvl: int):
+func _update_exp(status_exp, lvl):
 	var ex = 0
 	if status_exp:
 		ex = status_exp

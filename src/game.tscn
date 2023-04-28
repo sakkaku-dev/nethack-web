@@ -6,8 +6,8 @@
 [ext_resource type="Theme" uid="uid://b8t1beoo7xrs" path="res://theme.tres" id="2_gn1q7"]
 [ext_resource type="PackedScene" uid="uid://22arn76lxqeq" path="res://src/item.tscn" id="4_jgnvq"]
 [ext_resource type="PackedScene" uid="uid://uglnwq71fxxp" path="res://src/status.tscn" id="5_6j714"]
-[ext_resource type="Texture2D" uid="uid://c03uqshkfldfk" path="res://assets/tiles.bmp" id="5_q0kks"]
-[ext_resource type="Texture2D" uid="uid://v67k1x3eadck" path="res://assets/tiles_36.png" id="7_4qf8u"]
+[ext_resource type="Texture2D" uid="uid://b5odpnbh56sov" path="res://assets/tiles.bmp" id="5_q0kks"]
+[ext_resource type="Texture2D" uid="uid://du5nvvhxhjv88" path="res://assets/tiles_36.png" id="7_4qf8u"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tr12v"]
 texture = ExtResource("2_60jqp")

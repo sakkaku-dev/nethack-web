@@ -69,7 +69,13 @@ export interface Item {
   attr: number;
   str: string;
   identifier: number;
-  active?: boolean;
+  active: boolean;
+}
+
+export enum ItemFlag {
+  NONE = 0,
+  SELECTED = 1,
+  SKIPINVERT = 2,
 }
 
 // See botl.c
@@ -106,9 +112,7 @@ interface StatusAll {
 
 export type Status = Partial<StatusAll>;
 
-export const statusMap: Partial<
-  Record<STATUS_FIELD, (s: Status, v: string) => void>
-> = {
+export const statusMap: Partial<Record<STATUS_FIELD, (s: Status, v: string) => void>> = {
   [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v),
   [STATUS_FIELD.BL_STR]: (s, v) => (s.str = parseInt(v)),
   [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseInt(v)),
