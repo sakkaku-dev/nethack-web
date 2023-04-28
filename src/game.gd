@@ -38,12 +38,23 @@ func _unhandled_input(event: InputEvent):
 
 
 func openMenuOne(args):
+	var prompt = args.pop_front()
 	print('Menu One: %s' % [args])
+	var item = args.pop_front()
+	print(item.identifier)
+	print(item.accelerator)
+	print(item.str)
+	_send_select([item.identifier])
 
 func openMenuAny(args):
-	var prompt = args[0]
-	var items = args[1]
+	var prompt = args.pop_front()
 	print('Menu Any: %s' % [args])
+	_send_select([args.pop_front().identifier])
+
+
+func _send_select(ids: Array[int]):
+	var window = JavaScriptBridge.get_interface("window")
+	window.nethackJS.selectMenu(ids)
 
 func openDialog(args):
 	var dialog = DIALOG.instantiate()

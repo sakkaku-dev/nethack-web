@@ -1,12 +1,12 @@
 [gd_resource type="Theme" load_steps=3 format=3 uid="uid://b8t1beoo7xrs"]
 
-[ext_resource type="FontFile" uid="uid://bcu5uncfj8ptc" path="res://Silkscreen-Regular.ttf" id="1_2esl2"]
+[ext_resource type="FontFile" uid="uid://icht86xvusiv" path="res://Minecraft.ttf" id="1_or43j"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hml25"]
 bg_color = Color(0.133333, 0.109804, 0.0980392, 1)
 
 [resource]
-default_font = ExtResource("1_2esl2")
-default_font_size = 16
+default_font = ExtResource("1_or43j")
+default_font_size = 12
 PanelContainer/styles/panel = SubResource("StyleBoxFlat_hml25")
 RichTextLabel/constants/line_separation = 5

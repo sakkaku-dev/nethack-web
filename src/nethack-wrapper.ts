@@ -113,7 +113,8 @@ export class NetHackWrapper implements NetHackJS {
       .subscribe();
   }
 
-  public selectMenu(items: any[]) {
+  public selectMenu(items: number[]) {
+    console.log("Selected menu", items);
     this.selectedMenu$.next(items);
   }
 
@@ -192,7 +193,17 @@ export class NetHackWrapper implements NetHackJS {
 
       // TODO: select
       const itemIds = await firstValueFrom(this.selectedMenu$);
-      // itemIds.forEach((x) => selected.push({ item: x, count: 1 }));
+      const ptr = window.nethackGlobal.helpers.createPointerValue(
+        "nethack.menu.selected",
+        Type.INT,
+        itemIds.map((x) => [x, -1, 0])
+      );
+      window.nethackGlobal.helpers.setPointerValue(
+        "nethack.menu.setSelected",
+        selected,
+        Type.INT,
+        ptr
+      );
       return itemIds.length;
     }
 

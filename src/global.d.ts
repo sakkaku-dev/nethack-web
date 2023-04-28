@@ -8,7 +8,12 @@ declare interface Window {
   nethackGodot: NetHackGodot;
 
   nethackGlobal: {
-    helpers: Record<string, Function>;
+    helpers: {
+      mapglyphHelper: Function;
+      getPointerValue: Function;
+      setPointerValue: Function;
+      createPointerValue: Function;
+    },
     globals: Record<string, any>;
   };
 
