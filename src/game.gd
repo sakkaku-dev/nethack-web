@@ -1,6 +1,6 @@
 extends Node
 
-const TILE_SOURCE = 2
+const TILE_SOURCE = 0
 const TILE_LAYER = 0
 const TILE_SIZE_X = 40
 
@@ -9,6 +9,7 @@ const TILE_SIZE_X = 40
 
 @export var map: TileMap
 @export var camera: Camera2D
+@export var cursor: Node2D
 
 @export var status: Status
 @export var inventory: Inventory
@@ -96,7 +97,8 @@ func closeDialog(args):
 
 
 func moveCursor(args):
-	_move_camera(args[0], args[1])
+	var pos = _move_camera(args[0], args[1])
+	cursor.position = pos
 
 func centerView(args):
 	_move_camera(args[0], args[1])
@@ -104,6 +106,7 @@ func centerView(args):
 func _move_camera(x, y):
 	var pos = map.map_to_local(Vector2(x, y))
 	camera.position = pos
+	return pos
 
 func printLine(args):
 	console.text += args[0] + "\n"
