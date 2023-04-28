@@ -79,6 +79,7 @@ export class NetHackWrapper implements NetHackJS {
       return await firstValueFrom(this.input$);
     },
     [Command.ASK_NAME]: async () => await firstValueFrom(this.input$),
+    [Command.DISPLAY_FILE]: this.displayFile.bind(this),
 
     // TODO: message_menu
     // TODO: display_file
@@ -141,6 +142,10 @@ export class NetHackWrapper implements NetHackJS {
         tap((s) => this.onStatusUpdate$.next(s))
       )
       .subscribe();
+  }
+
+  private async displayFile(file: string, complain: number) {
+    console.log("Display file", file, complain);
   }
 
   public selectMenu(items: number[]) {
@@ -227,7 +232,14 @@ export class NetHackWrapper implements NetHackJS {
         this.onMenu$.next({ ...this.menu, count: 1, winid });
       }
 
-      const itemIds = await firstValueFrom(this.selectedMenu$);
+      const selectedIds = await firstValueFrom(this.selectedMenu$);
+      const itemIds = selectedIds.filter((id) =>
+        this.menu.items.find((x) => x.identifier === id)
+      );
+
+      if (itemIds.length === 0) {
+        return 0;
+      }
 
       const int_size = 4;
       const size = int_size * 3; // selected object has 3 fields

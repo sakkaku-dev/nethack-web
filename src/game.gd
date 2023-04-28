@@ -53,10 +53,11 @@ func openMenu(args):
 
 	_register_dialog(id, menu)
 	menu.open(prompt, args, count)
-	menu.selected.connect(self._send_select)
+	menu.selected.connect(func(ids): self._send_select(ids, id))
 
 
-func _send_select(ids: Array):
+func _send_select(ids: Array, id: int):
+	closeDialog([id]) # sometimes destroy command is not sent
 	var window = JavaScriptBridge.get_interface("window")
 	window.nethackJS.selectMenu(_to_js_array(ids))
 
