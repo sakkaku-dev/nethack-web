@@ -7,7 +7,7 @@ Nethack for the web using godot as the UI.
 Build NetHack for WASM by following steps in `Cross-compiling`.
 Emscripten should be installed. I needed the patch in `lib/fixes.diff`.
 
-Current build is from `db90e7907` and using emscripten v2.0.34
+Current build is from `db90e7907` and using emscripten v3.1.34 (57b21b8fdcbe3ebb523178b79465254668eab408)
 
 Apply changes needed for build, if it still works
 

@@ -68,9 +68,9 @@ func openQuestion(args):
 	# 	choices.append(args[i])
 
 	var line = question
-	if choices.size() > 0:
-		line += " " + str(choices)
-	printLine(line)
+	# if choices.size() > 0:
+	# 	line += " " + str(choices)
+	printLine([line])
 
 func closeDialog(args):
 	var id = args[0]

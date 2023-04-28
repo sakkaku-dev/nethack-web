@@ -1,6 +1,5 @@
 // @ts-ignore
 import nethackLib from "../lib/nethack";
-import { NetHackGodot, NetHackJS } from "./models";
 
 import { NetHackWrapper } from "./nethack-wrapper";
 
