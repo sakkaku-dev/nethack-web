@@ -79,6 +79,10 @@ export class NetHackWrapper implements NetHackJS {
       return await firstValueFrom(this.input$);
     },
     [Command.ASK_NAME]: async () => await firstValueFrom(this.input$),
+
+    // TODO: message_menu
+    // TODO: display_file
+    // TODO: select_menu with yn_function
   };
 
   private idCounter = 0;
