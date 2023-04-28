@@ -10,9 +10,9 @@
     "build:nethack": "cd NetHack && make CROSS_TO_WASM=1",
     "copy:nethack": "cp NetHack/targets/wasm/nethack.js NetHack/targets/wasm/nethack.wasm ./lib",
     "fix:nethack": "sed -i '/var ENV = {}/a Module.ENV = ENV;' ./lib/nethack.js",
-    "build:js": "rollup -c rollup.config.js",
+    "build:js": "rollup -c rollup.config.js && cp lib/nethack.wasm build",
     "build:godot": "godot --export-debug Web",
-    "build": "npm run build:godot && npm run build:js && cp lib/nethack.wasm build"
+    "build": "npm run build:godot && npm run build:js"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^24.1.0",

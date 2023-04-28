@@ -1,8 +1,7 @@
 # This is generated. Do not edit
 class_name NetHackLink
 
-var openMenuAny
-var openMenuOne
+var openMenu
 var openDialog
 var openQuestion
 var closeDialog
@@ -15,11 +14,8 @@ var updateInventory
 
 func init(cb):
 	var obj = JavaScriptBridge.create_object("Object")
-	openMenuAny = JavaScriptBridge.create_callback(cb.openMenuAny)
-	obj.openMenuAny = openMenuAny
-
-	openMenuOne = JavaScriptBridge.create_callback(cb.openMenuOne)
-	obj.openMenuOne = openMenuOne
+	openMenu = JavaScriptBridge.create_callback(cb.openMenu)
+	obj.openMenu = openMenu
 
 	openDialog = JavaScriptBridge.create_callback(cb.openDialog)
 	obj.openDialog = openDialog

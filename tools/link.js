@@ -4,8 +4,7 @@ const path = require('path');
 // Methods of NetHackGodot
 // TODO: check if possible to extract from interface
 const methods = [
-  "openMenuAny",
-  "openMenuOne",
+  "openMenu",
   "openDialog",
   "openQuestion",
 

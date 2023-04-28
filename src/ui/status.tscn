@@ -1,0 +1,152 @@
+[gd_scene load_steps=2 format=3 uid="uid://dua7j7rgqsqov"]
+
+[ext_resource type="Script" path="res://src/ui/status.gd" id="1_53x0g"]
+
+[node name="Status" type="VBoxContainer" node_paths=PackedStringArray("title", "align", "str_", "dex", "con", "int_", "wis", "cha", "hp", "ac", "power", "exp_", "gold", "dungeon", "carry", "condition", "hunger")]
+script = ExtResource("1_53x0g")
+title = NodePath("Titel")
+align = NodePath("Align")
+str_ = NodePath("HBoxContainer/VBoxContainer/Str2")
+dex = NodePath("HBoxContainer/VBoxContainer/Dex2")
+con = NodePath("HBoxContainer/VBoxContainer/Con2")
+int_ = NodePath("HBoxContainer/VBoxContainer/Int2")
+wis = NodePath("HBoxContainer/VBoxContainer/Wis2")
+cha = NodePath("HBoxContainer/VBoxContainer/Cha2")
+hp = NodePath("HBoxContainer/VBoxContainer2/HP2")
+ac = NodePath("HBoxContainer/VBoxContainer2/AC2")
+power = NodePath("HBoxContainer/VBoxContainer2/PW2")
+exp_ = NodePath("HBoxContainer/VBoxContainer2/EX2")
+gold = NodePath("HBoxContainer/VBoxContainer2/Gold2")
+dungeon = NodePath("HBoxContainer/VBoxContainer2/Dungeon2")
+carry = NodePath("Carry")
+condition = NodePath("Condition")
+hunger = NodePath("Hunger")
+
+[node name="Titel" type="Label" parent="."]
+layout_mode = 2
+text = "Title"
+
+[node name="Align" type="Label" parent="."]
+layout_mode = 2
+text = "Align"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="VBoxContainer" type="GridContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 2
+
+[node name="Str" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Str"
+
+[node name="Str2" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Str"
+
+[node name="Dex" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Dex"
+
+[node name="Dex2" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Dex"
+
+[node name="Con" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Con"
+
+[node name="Con2" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Con"
+
+[node name="Int" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Int"
+
+[node name="Int2" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Int"
+
+[node name="Wis" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Wis"
+
+[node name="Wis2" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Wis"
+
+[node name="Cha" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Cha"
+
+[node name="Cha2" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Cha"
+
+[node name="VBoxContainer2" type="GridContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 2
+
+[node name="HP" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "HP"
+
+[node name="HP2" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "HP"
+
+[node name="PW" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "Pow"
+
+[node name="PW2" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "Pow"
+
+[node name="AC" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "AC"
+
+[node name="AC2" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "AC"
+
+[node name="EX" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "Exp"
+
+[node name="EX2" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "Exp"
+
+[node name="Dungeon" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "LV"
+
+[node name="Dungeon2" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "LV"
+
+[node name="Gold" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "$"
+
+[node name="Gold2" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "$"
+
+[node name="Carry" type="Label" parent="."]
+layout_mode = 2
+text = "Carry"
+
+[node name="Condition" type="Label" parent="."]
+layout_mode = 2
+text = "Condition"
+
+[node name="Hunger" type="Label" parent="."]
+layout_mode = 2
+text = "Hunger"

@@ -1,13 +1,15 @@
-[gd_scene load_steps=13 format=3 uid="uid://1g3xahsibu80"]
+[gd_scene load_steps=15 format=3 uid="uid://chkfwo8q7i3p5"]
 
 [ext_resource type="Script" path="res://src/game.gd" id="1_j1xl4"]
-[ext_resource type="Script" path="res://src/Inventory.gd" id="2_0gtrk"]
+[ext_resource type="Script" path="res://src/ui/Inventory.gd" id="2_0gtrk"]
 [ext_resource type="Texture2D" uid="uid://df8pfnja0bl6x" path="res://assets/tileset.jpg" id="2_60jqp"]
+[ext_resource type="PackedScene" uid="uid://canok00lmipsw" path="res://src/ui/dialog.tscn" id="2_d14hr"]
 [ext_resource type="Theme" uid="uid://b8t1beoo7xrs" path="res://theme.tres" id="2_gn1q7"]
-[ext_resource type="PackedScene" uid="uid://22arn76lxqeq" path="res://src/item.tscn" id="4_jgnvq"]
-[ext_resource type="PackedScene" uid="uid://uglnwq71fxxp" path="res://src/status.tscn" id="5_6j714"]
-[ext_resource type="Texture2D" uid="uid://b5odpnbh56sov" path="res://assets/tiles.bmp" id="5_q0kks"]
-[ext_resource type="Texture2D" uid="uid://du5nvvhxhjv88" path="res://assets/tiles_36.png" id="7_4qf8u"]
+[ext_resource type="PackedScene" uid="uid://d20ncxoxxbyjm" path="res://src/ui/menu.tscn" id="3_or0di"]
+[ext_resource type="PackedScene" uid="uid://bd1j8nkx65k2m" path="res://src/ui/item.tscn" id="4_jgnvq"]
+[ext_resource type="PackedScene" uid="uid://dua7j7rgqsqov" path="res://src/ui/status.tscn" id="5_6j714"]
+[ext_resource type="Texture2D" uid="uid://c03uqshkfldfk" path="res://assets/tiles.bmp" id="5_q0kks"]
+[ext_resource type="Texture2D" uid="uid://v67k1x3eadck" path="res://assets/tiles_36.png" id="7_4qf8u"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tr12v"]
 texture = ExtResource("2_60jqp")
@@ -6588,6 +6590,8 @@ sources/2 = SubResource("TileSetAtlasSource_n5tsv")
 
 [node name="Game" type="Node" node_paths=PackedStringArray("map", "camera", "status", "inventory", "console")]
 script = ExtResource("1_j1xl4")
+DIALOG = ExtResource("2_d14hr")
+MENU = ExtResource("3_or0di")
 map = NodePath("HBoxContainer/VBoxContainer/SubViewportContainer/SubViewport/TileMap")
 camera = NodePath("HBoxContainer/VBoxContainer/SubViewportContainer/SubViewport/TileMap/Camera2D")
 status = NodePath("HBoxContainer/Side/MarginContainer/SideBar/Status")

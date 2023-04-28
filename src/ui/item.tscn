@@ -1,0 +1,38 @@
+[gd_scene load_steps=3 format=3 uid="uid://bd1j8nkx65k2m"]
+
+[ext_resource type="Script" path="res://src/ui/item.gd" id="1_50ecu"]
+[ext_resource type="Texture2D" uid="uid://df8pfnja0bl6x" path="res://assets/tileset.jpg" id="2_65fpx"]
+
+[node name="Item" type="VBoxContainer" node_paths=PackedStringArray("accel_label")]
+tooltip_text = "Test"
+script = ExtResource("1_50ecu")
+accel_label = NodePath("Control3/accel")
+
+[node name="Control3" type="Control" parent="."]
+z_index = 1
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 8
+mouse_filter = 2
+
+[node name="accel" type="Label" parent="Control3"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 26.0
+grow_horizontal = 2
+text = "a"
+horizontal_alignment = 1
+
+[node name="Control2" type="Control" parent="."]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="Control2"]
+position = Vector2(16, 16)
+texture = ExtResource("2_65fpx")
+hframes = 40
+vframes = 30

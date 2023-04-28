@@ -1,9 +1,27 @@
-import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
-import { Command, Item, ItemFlag, NetHackJS, Status, Tile, statusMap } from "./models";
+import {
+  BehaviorSubject,
+  Subject,
+  debounceTime,
+  filter,
+  firstValueFrom,
+  skip,
+  tap,
+} from "rxjs";
+import {
+  Command,
+  Item,
+  ItemFlag,
+  NetHackJS,
+  Status,
+  Tile,
+  statusMap,
+} from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
 export interface MenuSelect {
+  winid: number;
   prompt?: string;
+  count: number;
   items: Item[];
 }
 
@@ -22,9 +40,12 @@ export interface Window {
 }
 
 export class NetHackWrapper implements NetHackJS {
-  private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
+  private commandMap: Partial<
+    Record<Command, (...args: any[]) => Promise<any>>
+  > = {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
-    [Command.DESTROY_WINDOW]: async (winid: number) => this.onCloseDialog$.next(winid),
+    [Command.DESTROY_WINDOW]: async (winid: number) =>
+      this.onCloseDialog$.next(winid),
 
     // Text / Dialog
     [Command.PUTSTR]: async (winid, attr, str) => (this.putStr += str + "\n"),
@@ -35,14 +56,16 @@ export class NetHackWrapper implements NetHackJS {
     [Command.PRINT_TILE]: async (winid, x, y, tile) =>
       this.printTile$.next([...this.printTile$.value, { x, y, tile }]),
     [Command.CURSOR]: async (winid, x, y) =>
-      winid == window.nethackGlobal.globals.WIN_MAP && this.onCursorMove$.next({ x, y }),
+      winid == window.nethackGlobal.globals.WIN_MAP &&
+      this.onCursorMove$.next({ x, y }),
     [Command.CLIPAROUND]: async (x, y) => this.onMapCenter$.next({ x, y }),
 
     // Status
     [Command.STATUS_UPDATE]: this.statusUpdate.bind(this),
 
     // Menu
-    [Command.MENU_START]: async () => (this.menu = { items: [] }),
+    [Command.MENU_START]: async () =>
+      (this.menu = { winid: 0, items: [], count: 0 }),
     [Command.MENU_END]: async (winid, prompt) => (this.menu.prompt = prompt),
     [Command.MENU_ADD]: this.menuAdd.bind(this),
     [Command.MENU_SELECT]: this.menuSelect.bind(this),
@@ -59,7 +82,7 @@ export class NetHackWrapper implements NetHackJS {
   };
 
   private idCounter = 0;
-  private menu: MenuSelect = { items: [] };
+  private menu: MenuSelect = { winid: 0, items: [], count: 0 };
   private putStr = "";
   private windows: Record<number, Window> = {};
 
@@ -70,8 +93,7 @@ export class NetHackWrapper implements NetHackJS {
   private printTile$ = new BehaviorSubject<Tile[]>([]);
   private inventory$ = new Subject<Item[]>();
 
-  onSingleMenu$ = new Subject<MenuSelect>();
-  onMultiMenu$ = new Subject<MenuSelect>();
+  onMenu$ = new Subject<MenuSelect>();
   onDialog$ = new Subject<{ id: number; text: string }>();
   onQuestion$ = new Subject<Question>();
 
@@ -85,7 +107,7 @@ export class NetHackWrapper implements NetHackJS {
   onStatusUpdate$ = new Subject<Status>();
   onInventoryUpdate$ = new Subject<Item[]>();
 
-  constructor(private debug = false) {
+  constructor(private debug = false, private module: any) {
     this.printTile$
       .pipe(
         skip(1),
@@ -152,7 +174,9 @@ export class NetHackWrapper implements NetHackJS {
     if (this.putStr !== "") {
       this.onDialog$.next({ id: winid, text: this.putStr });
       const acceptedCodes = [" ", "\n"].map((x) => x.charCodeAt(0));
-      await firstValueFrom(this.input$.pipe(filter((x) => acceptedCodes.includes(x))));
+      await firstValueFrom(
+        this.input$.pipe(filter((x) => acceptedCodes.includes(x)))
+      );
       this.putStr = "";
     }
   }
@@ -178,7 +202,11 @@ export class NetHackWrapper implements NetHackJS {
     });
   }
 
-  private async menuSelect(winid: number, select: MENU_SELECT, selected: number) {
+  private async menuSelect(
+    winid: number,
+    select: MENU_SELECT,
+    selected: number
+  ) {
     if (winid === window.nethackGlobal.globals.WIN_INVEN) {
       this.inventoryUpdate(this.menu.items);
       return 0;
@@ -186,25 +214,58 @@ export class NetHackWrapper implements NetHackJS {
 
     if (this.menu.items.length > 0 && select != MENU_SELECT.PICK_NONE) {
       if (select == MENU_SELECT.PICK_ANY) {
-        this.onMultiMenu$.next(this.menu);
+        this.onMenu$.next({ ...this.menu, count: -1, winid });
       } else if (select == MENU_SELECT.PICK_ONE) {
-        this.onSingleMenu$.next(this.menu);
+        this.onMenu$.next({ ...this.menu, count: 1, winid });
       }
 
-      // TODO: select
       const itemIds = await firstValueFrom(this.selectedMenu$);
-      const ptr = window.nethackGlobal.helpers.createPointerValue(
-        "nethack.menu.selected",
-        Type.INT,
-        itemIds.map((x) => [x, -1, 0])
+
+      const int_size = 4;
+      const size = int_size * 3; // selected object has 3 fields
+      const total_size = size * itemIds.length;
+      const start_ptr = this.module._malloc(total_size);
+
+      // write selected items to memory
+      let ptr = start_ptr;
+      itemIds.forEach((id) => {
+        window.nethackGlobal.helpers.setPointerValue(
+          "nethack.menu.selected",
+          ptr,
+          Type.INT,
+          id
+        );
+
+        window.nethackGlobal.helpers.setPointerValue(
+          "nethack.menu.selected",
+          ptr + int_size,
+          Type.INT,
+          -1
+        );
+
+        window.nethackGlobal.helpers.setPointerValue(
+          "nethack.menu.selected",
+          ptr + int_size * 2,
+          Type.INT,
+          0
+        );
+
+        ptr += size;
+      });
+
+      // point selected to the first item
+      const selected_pp = window.nethackGlobal.helpers.getPointerValue(
+        "",
+        selected,
+        Type.POINTER
       );
       window.nethackGlobal.helpers.setPointerValue(
         "nethack.menu.setSelected",
-        selected,
+        selected_pp,
         Type.INT,
-        ptr
+        start_ptr
       );
-      return itemIds.length;
+      return itemIds?.length ?? -1;
     }
 
     return 0;
@@ -244,7 +305,11 @@ export class NetHackWrapper implements NetHackJS {
       ptr,
       Type.POINTER
     );
-    return window.nethackGlobal.helpers.getPointerValue("nethack.pointerValue", x, type);
+    return window.nethackGlobal.helpers.getPointerValue(
+      "nethack.pointerValue",
+      x,
+      type
+    );
   }
 }
 

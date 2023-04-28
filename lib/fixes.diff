@@ -24,51 +24,8 @@ index 65fea90b0..fe355b0c8 100644
  #define warn_unused_result /*empty*/
  #endif
  #endif
-diff --git a/sys/libnh/libnhmain.c b/sys/libnh/libnhmain.c
-index bbd16482f..a28ab53dd 100644
---- a/sys/libnh/libnhmain.c
-+++ b/sys/libnh/libnhmain.c
-@@ -771,6 +771,7 @@ EM_JS(void, js_helpers_init, (), {
-     installHelper(displayInventory);
-     installHelper(getPointerValue);
-     installHelper(setPointerValue);
-+    installHelper(createPointerValue);
- 
-     // used by print_glyph
-     function mapglyphHelper(glyph, x, y, mgflags) {
-@@ -882,6 +883,30 @@ EM_JS(void, js_helpers_init, (), {
-         }
-     }
- 
-+    function createPointerValue(name, type, value) {
-+        if(!Array.isArray(value))
-+            throw new TypeError(`expected ${name} return type to be array`);
-+
-+        if(value.length == 0 || !Array.isArray(value[0]))
-+            throw new TypeError(`expected ${name} return type to be array or contain values`);
-+
-+        // Only support arrays of arrays of ints (4 byte) for now
-+        let int_byte_size = 4;
-+        let size = value.length * int_byte_size;
-+        let p = _malloc(size); 
-+
-+        for (i = 0; i < value.length; i++) {
-+            let row = value[i];
-+            let start = p + i * size;
-+            for (j = 0; j < row.length; j++) {
-+                let v = row[j];
-+                setPointerValue(name, start + j * int_byte_size, 'i', v) // TODO: more dynamic types
-+            }
-+        }
-+
-+        return p;
-+    }
-+
- 
-     function installHelper(fn, name) {
-         name = name || fn.name;
 diff --git a/sys/unix/hints/include/cross-pre.2020 b/sys/unix/hints/include/cross-pre.2020
-index 6146c8143..4251ac98c 100644
+index 6146c8143..0f6030268 100644
 --- a/sys/unix/hints/include/cross-pre.2020
 +++ b/sys/unix/hints/include/cross-pre.2020
 @@ -29,6 +29,7 @@ endif
@@ -79,6 +36,15 @@ index 6146c8143..4251ac98c 100644
  HACKDIR=/
  PREFIX=
  override TARGET = wasm
+@@ -311,7 +312,7 @@ EMCC_LFLAGS += -s ALLOW_TABLE_GROWTH
+ EMCC_LFLAGS += -s ASYNCIFY -s ASYNCIFY_IMPORTS='["local_callback"]'
+ EMCC_LFLAGS += -O3
+ EMCC_LFLAGS += -s MODULARIZE
+-EMCC_LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback", "_mapglyph", "_display_inventory"]'
++EMCC_LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback", "_mapglyph", "_display_inventory", "_malloc", "_free"]'
+ EMCC_LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", \
+ 			"removeFunction", "UTF8ToString", "getValue", "setValue"]'
+ EMCC_LFLAGS += -s ERROR_ON_UNDEFINED_SYMBOLS=0
 @@ -324,7 +325,7 @@ EMCC_LFLAGS += --embed-file $(WASM_DATA_DIR)@/
  # WASM C flags
  EMCC_CFLAGS =

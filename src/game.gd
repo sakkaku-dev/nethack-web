@@ -4,7 +4,8 @@ const TILE_SOURCE = 2
 const TILE_LAYER = 0
 const TILE_SIZE_X = 40
 
-const DIALOG = preload("res://src/dialog.tscn")
+@export var DIALOG: PackedScene
+@export var MENU: PackedScene
 
 @export var map: TileMap
 @export var camera: Camera2D
@@ -35,26 +36,28 @@ func _unhandled_input(event: InputEvent):
 			else:
 				window.nethackJS.sendInput(unicode)
 
+func _to_js_array(arr: Array):
+	var js_arr = JavaScriptBridge.create_object("Array")
+	for x in arr:
+		js_arr.push(x)
+	return js_arr
 
-
-func openMenuOne(args):
+func openMenu(args):
+	var id = args.pop_front()
 	var prompt = args.pop_front()
-	print('Menu One: %s' % [args])
-	var item = args.pop_front()
-	print(item.identifier)
-	print(item.accelerator)
-	print(item.str)
-	_send_select([item.identifier])
+	var count = args.pop_front()
 
-func openMenuAny(args):
-	var prompt = args.pop_front()
-	print('Menu Any: %s' % [args])
-	_send_select([args.pop_front().identifier])
+	var menu = MENU.instantiate() as Menu
+	add_child(menu)
+
+	_register_dialog(id, menu)
+	menu.open(prompt, args, count)
+	menu.selected.connect(self._send_select)
 
 
-func _send_select(ids: Array[int]):
+func _send_select(ids: Array):
 	var window = JavaScriptBridge.get_interface("window")
-	window.nethackJS.selectMenu(ids)
+	window.nethackJS.selectMenu(_to_js_array(ids))
 
 func openDialog(args):
 	var dialog = DIALOG.instantiate()
@@ -63,12 +66,15 @@ func openDialog(args):
 	var id = args[0]
 	var txt = args[1]
 
+	_register_dialog(id, dialog)
+	dialog.open(txt)
+
+func _register_dialog(id, dialog):
 	if id in dialogs:
 		print('removing existing dialog wih id %s' % id)
 		remove_child(dialogs[id])
 
 	dialogs[id] = dialog
-	dialog.open(txt)
 	
 func openQuestion(args):
 	var question = args[0]
