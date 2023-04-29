@@ -145,7 +145,9 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async displayFile(file: string, complain: number) {
-    console.log("Display file", file, complain);
+    const text = await readAsync(file);
+    this.onDialog$.next(text);
+    await this.waitContinueKey();
   }
 
   public selectMenu(items: number[]) {
@@ -186,12 +188,16 @@ export class NetHackWrapper implements NetHackJS {
   private async displayWindow(winid: number, blocking: number) {
     if (this.putStr !== "") {
       this.onDialog$.next({ id: winid, text: this.putStr });
-      const acceptedCodes = [" ", "\n"].map((x) => x.charCodeAt(0));
-      await firstValueFrom(
-        this.input$.pipe(filter((x) => acceptedCodes.includes(x)))
-      );
+      await this.waitContinueKey();
       this.putStr = "";
     }
+  }
+
+  private async waitContinueKey() {
+    const acceptedCodes = [" ", "\n"].map((x) => x.charCodeAt(0));
+    await firstValueFrom(
+      this.input$.pipe(filter((x) => acceptedCodes.includes(x)))
+    );
   }
 
   private async menuAdd(
