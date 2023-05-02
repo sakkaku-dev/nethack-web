@@ -65,7 +65,6 @@ export class NetHackWrapper implements NetHackJS {
     [Command.DISPLAY_FILE]: this.displayFile.bind(this),
 
     // TODO: message_menu
-    // TODO: display_file
     // TODO: select_menu with yn_function
 
     // TODO: character selection
@@ -131,6 +130,7 @@ export class NetHackWrapper implements NetHackJS {
     const text = this.module.FS.readFile("/dat/" + file, { encoding: "utf8" });
     this.onDialog$.next({ id: -1, text });
     await this.waitContinueKey();
+    this.onCloseDialog$.next(-1);
   }
 
   public selectMenu(items: number[]) {

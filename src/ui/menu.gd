@@ -38,7 +38,17 @@ func open(prompt: String, items: Array, count: int) -> void:
 			btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			btn.toggle_mode = true
 			btn.pressed.connect(func(): self._on_pressed(item.identifier))
+			btn.shortcut = _code_to_shortcut(accel)
 			items_container.add_child(btn)
+
+func _code_to_shortcut(unicode):
+	var shortcut = Shortcut.new()
+	var key = InputEventKey.new()
+	key.device = -1
+	key.unicode = unicode
+	key.pressed = true
+	shortcut.events = [key]
+	return shortcut
 
 func _on_pressed(id: int):
 	if select_count == 1:

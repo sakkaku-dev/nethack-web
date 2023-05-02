@@ -5,7 +5,7 @@
 # npm run copy:nethack
 # npm run fix:nethack
 
-# npm run build:godot
+npm run build:godot
 npm run build:js
 
 sudo mkdir -p /srv/http/nethack
