@@ -11,7 +11,7 @@ const TILE_SIZE_X = 40
 @export var camera: Camera2D
 @export var cursor: Node2D
 
-@export var status: Status
+@export var status: StatusNode
 @export var inventory: Inventory
 @export var console: RichTextLabel
 
@@ -49,8 +49,6 @@ func openMenu(args):
 	var count = args.pop_front()
 
 	var menu = MENU.instantiate() as Menu
-	add_child(menu)
-
 	_register_dialog(id, menu)
 	menu.open(prompt, args, count)
 	menu.selected.connect(func(ids): self._send_select(ids, id))
@@ -63,21 +61,20 @@ func _send_select(ids: Array, id: int):
 
 func openDialog(args):
 	var dialog = DIALOG.instantiate()
-	add_child(dialog)
-	
 	var id = args[0]
 	var txt = args[1]
-
 	_register_dialog(id, dialog)
 	dialog.open(txt)
 
 func _register_dialog(id, dialog):
 	if id in dialogs:
 		print('removing existing dialog wih id %s' % id)
-		remove_child(dialogs[id])
+		var node = dialogs[id] as Node
+		remove_child(node)
 
 	dialogs[id] = dialog
-	
+	add_child(dialog)
+
 func openQuestion(args):
 	var question = args[0]
 

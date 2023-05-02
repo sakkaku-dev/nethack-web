@@ -8,10 +8,10 @@
 [ext_resource type="PackedScene" uid="uid://d20ncxoxxbyjm" path="res://src/ui/menu.tscn" id="3_or0di"]
 [ext_resource type="PackedScene" uid="uid://bd1j8nkx65k2m" path="res://src/ui/item.tscn" id="4_jgnvq"]
 [ext_resource type="PackedScene" uid="uid://dua7j7rgqsqov" path="res://src/ui/status.tscn" id="5_6j714"]
-[ext_resource type="Texture2D" uid="uid://c03uqshkfldfk" path="res://assets/tiles.bmp" id="5_q0kks"]
-[ext_resource type="Texture2D" uid="uid://v67k1x3eadck" path="res://assets/tiles_36.png" id="7_4qf8u"]
-[ext_resource type="Texture2D" uid="uid://b0wqfi4s0t53n" path="res://assets/spritesheet.png" id="8_oxbsi"]
-[ext_resource type="Texture2D" uid="uid://be6fuehuuwtxh" path="res://assets/cursor.png" id="12_w7ywh"]
+[ext_resource type="Texture2D" uid="uid://b5odpnbh56sov" path="res://assets/tiles.bmp" id="5_q0kks"]
+[ext_resource type="Texture2D" uid="uid://du5nvvhxhjv88" path="res://assets/tiles_36.png" id="7_4qf8u"]
+[ext_resource type="Texture2D" uid="uid://dfkehlegr64m5" path="res://assets/spritesheet.png" id="8_oxbsi"]
+[ext_resource type="Texture2D" uid="uid://kqr7yso0gtm" path="res://assets/cursor.png" id="12_w7ywh"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_25are"]
 texture = ExtResource("8_oxbsi")
