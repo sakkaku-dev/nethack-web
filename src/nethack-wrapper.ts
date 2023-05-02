@@ -34,8 +34,12 @@ export class NetHackWrapper implements NetHackJS {
     [Command.RAW_PRINT_BOLD]: async (str) => this.onPrint$.next(str),
 
     // Map
-    [Command.PRINT_TILE]: async (winid, x, y, tile) =>
-      this.printTile$.next([...this.printTile$.value, { x, y, tile }]),
+    [Command.PRINT_GLYPH]: async (winid, x, y, glyph) =>
+      this.printTile$.next([
+        ...this.printTile$.value,
+        { x, y, tile: this.module._glyph_to_tile(glyph) },
+      ]),
+
     [Command.CURSOR]: async (winid, x, y) =>
       winid == window.nethackGlobal.globals.WIN_MAP && this.onCursorMove$.next({ x, y }),
     [Command.CLIPAROUND]: async (x, y) => this.onMapCenter$.next({ x, y }),
@@ -124,7 +128,10 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async displayFile(file: string, complain: number) {
-    const text = this.module.FS.readFile(file);
+    const x = this.module.FS.lookupPath(file, { recurse_count: 3 });
+    console.log(x);
+
+    const text = this.module.FS.readFile("/dat/" + file);
     this.onDialog$.next({ id: -1, text });
     await this.waitContinueKey();
   }
@@ -188,7 +195,7 @@ export class NetHackWrapper implements NetHackJS {
     flag: number
   ) {
     this.menu.items.push({
-      glyph: window.nethackGlobal.helpers.mapglyphHelper(glyph, 0, 0, 0),
+      tile: this.module._glyph_to_tile(glyph),
       identifier,
       accelerator,
       groupAcc,

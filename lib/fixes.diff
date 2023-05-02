@@ -24,8 +24,33 @@ index 65fea90b0..fe355b0c8 100644
  #define warn_unused_result /*empty*/
  #endif
  #endif
+diff --git a/sys/libnh/libnhmain.c b/sys/libnh/libnhmain.c
+index bbd16482f..3354643d8 100644
+--- a/sys/libnh/libnhmain.c
++++ b/sys/libnh/libnhmain.c
+@@ -8,6 +8,8 @@
+ #include "hack.h"
+ #include "dlb.h"
+ 
++extern short glyph2tile[];
++
+ #include <ctype.h>
+ #include <sys/stat.h>
+ #include <signal.h>
+@@ -759,6 +761,11 @@ sys_random_seed()
+     return seed;
+ }
+ 
++unsigned glyph_to_tile(int glyph) 
++{
++    return glyph2tile[glyph];
++}
++
+ #ifdef __EMSCRIPTEN__
+ /***
+  * Helpers
 diff --git a/sys/unix/hints/include/cross-pre.2020 b/sys/unix/hints/include/cross-pre.2020
-index 6146c8143..0f6030268 100644
+index 6146c8143..c7eff02bd 100644
 --- a/sys/unix/hints/include/cross-pre.2020
 +++ b/sys/unix/hints/include/cross-pre.2020
 @@ -29,6 +29,7 @@ endif
@@ -36,16 +61,22 @@ index 6146c8143..0f6030268 100644
  HACKDIR=/
  PREFIX=
  override TARGET = wasm
-@@ -311,7 +312,7 @@ EMCC_LFLAGS += -s ALLOW_TABLE_GROWTH
+@@ -311,20 +312,21 @@ EMCC_LFLAGS += -s ALLOW_TABLE_GROWTH
  EMCC_LFLAGS += -s ASYNCIFY -s ASYNCIFY_IMPORTS='["local_callback"]'
  EMCC_LFLAGS += -O3
  EMCC_LFLAGS += -s MODULARIZE
 -EMCC_LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback", "_mapglyph", "_display_inventory"]'
-+EMCC_LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback", "_mapglyph", "_display_inventory", "_malloc", "_free"]'
++EMCC_LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback", "_glyph_to_tile", "_mapglyph", "_display_inventory", "_malloc", "_free"]'
  EMCC_LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", \
  			"removeFunction", "UTF8ToString", "getValue", "setValue"]'
  EMCC_LFLAGS += -s ERROR_ON_UNDEFINED_SYMBOLS=0
-@@ -324,7 +325,7 @@ EMCC_LFLAGS += --embed-file $(WASM_DATA_DIR)@/
+ # XXX: the "@/" at the end of "--embed-file" tells emscripten to embed the files
+ # in the root directory, otherwise they will end up in the $(WASM_DATA_DIR) path
+ EMCC_LFLAGS += --embed-file $(WASM_DATA_DIR)@/
++EMCC_LFLAGS += --preload-file ../dat
+ # For a list of EMCC settings:
+ # https://github.com/emscripten-core/emscripten/blob/master/src/settings.js
+ #
  # WASM C flags
  EMCC_CFLAGS =
  EMCC_CFLAGS += -Wall
@@ -54,7 +85,7 @@ index 6146c8143..0f6030268 100644
  EMCC_CFLAGS += -DNO_SIGNAL
  #EMCC_CFLAGS += -s DISABLE_EXCEPTION_CATCHING=0
  #EMCC_DEBUG_CFLAGS += -s ASSERTIONS=1
-@@ -349,7 +350,8 @@ endif
+@@ -349,7 +351,8 @@ endif
  override TARGET_CC = emcc
  override TARGET_CXX = emcc
  override TARGET_AR = emar
@@ -64,7 +95,7 @@ index 6146c8143..0f6030268 100644
  WASM_CFLAGS += -Wimplicit -Wreturn-type -Wunused -Wformat -Wswitch
  WASM_CFLAGS += -Wshadow
  # WASM_CFLAGS += -Wwrite-strings
-@@ -379,10 +381,12 @@ override TARGET_LFLAGS= $(EMCC_LFLAGS)
+@@ -379,10 +382,12 @@ override TARGET_LFLAGS= $(EMCC_LFLAGS)
  override SYSSRC = ../sys/libnh/libnhmain.c \
  		../sys/share/ioctl.c ../sys/share/unixtty.c \
  		../sys/unix/unixunix.c ../sys/unix/unixres.c \
@@ -77,32 +108,3 @@ index 6146c8143..0f6030268 100644
  		$(TARGETPFX)winshim.o
  override WINLIB = emranlib 
  override LUALIB=
-diff --git a/win/shim/winshim.c b/win/shim/winshim.c
-index b37da9b11..9b525413b 100644
---- a/win/shim/winshim.c
-+++ b/win/shim/winshim.c
-@@ -7,6 +7,8 @@
- #include "hack.h"
- #include <string.h>
- 
-+extern short glyph2tile[];
-+
- #ifdef SHIM_GRAPHICS
- #include <stdarg.h>
- /* for cross-compiling to WebAssembly (WASM) */
-@@ -129,7 +131,14 @@ VDECLCB(shim_mark_synch,(void), "v")
- VDECLCB(shim_wait_synch,(void), "v")
- VDECLCB(shim_cliparound,(int x, int y), "vii", A2P x, A2P y)
- VDECLCB(shim_update_positionbar,(char *posbar), "vp", P2V posbar)
--VDECLCB(shim_print_glyph,(winid w, int x, int y, int glyph, int bkglyph), "viiiii", A2P w, A2P x, A2P y, A2P glyph, A2P bkglyph)
-+
-+VDECLCB(shim_print_tile,(winid w, int x, int y, int tile), "viiii", A2P w, A2P x, A2P y, A2P tile)
-+
-+void shim_print_glyph(winid w, int x, int y, int glyph, int bkglyph) 
-+{
-+    shim_print_tile(w, x, y, glyph2tile[glyph]);
-+}
-+
- VDECLCB(shim_raw_print,(const char *str), "vs", P2V str)
- VDECLCB(shim_raw_print_bold,(const char *str), "vs", P2V str)
- DECLCB(int, shim_nhgetch,(void), "i")

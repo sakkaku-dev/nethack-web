@@ -52,7 +52,7 @@ export enum Command {
   MENU_ADD = "shim_add_menu",
   MENU_SELECT = "shim_select_menu",
 
-  PRINT_TILE = "shim_print_tile",
+  PRINT_GLYPH = "shim_print_glyph",
   CURSOR = "shim_curs",
   CLIPAROUND = "shim_cliparound",
   PUTSTR = "shim_putstr",
@@ -63,7 +63,7 @@ export enum Command {
 }
 
 export interface Item {
-  glyph: number;
+  tile: number;
   accelerator: string;
   groupAcc: string;
   attr: number;
@@ -112,9 +112,7 @@ interface StatusAll {
 
 export type Status = Partial<StatusAll>;
 
-export const statusMap: Partial<
-  Record<STATUS_FIELD, (s: Status, v: string) => void>
-> = {
+export const statusMap: Partial<Record<STATUS_FIELD, (s: Status, v: string) => void>> = {
   [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v),
   [STATUS_FIELD.BL_STR]: (s, v) => (s.str = parseInt(v)),
   [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseInt(v)),
