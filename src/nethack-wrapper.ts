@@ -128,10 +128,7 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async displayFile(file: string, complain: number) {
-    const x = this.module.FS.lookupPath(file, { recurse_count: 3 });
-    console.log(x);
-
-    const text = this.module.FS.readFile("/dat/" + file);
+    const text = this.module.FS.readFile("/dat/" + file, { encoding: "utf8" });
     this.onDialog$.next({ id: -1, text });
     await this.waitContinueKey();
   }
