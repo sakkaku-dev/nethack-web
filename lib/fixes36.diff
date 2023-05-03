@@ -1,0 +1,113 @@
+diff --git a/include/config.h b/include/config.h
+index b606b5db1..99a3f06a2 100644
+--- a/include/config.h
++++ b/include/config.h
+@@ -38,6 +38,10 @@
+ 
+ #include "config1.h" /* should auto-detect MSDOS, MAC, AMIGA, and WIN32 */
+ 
++#ifdef WEB_GRAPHICS
++#define DEFAULT_WINDOW_SYS "web"
++#endif
++
+ /* Windowing systems...
+  * Define all of those you want supported in your binary.
+  * Some combinations make no sense.  See the installation document.
+diff --git a/src/windows.c b/src/windows.c
+index 94ac40f3e..9b00748e2 100644
+--- a/src/windows.c
++++ b/src/windows.c
+@@ -3,6 +3,9 @@
+ /* NetHack may be freely redistributed.  See license for details. */
+ 
+ #include "hack.h"
++#ifdef WEB_GRAPHICS
++extern struct window_procs web_procs;
++#endif
+ #ifdef TTY_GRAPHICS
+ #include "wintty.h"
+ #endif
+@@ -92,6 +95,9 @@ static struct win_choices {
+     void *FDECL((*chain_routine), (int, int, void *, void *, void *));
+ #endif
+ } winchoices[] = {
++#ifdef WEB_GRAPHICS
++    { &web_procs, 0, CHAINR(0) },
++#endif
+ #ifdef TTY_GRAPHICS
+     { &tty_procs, win_tty_init CHAINR(0) },
+ #endif
+diff --git a/win/web/web.c b/win/web/web.c
+new file mode 100644
+index 000000000..6602d842c
+--- /dev/null
++++ b/win/web/web.c
+@@ -0,0 +1,67 @@
++// Keep this up to date with winprocs.h
++struct window_procs web_procs = {
++    "web",
++    WC_HILITE_PET | WC_MOUSE_SUPPORT,
++    0L, // wincap2
++    {1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1} // disable colors?
++    web_init_nhwindows,
++    web_player_selection,
++    web_askname,
++    web_get_nh_event,
++    web_exit_nhwindows,
++    web_suspend_nhwindows,
++    web_resume_nhwindows,
++    web_create_nhwindow,
++    web_clear_nhwindow,
++    web_display_nhwindow,
++    web_destroy_nhwindow,
++    web_curs,
++    web_putstr,
++    web_putmixed,
++    web_display_file,
++    web_start_menu,
++    web_add_menu,
++    web_end_menu,
++    web_select_menu,
++    web_message_menu,
++    web_update_inventory,
++    web_mark_synch,
++    web_wait_synch,
++#ifdef CLIPPING
++    web_cliparound,
++#endif
++#ifdef POSITIONBAR
++    web_update_positionbar,
++#endif
++    web_print_glyph,
++    web_raw_print,
++    web_raw_print_bold,
++    web_nhgetch,
++    web_nh_poskey,
++    web_nhbell,
++    web_doprev_message,
++    web_yn_function,
++    web_getlin,
++    web_get_ext_cmd,
++    web_number_pad,
++    web_delay_output,
++#ifdef CHANGE_COLOR
++    web_change_color,
++#ifdef MAC
++    web_change_background,
++    web_set_font_name,
++#endif
++    web_get_color_string,
++#endif
++    web_start_screen,
++    web_end_screen,
++    web_outrip,
++    web_preference_update
++    web_getmsghistory,
++    web_putmsghistory,
++    web_status_init,
++    web_status_finish,
++    web_status_enablefield,
++    web_status_update,
++    web_can_suspend,
++};
+\ No newline at end of file
