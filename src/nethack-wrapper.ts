@@ -126,8 +126,28 @@ export class NetHackWrapper implements NetHackJS {
       .subscribe();
   }
 
+  async handle(cmd: Command, ...args: any[]) {
+    if (this.debug) {
+      console.log(cmd, args);
+    }
+
+    const commandHandler = this.commandMap[cmd];
+    if (commandHandler) {
+      return commandHandler(...args);
+    }
+
+    // Defaults
+    if (cmd === Command.GET_HISTORY) {
+      return "";
+    }
+    if (cmd === Command.YN_FUNCTION || cmd === Command.MESSAGE_MENU) {
+      return 121;
+    }
+    return 0;
+  }
+
   private async displayFile(file: string, complain: number) {
-    const text = this.module.FS.readFile("/dat/" + file, { encoding: "utf8" });
+    const text = this.module.FS.readFile(file, { encoding: "utf8" });
     this.onDialog$.next({ id: -1, text });
     await this.waitContinueKey();
     this.onCloseDialog$.next(-1);
@@ -141,23 +161,6 @@ export class NetHackWrapper implements NetHackJS {
   public sendInput(key: number) {
     console.log("Receiced input", key);
     this.input$.next(key);
-  }
-
-  async handle(cmd: Command, ...args: any[]) {
-    if (this.debug) {
-      console.log(cmd, args);
-    }
-
-    const commandHandler = this.commandMap[cmd];
-    if (commandHandler) {
-      return commandHandler(...args);
-    }
-
-    if (cmd == Command.GET_HISTORY) {
-      return "";
-    }
-
-    return 0;
   }
 
   private async createWindow(type: WIN_TYPE) {

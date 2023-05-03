@@ -1,0 +1,33 @@
+diff --git a/sys/libnh/libnhmain.c b/sys/libnh/libnhmain.c
+index ddfdf9074..3682e33d9 100644
+--- a/sys/libnh/libnhmain.c
++++ b/sys/libnh/libnhmain.c
+@@ -291,7 +291,7 @@ nhmain(int argc, char *argv[])
+             wd_message();
+             if (discover || wizard) {
+                 /* this seems like a candidate for paranoid_confirmation... */
+-                if (yn("Do you want to keep the save file?") == 'n') {
++                if (y_n("Do you want to keep the save file?") == 'n') {
+                     (void) delete_savefile();
+                 } else {
+                     (void) chmod(fq_save, FCMASK); /* back to readable */
+diff --git a/sys/unix/hints/include/cross-pre.370 b/sys/unix/hints/include/cross-pre.370
+index 2bd09ba31..966f9de60 100644
+--- a/sys/unix/hints/include/cross-pre.370
++++ b/sys/unix/hints/include/cross-pre.370
+@@ -252,13 +252,14 @@ EMCC_LFLAGS += -s ERROR_ON_UNDEFINED_SYMBOLS=0
+ # XXX: the "@/" at the end of "--embed-file" tells emscripten to embed the files
+ # in the root directory, otherwise they will end up in the $(WASM_DATA_DIR) path
+ EMCC_LFLAGS += --embed-file $(WASM_DATA_DIR)@/
++EMCC_LFLAGS += --preload-file ../dat@/
+ # For a list of EMCC settings:
+ # https://github.com/emscripten-core/emscripten/blob/master/src/settings.js
+ #
+ # WASM C flags
+ EMCC_CFLAGS =
+ EMCC_CFLAGS += -Wall
+-EMCC_CFLAGS += -Werror
++#EMCC_CFLAGS += -Werror
+ EMCC_CFLAGS += -DNO_SIGNAL
+ #EMCC_CFLAGS += -s DISABLE_EXCEPTION_CATCHING=0
+ EMCC_DEBUG_LFLAGS += -s ASSERTIONS=1
