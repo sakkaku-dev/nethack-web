@@ -37,7 +37,7 @@ methods.forEach((m) => {
 
 content += '\treturn obj'
 
-const out = path.join(__dirname, "../src/link.gd");
+const out = path.join(__dirname, "../NetHack-UI/src/link.gd");
 fs.writeFile(out, content, (err) => {
   console.error(err);
 });
