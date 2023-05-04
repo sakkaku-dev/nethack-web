@@ -37,77 +37,210 @@ index 94ac40f3e..9b00748e2 100644
  #ifdef TTY_GRAPHICS
      { &tty_procs, win_tty_init CHAINR(0) },
  #endif
+diff --git a/sys/unix/Makefile.src b/sys/unix/Makefile.src
+index eeb30b9a0..b3687fa80 100644
+--- a/sys/unix/Makefile.src
++++ b/sys/unix/Makefile.src
+@@ -595,6 +595,10 @@ objects.o:
+ 	$(CC) $(CFLAGS) -c objects.c
+ 	@rm -f $(MAKEDEFS)
+ 
++web.o: ../win/web/web.c $(HACK_H) ../include/dlb.h \
++		../include/patchlevel.h
++	$(CC) $(CFLAGS) -c ../win/web/web.c
++
+ # Qt 3 windowport meta-object-compiler output
+ qt_kde0.moc: ../include/qt_kde0.h
+ 	$(QTDIR)/bin/moc -o qt_kde0.moc ../include/qt_kde0.h
+diff --git a/sys/unix/hints/linux b/sys/unix/hints/linux
+index 862915053..31ce4382b 100644
+--- a/sys/unix/hints/linux
++++ b/sys/unix/hints/linux
+@@ -16,6 +16,9 @@ SHELLDIR = $(PREFIX)/games
+ INSTDIR=$(HACKDIR)
+ VARDIR = $(HACKDIR)
+ 
++CC=emcc
++EMCC_CFLAGS = -DWEB_GRAPHICS -DNOTTYGRAPHICS -DUSE_TILES
++GAME=
+ 
+ 
+ POSTINSTALL=cp -n sys/unix/sysconf $(INSTDIR)/sysconf; $(CHOWN) $(GAMEUID) $(INSTDIR)/sysconf; $(CHGRP) $(GAMEGRP) $(INSTDIR)/sysconf; chmod $(VARFILEPERM) $(INSTDIR)/sysconf;
+@@ -28,7 +31,7 @@ CFLAGS+=-DTIMED_DELAY
+ CFLAGS+=-DHACKDIR=\"$(HACKDIR)\"
+ CFLAGS+=-DDUMPLOG
+ CFLAGS+=-DCONFIG_ERROR_SECURE=FALSE
+-CFLAGS+=-DCURSES_GRAPHICS
++# CFLAGS+=-DCURSES_GRAPHICS
+ #CFLAGS+=-DEXTRA_SANITY_CHECKS
+ #CFLAGS+=-DEDIT_GETLIN
+ #CFLAGS+=-DSCORE_ON_BOTL
+@@ -39,9 +42,13 @@ LINK=$(CC)
+ # Only needed for GLIBC stack trace:
+ LFLAGS=-rdynamic
+ 
+-WINSRC = $(WINTTYSRC) $(WINCURSESSRC)
+-WINOBJ = $(WINTTYOBJ) $(WINCURSESOBJ)
+-WINLIB = $(WINTTYLIB) $(WINCURSESLIB)
++WINWEBSRC = ../win/web/web.c tile.c
++WINWEBOBJ = web.o tile.o
++WINWEBLIB =
++
++WINSRC = $(WINWEBSRC)
++WINOBJ = $(WINWEBOBJ)
++WINLIB = $(WINWEBLIB)
+ 
+ # if TTY_TILES_ESCCODES
+ #WINSRC += tile.c
+diff --git a/util/makedefs.c b/util/makedefs.c
+index cd971bcc0..2c1bc96ff 100644
+--- a/util/makedefs.c
++++ b/util/makedefs.c
+@@ -1544,6 +1544,9 @@ build_savebones_compat_string()
+ }
+ 
+ static const char *build_opts[] = {
++#ifdef WEB_GRAPHICS
++    "Web",
++#endif
+ #ifdef AMIGA_WBENCH
+     "Amiga WorkBench support",
+ #endif
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..6602d842c
+index 000000000..ad19502dd
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,67 @@
-+// Keep this up to date with winprocs.h
-+struct window_procs web_procs = {
-+    "web",
-+    WC_HILITE_PET | WC_MOUSE_SUPPORT,
-+    0L, // wincap2
-+    {1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1} // disable colors?
-+    web_init_nhwindows,
-+    web_player_selection,
-+    web_askname,
-+    web_get_nh_event,
-+    web_exit_nhwindows,
-+    web_suspend_nhwindows,
-+    web_resume_nhwindows,
-+    web_create_nhwindow,
-+    web_clear_nhwindow,
-+    web_display_nhwindow,
-+    web_destroy_nhwindow,
-+    web_curs,
-+    web_putstr,
-+    web_putmixed,
-+    web_display_file,
-+    web_start_menu,
-+    web_add_menu,
-+    web_end_menu,
-+    web_select_menu,
-+    web_message_menu,
-+    web_update_inventory,
-+    web_mark_synch,
-+    web_wait_synch,
+@@ -0,0 +1,131 @@
++#include "hack.h"
++#include <emscripten/emscripten.h>
++
++void web_init_nhwindows(int * a, char ** b);
++void web_player_selection();
++void web_askname();
++void web_get_nh_event();
++void web_exit_nhwindows(const char * a);
++void web_suspend_nhwindows(const char * a);
++void web_resume_nhwindows();
++winid web_create_nhwindow(int a);
++void web_clear_nhwindow(winid a);
++void web_display_nhwindow(winid a, BOOLEAN_P b);
++void web_destroy_nhwindow(winid a);
++void web_curs(winid a, int b, int c);
++void web_putstr(winid a, int b, const char * c);
++void web_putmixed(winid a, int b, const char * c);
++void web_display_file(const char * a, BOOLEAN_P b);
++void web_start_menu(winid a);
++void web_add_menu(winid a, int b, const ANY_P * c, CHAR_P d, CHAR_P e, int f, const char * g, BOOLEAN_P h);
++void web_end_menu(winid a, const char * b);
++int web_select_menu(winid a, int b, MENU_ITEM_P ** c);
++char web_message_menu(CHAR_P a, int b, const char * c);
++void web_update_inventory();
++void web_mark_synch();
++void web_wait_synch();
 +#ifdef CLIPPING
-+    web_cliparound,
++void web_cliparound(int a, int b);
 +#endif
 +#ifdef POSITIONBAR
-+    web_update_positionbar,
++void web_update_positionbar(char * a);
 +#endif
-+    web_print_glyph,
-+    web_raw_print,
-+    web_raw_print_bold,
-+    web_nhgetch,
-+    web_nh_poskey,
-+    web_nhbell,
-+    web_doprev_message,
-+    web_yn_function,
-+    web_getlin,
-+    web_get_ext_cmd,
-+    web_number_pad,
-+    web_delay_output,
++void web_print_glyph(winid a, XCHAR_P b, XCHAR_P c, int d, int e);
++void web_raw_print(const char * a);
++void web_raw_print_bold(const char * a);
++int web_nhgetch();
++int web_nh_poskey(int * a, int * b, int * c);
++void web_nhbell();
++int web_doprev_message();
++char web_yn_function(const char * a, const char * b, CHAR_P c);
++void web_getlin(const char * a, char * b);
++int web_get_ext_cmd();
++void web_number_pad(int a);
++void web_delay_output();
 +#ifdef CHANGE_COLOR
-+    web_change_color,
++void web_change_color(int a, long b, int c);
 +#ifdef MAC
-+    web_change_background,
-+    web_set_font_name,
++void web_change_background(int a);
++short web_set_font_name(winid a, char * b);
 +#endif
-+    web_get_color_string,
++char * web_get_color_string();
 +#endif
-+    web_start_screen,
-+    web_end_screen,
-+    web_outrip,
-+    web_preference_update
-+    web_getmsghistory,
-+    web_putmsghistory,
-+    web_status_init,
-+    web_status_finish,
-+    web_status_enablefield,
-+    web_status_update,
-+    web_can_suspend,
++void web_start_screen();
++void web_end_screen();
++void web_outrip(winid a, int b, time_t c);
++void web_preference_update(const char * a);
++char * web_getmsghistory(BOOLEAN_P a);
++void web_putmsghistory(const char * a, BOOLEAN_P b);
++void web_status_init();
++void web_status_finish();
++void web_status_enablefield(int a, const char * b, const char * c, BOOLEAN_P d);
++void web_status_update(int a, genericptr_t b, int c, int d, int e, unsigned long * f);
++boolean web_can_suspend();
++
++
++struct window_procs web_procs = {
++	"web",
++	WC_HILITE_PET | WC_MOUSE_SUPPORT,
++	0L, // wincap2
++	{1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1}, // disable colors?
++	web_init_nhwindows,
++	web_player_selection,
++	web_askname,
++	web_get_nh_event,
++	web_exit_nhwindows,
++	web_suspend_nhwindows,
++	web_resume_nhwindows,
++	web_create_nhwindow,
++	web_clear_nhwindow,
++	web_display_nhwindow,
++	web_destroy_nhwindow,
++	web_curs,
++	web_putstr,
++	web_putmixed,
++	web_display_file,
++	web_start_menu,
++	web_add_menu,
++	web_end_menu,
++	web_select_menu,
++	web_message_menu,
++	web_update_inventory,
++	web_mark_synch,
++	web_wait_synch,
++#ifdef CLIPPING
++	web_cliparound,
++#endif
++#ifdef POSITIONBAR
++	web_update_positionbar,
++#endif
++	web_print_glyph,
++	web_raw_print,
++	web_raw_print_bold,
++	web_nhgetch,
++	web_nh_poskey,
++	web_nhbell,
++	web_doprev_message,
++	web_yn_function,
++	web_getlin,
++	web_get_ext_cmd,
++	web_number_pad,
++	web_delay_output,
++#ifdef CHANGE_COLOR
++	web_change_color,
++#ifdef MAC
++	web_change_background,
++	web_set_font_name,
++#endif
++	web_get_color_string,
++#endif
++	web_start_screen,
++	web_end_screen,
++	web_outrip,
++	web_preference_update,
++	web_getmsghistory,
++	web_putmsghistory,
++	web_status_init,
++	web_status_finish,
++	web_status_enablefield,
++	web_status_update,
++	web_can_suspend,
 +};
 \ No newline at end of file
