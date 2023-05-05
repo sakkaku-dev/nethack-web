@@ -81,7 +81,7 @@ fs.readFile(WIN_PROCS_FILE, 'utf8', (err, data) => {
 							let varName = 'a'.charCodeAt(0);
 							const param = paramMatch[1].split(',');
 							const paramLine = param.map(p => p.trim() + ' ' + String.fromCharCode(varName++)).join(', ');
-							functionsC += `${returnType} ${new_fn}(${paramLine});\n`;
+							functionsC += `${returnType} ${new_fn}(${paramLine}){}\n`;
 						} else {
 							console.warn('Could not find params for ' + fn);
 						}
