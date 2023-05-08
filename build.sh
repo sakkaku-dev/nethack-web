@@ -12,6 +12,7 @@ pushd NetHack
 	make spotless
 	make
 
+	# Build dat files, added with --preload-file
 	make install PREFIX="$MYDIR/build"
 	rm $MYDIR/build/nethack/nethack
 	rm $MYDIR/build/nethack/recover
@@ -21,18 +22,12 @@ popd
 
 stage2() {
 pushd NetHack/src
-	touch allmain.c
+	# touch allmain.c
 	make PREFIX="$MYDIR/build"
-# pushd build
-	# cp ../NetHack/src/nethack out.js
-	# emcc out.js \
-	# 	-O3 \
-	# 	-Oz \
-	# 	-o nethack.js \
-	# 	-s ASYNCIFY \
-	# 	--memory-init-file 1 \
-	# 	--js-library ../src/nethack_lib.js \
-	# 	--preload-file nethack
+
+	cp nethack $MYDIR/lib/nethack.js
+	cp nethack.wasm $MYDIR/lib/nethack.wasm
+	cp nethack.data $MYDIR/lib/nethack.data
 popd
 }
 

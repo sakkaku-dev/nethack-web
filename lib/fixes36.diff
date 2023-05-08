@@ -380,10 +380,10 @@ index 78e9d725f..2fbe8a27e 100644
 -		tilemap tileedit tile2bmp
 +		tilemap.js tileedit tile2bmp
 diff --git a/sys/unix/hints/linux b/sys/unix/hints/linux
-index 862915053..8f64e523d 100644
+index 862915053..c340f17de 100644
 --- a/sys/unix/hints/linux
 +++ b/sys/unix/hints/linux
-@@ -11,37 +11,45 @@
+@@ -11,37 +11,52 @@
  
  #PREFIX=/usr
  PREFIX=$(wildcard ~)/nh/install
@@ -423,8 +423,15 @@ index 862915053..8f64e523d 100644
  LINK=$(CC)
  # Only needed for GLIBC stack trace:
 -LFLAGS=-rdynamic
-+LFLAGS=-rdynamic -lnodefs.js -s ASYNCIFY --js-library ../../src/web.js
-+LFLAGS+=-s ERROR_ON_UNDEFINED_SYMBOLS=0
++LFLAGS =-rdynamic -lnodefs.js -s ASYNCIFY --preload-file $(PREFIX)/nethack
++LFLAGS +=-s ERROR_ON_UNDEFINED_SYMBOLS=0
++LFLAGS += -s ALLOW_TABLE_GROWTH
++LFLAGS += -s ASYNCIFY -s ASYNCIFY_IMPORTS='["local_callback"]'
++# LFLAGS += -O3
++LFLAGS += -s MODULARIZE
++LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback", "_mapglyph", "_display_inventory"]'
++LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", \
++			"removeFunction", "UTF8ToString", "getValue", "setValue"]'
 +
 +WINWEBSRC = ../win/web/web.c tile.c
 +WINWEBOBJ = web.o tile.o
@@ -439,6 +446,394 @@ index 862915053..8f64e523d 100644
  
  # if TTY_TILES_ESCCODES
  #WINSRC += tile.c
+diff --git a/sys/unix/unixmain.c b/sys/unix/unixmain.c
+index 1e7880165..074901343 100644
+--- a/sys/unix/unixmain.c
++++ b/sys/unix/unixmain.c
+@@ -16,6 +16,13 @@
+ #include <fcntl.h>
+ #endif
+ 
++#ifdef __EMSCRIPTEN__
++#include <emscripten/emscripten.h>
++void js_helpers_init();
++void js_constants_init();
++void js_globals_init();
++#endif
++
+ #if !defined(_BULL_SOURCE) && !defined(__sgi) && !defined(_M_UNIX)
+ #if !defined(SUNOS4) && !(defined(ULTRIX) && defined(__GNUC__))
+ #if defined(POSIX_TYPES) || defined(SVR4) || defined(HPUX)
+@@ -209,6 +216,13 @@ char *argv[];
+ #ifdef WINCHAIN
+     commit_windowchain();
+ #endif
++
++#ifdef __EMSCRIPTEN__
++    js_helpers_init();
++    js_constants_init();
++    js_globals_init();
++#endif
++
+     init_nhwindows(&argc, argv); /* now we can set up window system */
+ #ifdef _M_UNIX
+     init_sco_cons();
+@@ -808,3 +822,354 @@ sys_random_seed()
+ }
+ 
+ /*unixmain.c*/
++
++
++#ifdef __EMSCRIPTEN__
++/***
++ * Helpers
++ ***/
++EM_JS(void, js_helpers_init, (), {
++    globalThis.nethackGlobal = globalThis.nethackGlobal || {};
++    globalThis.nethackGlobal.helpers = globalThis.nethackGlobal.helpers || {};
++
++    installHelper(mapglyphHelper);
++    installHelper(displayInventory);
++    installHelper(getPointerValue);
++    installHelper(setPointerValue);
++
++    // used by print_glyph
++    function mapglyphHelper(glyph, x, y, mgflags) {
++        let ochar = _malloc(4);
++        let ocolor = _malloc(4);
++        let ospecial = _malloc(4);
++
++        _mapglyph(glyph, ochar, ocolor, ospecial, x, y, mgflags);
++
++        let ch = getValue(ochar, "i32");
++        let color = getValue(ocolor, "i32");
++        let special = getValue(ospecial, "i32");
++
++        _free (ochar);
++        _free (ocolor);
++        _free (ospecial);
++
++        return {
++            glyph,
++            ch,
++            color,
++            special,
++            x,
++            y,
++            mgflags
++        };
++    }
++
++    // used by update_inventory
++    function displayInventory() {
++        // Asyncify.handleAsync(async () => {
++            return _display_inventory(0, 0);
++        // });
++    }
++
++    // convert 'ptr' to the type indicated by 'type'
++    function getPointerValue(name, ptr, type) {
++        // console.log("getPointerValue", name, "0x" + ptr.toString(16), type);
++        switch(type) {
++        case "s": // string
++            // var value = UTF8ToString(getValue(ptr, "*"));
++            return UTF8ToString(ptr);
++        case "p": // pointer
++            if(!ptr) return 0; // null pointer
++            return getValue(ptr, "*");
++        case "c": // char
++            return String.fromCharCode(getValue(ptr, "i8"));
++        case "0": /* 2^0 = 1 byte */
++            return getValue(ptr, "i8");
++        case "1": /* 2^1 = 2 bytes */
++            return getValue(ptr, "i16");
++        case "2": /* 2^2 = 4 bytes */
++        case "i": // integer
++        case "n": // number
++            return getValue(ptr, "i32");
++        case "f": // float
++            return getValue(ptr, "float");
++        case "d": // double
++            return getValue(ptr, "double");
++        case "o": // overloaded: multiple types
++            return ptr;
++        default:
++            throw new TypeError ("unknown type:" + type);
++        }
++    }
++
++    // sets the return value of the function to the type expected
++    function setPointerValue(name, ptr, type, value = 0) {
++        // console.log("setPointerValue", name, "0x" + ptr.toString(16), type, value);
++        switch (type) {
++        case "p":
++            throw new Error("not implemented");
++        case "s":
++            if(typeof value !== "string")
++                throw new TypeError(`expected ${name} return type to be string`);
++            // value=value?value:"(no value)";
++            // var strPtr = getValue(ptr, "i32");
++            stringToUTF8(value, ptr, 1024); // TODO: uhh... danger will robinson
++            break;
++        case "i":
++            if(typeof value !== "number" || !Number.isInteger(value))
++                throw new TypeError(`expected ${name} return type to be integer`);
++            setValue(ptr, value, "i32");
++            break;
++        case "c":
++            if(typeof value !== "number" || value < 0 || value > 128)
++                throw new TypeError(`expected ${name} return type to be integer representing an ASCII character`);
++            setValue(ptr, value, "i8");
++            break;
++        case "f":
++            if(typeof value !== "number" || isFloat(value))
++                throw new TypeError(`expected ${name} return type to be float`);
++            // XXX: I'm not sure why 'double' works and 'float' doesn't
++            setValue(ptr, value, "double");
++            break;
++        case "d":
++            if(typeof value !== "number" || isFloat(value))
++                throw new TypeError(`expected ${name} return type to be double`);
++            setValue(ptr, value, "double");
++            break;
++        case "v":
++            break;
++        default:
++            throw new Error("unknown type");
++        }
++
++        function isFloat(n){
++            return n === +n && n !== (n|0) && !Number.isInteger(n);
++        }
++    }
++
++
++    function installHelper(fn, name) {
++        name = name || fn.name;
++        globalThis.nethackGlobal.helpers[name] = fn;
++    }
++})
++
++/***
++ * Constants
++ ***/
++#define SET_CONSTANT(scope, name) set_const(scope, #name, name);
++EM_JS(void, set_const, (char *scope_str, char *name_str, int num), {
++    let scope = UTF8ToString(scope_str);
++    let name = UTF8ToString(name_str);
++
++    globalThis.nethackGlobal.constants[scope] = globalThis.nethackGlobal.constants[scope] || {};
++    globalThis.nethackGlobal.constants[scope][name] = num;
++    globalThis.nethackGlobal.constants[scope][num] = name;
++});
++#define SET_CONSTANT_STRING(scope, name) set_const_str(scope, #name, name);
++EM_JS(void, set_const_str, (char *scope_str, char *name_str, char *input_str), {
++    let scope = UTF8ToString(scope_str);
++    let name = UTF8ToString(name_str);
++    let str = UTF8ToString(input_str);
++
++    globalThis.nethackGlobal.constants[scope] = globalThis.nethackGlobal.constants[scope] || {};
++    globalThis.nethackGlobal.constants[scope][name] = str;
++});
++
++void js_constants_init() {
++    EM_ASM({
++        globalThis.nethackGlobal = globalThis.nethackGlobal || {};
++        globalThis.nethackGlobal.constants = globalThis.nethackGlobal.constants || {};
++    });
++
++    // create_nhwindow
++    SET_CONSTANT("WIN_TYPE", NHW_MESSAGE)
++    SET_CONSTANT("WIN_TYPE", NHW_STATUS)
++    SET_CONSTANT("WIN_TYPE", NHW_MAP)
++    SET_CONSTANT("WIN_TYPE", NHW_MENU)
++    SET_CONSTANT("WIN_TYPE", NHW_TEXT)
++
++    // status_update
++    SET_CONSTANT("STATUS_FIELD", BL_TITLE)
++    SET_CONSTANT("STATUS_FIELD", BL_STR)
++    SET_CONSTANT("STATUS_FIELD", BL_DX)
++    SET_CONSTANT("STATUS_FIELD", BL_CO)
++    SET_CONSTANT("STATUS_FIELD", BL_IN)
++    SET_CONSTANT("STATUS_FIELD", BL_WI)
++    SET_CONSTANT("STATUS_FIELD", BL_CH)
++    SET_CONSTANT("STATUS_FIELD", BL_ALIGN)
++    SET_CONSTANT("STATUS_FIELD", BL_SCORE)
++    SET_CONSTANT("STATUS_FIELD", BL_CAP)
++    SET_CONSTANT("STATUS_FIELD", BL_GOLD)
++    SET_CONSTANT("STATUS_FIELD", BL_ENE)
++    SET_CONSTANT("STATUS_FIELD", BL_ENEMAX)
++    SET_CONSTANT("STATUS_FIELD", BL_XP)
++    SET_CONSTANT("STATUS_FIELD", BL_AC)
++    SET_CONSTANT("STATUS_FIELD", BL_HD)
++    SET_CONSTANT("STATUS_FIELD", BL_TIME)
++    SET_CONSTANT("STATUS_FIELD", BL_HUNGER)
++    SET_CONSTANT("STATUS_FIELD", BL_HP)
++    SET_CONSTANT("STATUS_FIELD", BL_HPMAX)
++    SET_CONSTANT("STATUS_FIELD", BL_LEVELDESC)
++    SET_CONSTANT("STATUS_FIELD", BL_EXP)
++    SET_CONSTANT("STATUS_FIELD", BL_CONDITION)
++
++    // SET_CONSTANT("STATUS_FIELD", BL_CHARACTERISTICS)
++    // SET_CONSTANT("STATUS_FIELD", BL_RESET)
++    // SET_CONSTANT("STATUS_FIELD", BL_FLUSH)
++    // SET_CONSTANT("STATUS_FIELD", MAXBLSTATS)
++
++    // text attributes
++    SET_CONSTANT("ATTR", ATR_NONE);
++    SET_CONSTANT("ATTR", ATR_ULINE);
++    SET_CONSTANT("ATTR", ATR_BOLD);
++    SET_CONSTANT("ATTR", ATR_BLINK);
++    SET_CONSTANT("ATTR", ATR_INVERSE);
++
++    // SET_CONSTANT("ATTR", ATR_URGENT);
++    // SET_CONSTANT("ATTR", ATR_NOHISTORY);
++    // SET_CONSTANT("ATTR", ATR_DIM);
++
++    // conditions
++    SET_CONSTANT("CONDITION", BL_MASK_STONE);
++    SET_CONSTANT("CONDITION", BL_MASK_SLIME);
++    SET_CONSTANT("CONDITION", BL_MASK_STRNGL);
++    SET_CONSTANT("CONDITION", BL_MASK_FOODPOIS);
++    SET_CONSTANT("CONDITION", BL_MASK_TERMILL);
++    SET_CONSTANT("CONDITION", BL_MASK_BLIND);
++    SET_CONSTANT("CONDITION", BL_MASK_DEAF);
++    SET_CONSTANT("CONDITION", BL_MASK_STUN);
++    SET_CONSTANT("CONDITION", BL_MASK_CONF);
++    SET_CONSTANT("CONDITION", BL_MASK_HALLU);
++    SET_CONSTANT("CONDITION", BL_MASK_LEV);
++    SET_CONSTANT("CONDITION", BL_MASK_FLY);
++    SET_CONSTANT("CONDITION", BL_MASK_RIDE);
++
++    // menu
++    SET_CONSTANT("MENU_SELECT", PICK_NONE);
++    SET_CONSTANT("MENU_SELECT", PICK_ONE);
++    SET_CONSTANT("MENU_SELECT", PICK_ANY);
++
++    // copyright
++    // SET_CONSTANT_STRING("COPYRIGHT", COPYRIGHT_BANNER_A);
++    // SET_CONSTANT_STRING("COPYRIGHT", COPYRIGHT_BANNER_B);
++    // XXX: not set for cross-compile
++    //SET_CONSTANT_STRING("COPYRIGHT", COPYRIGHT_BANNER_C);
++    // SET_CONSTANT_STRING("COPYRIGHT", COPYRIGHT_BANNER_D);
++
++    // glyphs
++    SET_CONSTANT("GLYPH", GLYPH_MON_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_PET_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_INVIS_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_DETECT_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_BODY_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_RIDDEN_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_OBJ_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_CMAP_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_EXPLODE_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_ZAP_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_SWALLOW_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_WARNING_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_STATUE_OFF);
++
++    // SET_CONSTANT("GLYPH", GLYPH_UNEXPLORED_OFF);
++    // SET_CONSTANT("GLYPH", GLYPH_NOTHING_OFF);
++    SET_CONSTANT("GLYPH", MAX_GLYPH);
++    SET_CONSTANT("GLYPH", NO_GLYPH);
++    SET_CONSTANT("GLYPH", GLYPH_INVISIBLE);
++
++    // SET_CONSTANT("GLYPH", GLYPH_UNEXPLORED);
++    // SET_CONSTANT("GLYPH", GLYPH_NOTHING);
++
++    // colors
++    SET_CONSTANT("COLORS", CLR_BLACK);
++    SET_CONSTANT("COLORS", CLR_RED);
++    SET_CONSTANT("COLORS", CLR_GREEN);
++    SET_CONSTANT("COLORS", CLR_BROWN);
++    SET_CONSTANT("COLORS", CLR_BLUE);
++    SET_CONSTANT("COLORS", CLR_MAGENTA);
++    SET_CONSTANT("COLORS", CLR_CYAN);
++    SET_CONSTANT("COLORS", CLR_GRAY);
++    SET_CONSTANT("COLORS", NO_COLOR);
++    SET_CONSTANT("COLORS", CLR_ORANGE);
++    SET_CONSTANT("COLORS", CLR_BRIGHT_GREEN);
++    SET_CONSTANT("COLORS", CLR_YELLOW);
++    SET_CONSTANT("COLORS", CLR_BRIGHT_BLUE);
++    SET_CONSTANT("COLORS", CLR_BRIGHT_MAGENTA);
++    SET_CONSTANT("COLORS", CLR_BRIGHT_CYAN);
++    SET_CONSTANT("COLORS", CLR_WHITE);
++    SET_CONSTANT("COLORS", CLR_MAX);
++
++    // color attributes (?)
++    SET_CONSTANT("COLOR_ATTR", HL_ATTCLR_DIM);
++    SET_CONSTANT("COLOR_ATTR", HL_ATTCLR_BLINK);
++    SET_CONSTANT("COLOR_ATTR", HL_ATTCLR_ULINE);
++    SET_CONSTANT("COLOR_ATTR", HL_ATTCLR_INVERSE);
++    SET_CONSTANT("COLOR_ATTR", HL_ATTCLR_BOLD);
++    SET_CONSTANT("COLOR_ATTR", BL_ATTCLR_MAX);
++}
++
++/***
++ * Globals
++ ***/
++#define CREATE_GLOBAL(var, type) create_global(#var, (void *)&var, type);
++#define CREATE_GLOBAL_FROM_ARRAY(base, iter, path, end_expr, type) \
++    for(iter = 0; end_expr; iter++) { \
++        snprintf(buf, BUFSZ, #base ".%d." #path, iter); \
++        create_global(buf, (void *)(&(base[iter].path)), type); \
++    }
++
++void create_global (char *name, void *ptr, char *type);
++
++void js_globals_init() {
++    // int i;
++    // char buf[BUFSZ];
++
++    EM_ASM({
++        globalThis.nethackGlobal = globalThis.nethackGlobal || {};
++        globalThis.nethackGlobal.globals = globalThis.nethackGlobal.globals || {};
++    });
++
++    /* globals */
++    CREATE_GLOBAL(plname, "s");
++
++    /* window globals */
++    CREATE_GLOBAL(WIN_MAP, "i");
++    CREATE_GLOBAL(WIN_MESSAGE, "i");
++    CREATE_GLOBAL(WIN_INVEN, "i");
++    CREATE_GLOBAL(WIN_STATUS, "i");
++}
++
++EM_JS(void, create_global, (char *name_str, void *ptr, char *type_str), {
++    let name = UTF8ToString(name_str);
++    let type = UTF8ToString(type_str);
++
++    // get helpers
++    let getPointerValue = globalThis.nethackGlobal.helpers.getPointerValue;
++    let setPointerValue = globalThis.nethackGlobal.helpers.setPointerValue;
++
++    let { obj, prop } = createPath(globalThis.nethackGlobal.globals, name);
++
++    // setters / getters with bound pointers
++    Object.defineProperty(obj, prop, {
++        get: getPointerValue.bind(null, name, ptr, type),
++        set: setPointerValue.bind(null, name, ptr, type),
++        configurable: true,
++        enumerable: true
++    });
++
++    function createPath(obj, path) {
++        path = path.split(".");
++        let i;
++        for (i = 0; i < path.length - 1; i++) {
++            // obj[path[i]] = obj[path[i]] || {};
++            if (obj[path[i]] === undefined) {
++                obj[path[i]] = {};
++            }
++            obj = obj[path[i]];
++        }
++
++        return { obj, prop: path[i] };
++    }
++})
++#endif
+\ No newline at end of file
 diff --git a/util/makedefs.c b/util/makedefs.c
 index cd971bcc0..2cbc030a8 100644
 --- a/util/makedefs.c
@@ -515,140 +910,273 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..64374f66a
+index 000000000..159e83762
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,132 @@
+@@ -0,0 +1,266 @@
 +#include "hack.h"
 +#include <emscripten/emscripten.h>
 +
++/* shim_graphics_callback is the primary interface to shim graphics,
++ * call this function with your declared callback function
++ * and you will receive all the windowing calls
++ */
++/************
++ * WASM interface
++ ************/
++EMSCRIPTEN_KEEPALIVE
++static char *shim_callback_name = NULL;
++void shim_graphics_set_callback(char *cbName) {
++    if (shim_callback_name != NULL) free(shim_callback_name);
++    if(cbName && strlen(cbName) > 0) {
++        shim_callback_name = strdup(cbName);
++    } else {
++        shim_callback_name = NULL;
++    }
++    /* TODO: free(shim_callback_name) during shutdown? */
++}
++void local_callback (const char *cb_name, const char *shim_name, void *ret_ptr, const char *fmt_str, void *args);
 +
-+extern void web_init_nhwindows(int * a, char ** b); 
-+extern void web_player_selection ();
-+extern void web_askname ();
-+extern void web_get_nh_event ();
-+extern void web_exit_nhwindows(const char * a); 
-+extern void web_suspend_nhwindows(const char * a); 
-+extern void web_resume_nhwindows ();
-+extern winid web_create_nhwindow(int a); 
-+extern void web_clear_nhwindow(winid a); 
-+extern void web_display_nhwindow(winid a, BOOLEAN_P b); 
-+extern void web_destroy_nhwindow(winid a); 
-+extern void web_curs(winid a, int b, int c); 
-+extern void web_putstr(winid a, int b, const char * c); 
-+extern void web_putmixed(winid a, int b, const char * c); 
-+extern void web_display_file(const char * a, BOOLEAN_P b); 
-+extern void web_start_menu(winid a); 
-+extern void web_add_menu(winid a, int b, const ANY_P * c, CHAR_P d, CHAR_P e, int f, const char * g, BOOLEAN_P h); 
-+extern void web_end_menu(winid a, const char * b); 
-+extern int web_select_menu(winid a, int b, MENU_ITEM_P ** c); 
-+extern char web_message_menu(CHAR_P a, int b, const char * c); 
-+extern void web_update_inventory ();
-+extern void web_mark_synch ();
-+extern void web_wait_synch ();
-+#ifdef CLIPPING
-+extern void web_cliparound(int a, int b); 
-+#endif
-+#ifdef POSITIONBAR
-+extern void web_update_positionbar(char * a); 
-+#endif
-+extern void web_print_glyph(winid a, XCHAR_P b, XCHAR_P c, int d, int e); 
-+extern void web_raw_print(const char * a); 
-+extern void web_raw_print_bold(const char * a); 
-+extern int web_nhgetch ();
-+extern int web_nh_poskey(int * a, int * b, int * c); 
-+extern void web_nhbell ();
-+extern int web_doprev_message ();
-+extern char web_yn_function(const char * a, const char * b, CHAR_P c); 
-+extern void web_getlin(const char * a, char * b); 
-+extern int web_get_ext_cmd ();
-+extern void web_number_pad(int a); 
-+extern void web_delay_output ();
-+#ifdef CHANGE_COLOR
-+extern void web_change_color(int a, long b, int c); 
-+#ifdef MAC
-+extern void web_change_background(int a); 
-+extern short web_set_font_name(winid a, char * b); 
-+#endif
-+extern char * web_get_color_string ();
-+#endif
-+extern void web_start_screen ();
-+extern void web_end_screen ();
-+extern void web_outrip(winid a, int b, time_t c); 
-+extern void web_preference_update(const char * a); 
-+extern char * web_getmsghistory(BOOLEAN_P a); 
-+extern void web_putmsghistory(const char * a, BOOLEAN_P b); 
-+extern void web_status_init ();
-+extern void web_status_finish ();
-+extern void web_status_enablefield(int a, const char * b, const char * c, BOOLEAN_P d); 
-+extern void web_status_update(int a, genericptr_t b, int c, int d, int e, unsigned long * f); 
-+extern boolean web_can_suspend ();
++/* A2P = Argument to Pointer */
++#define A2P &
++/* P2V = Pointer to Void */
++#define P2V (void *)
++#define DECLCB(ret_type, name, fn_args, fmt, ...) \
++ret_type name fn_args { \
++    void *args[] = { __VA_ARGS__ }; \
++    ret_type ret = (ret_type) 0; \
++    if (!shim_callback_name) return ret; \
++    local_callback(shim_callback_name, #name, (void *)&ret, fmt, args); \
++    return ret; \
++}
 +
++#define VDECLCB(name, fn_args, fmt, ...) \
++void name fn_args { \
++    void *args[] = { __VA_ARGS__ }; \
++    if (!shim_callback_name) return; \
++    local_callback(shim_callback_name, #name, NULL, fmt, args); \
++}
++
++VDECLCB(shim_init_nhwindows,(int *argcp, char **argv), "vpp", P2V argcp, P2V argv)
++VDECLCB(shim_player_selection,(void), "v")
++VDECLCB(shim_askname,(void), "v")
++VDECLCB(shim_get_nh_event,(void), "v")
++VDECLCB(shim_exit_nhwindows,(const char *str), "vs", P2V str)
++VDECLCB(shim_suspend_nhwindows,(const char *str), "vs", P2V str)
++VDECLCB(shim_resume_nhwindows,(void), "v")
++DECLCB(winid, shim_create_nhwindow, (int type), "ii", A2P type)
++VDECLCB(shim_clear_nhwindow,(winid window), "vi", A2P window)
++VDECLCB(shim_display_nhwindow,(winid window, BOOLEAN_P blocking), "vii", A2P window, A2P blocking)
++VDECLCB(shim_destroy_nhwindow,(winid window), "vi", A2P window)
++VDECLCB(shim_curs,(winid a, int x, int y), "viii", A2P a, A2P x, A2P y)
++VDECLCB(shim_putstr,(winid w, int attr, const char *str), "viis", A2P w, A2P attr, P2V str)
++VDECLCB(shim_display_file,(const char *name, BOOLEAN_P complain), "vsi", P2V name, A2P complain)
++VDECLCB(shim_start_menu,(winid window), "vi", A2P window)
++VDECLCB(shim_add_menu,
++    (winid window, int glyph, const ANY_P *identifier, CHAR_P ch, CHAR_P gch, int attr, const char *str, BOOLEAN_P preselected),
++    "viipiiisi",
++    A2P window, A2P glyph, P2V identifier, A2P ch, A2P gch, A2P attr, P2V str, A2P preselected)
++VDECLCB(shim_end_menu,(winid window, const char *prompt), "vis", A2P window, P2V prompt)
++/* XXX: shim_select_menu menu_list is an output */
++DECLCB(int, shim_select_menu,(winid window, int how, MENU_ITEM_P **menu_list), "iiio", A2P window, A2P how, P2V menu_list)
++DECLCB(char, shim_message_menu,(CHAR_P let, int how, const char *mesg), "ciis", A2P let, A2P how, P2V mesg)
++VDECLCB(shim_mark_synch,(void), "v")
++VDECLCB(shim_wait_synch,(void), "v")
++VDECLCB(shim_cliparound,(int x, int y), "vii", A2P x, A2P y)
++VDECLCB(shim_update_positionbar,(char *posbar), "vp", P2V posbar)
++
++VDECLCB(shim_print_glyph,(winid w, int x, int y, int glyph, int bkglyph), "viiiii", A2P w, A2P x, A2P y, A2P glyph, A2P bkglyph)
++
++// VDECLCB(shim_print_tile,(winid w, int x, int y, int tile), "viiii", A2P w, A2P x, A2P y, A2P tile)
++// void shim_print_glyph(winid w, int x, int y, int glyph, int bkglyph) 
++// {
++//     shim_print_tile(w, x, y, glyph2tile[glyph]);
++// }
++
++VDECLCB(shim_raw_print,(const char *str), "vs", P2V str)
++VDECLCB(shim_raw_print_bold,(const char *str), "vs", P2V str)
++DECLCB(int, shim_nhgetch,(void), "i")
++DECLCB(int, shim_nh_poskey,(int *x, int *y, int *mod), "iooo", P2V x, P2V y, P2V mod)
++VDECLCB(shim_nhbell,(void), "v")
++DECLCB(int, shim_doprev_message,(void),"iv")
++DECLCB(char, shim_yn_function,(const char *query, const char *resp, CHAR_P def), "cssi", P2V query, P2V resp, A2P def)
++VDECLCB(shim_getlin,(const char *query, char *bufp), "vso", P2V query, P2V bufp)
++DECLCB(int,shim_get_ext_cmd,(void),"iv")
++VDECLCB(shim_number_pad,(int state), "vi", A2P state)
++VDECLCB(shim_delay_output,(void), "v")
++VDECLCB(shim_change_color,(int color, long rgb, int reverse), "viii", A2P color, A2P rgb, A2P reverse)
++VDECLCB(shim_change_background,(int white_or_black), "vi", A2P white_or_black)
++DECLCB(short, set_shim_font_name,(winid window_type, char *font_name),"2is", A2P window_type, P2V font_name)
++DECLCB(char *,shim_get_color_string,(void),"sv")
++
++/* other defs that really should go away (they're tty specific) */
++VDECLCB(shim_start_screen, (void), "v")
++VDECLCB(shim_end_screen, (void), "v")
++VDECLCB(shim_preference_update, (const char *pref), "vp", P2V pref)
++DECLCB(char *,shim_getmsghistory, (BOOLEAN_P init), "si", A2P init)
++VDECLCB(shim_putmsghistory, (const char *msg, BOOLEAN_P restoring_msghist), "vsi", P2V msg, A2P restoring_msghist)
++VDECLCB(shim_status_init, (void), "v")
++VDECLCB(shim_status_enablefield,
++    (int fieldidx, const char *nm, const char *fmt, BOOLEAN_P enable),
++    "vippi",
++    A2P fieldidx, P2V nm, P2V fmt, A2P enable)
++/* XXX: the second argument to shim_status_update is sometimes an integer and sometimes a pointer */
++VDECLCB(shim_status_update,
++    (int fldidx, genericptr_t ptr, int chg, int percent, int color, unsigned long *colormasks),
++    "vioiiip",
++    A2P fldidx, P2V ptr, A2P chg, A2P percent, A2P color, P2V colormasks)
++
++	/* XXX: calling display_inventory() from shim_update_inventory() causes reentrancy that breaks emscripten Asyncify */
++/* this should be fine since according to windows.doc, the only purpose of shim_update_inventory() is to call display_inventory() */
++void shim_update_inventory() {
++    if(iflags.perm_invent) {
++        display_inventory(NULL, FALSE);
++    }
++}
++
++// Not in 3.7
++VDECLCB(shim_outrip, (winid window, int a, time_t b), "vii", P2V window, P2V a, P2V b)
++boolean shim_can_suspend () {};
 +
 +struct window_procs web_procs = {
 +	"web",
 +	WC_HILITE_PET | WC_MOUSE_SUPPORT,
 +	0L, // wincap2
 +	{1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1}, // disable colors?
-+	web_init_nhwindows,
-+	web_player_selection,
-+	web_askname,
-+	web_get_nh_event,
-+	web_exit_nhwindows,
-+	web_suspend_nhwindows,
-+	web_resume_nhwindows,
-+	web_create_nhwindow,
-+	web_clear_nhwindow,
-+	web_display_nhwindow,
-+	web_destroy_nhwindow,
-+	web_curs,
-+	web_putstr,
-+	web_putmixed,
-+	web_display_file,
-+	web_start_menu,
-+	web_add_menu,
-+	web_end_menu,
-+	web_select_menu,
-+	web_message_menu,
-+	web_update_inventory,
-+	web_mark_synch,
-+	web_wait_synch,
++	shim_init_nhwindows,
++	shim_player_selection,
++	shim_askname,
++	shim_get_nh_event,
++	shim_exit_nhwindows,
++	shim_suspend_nhwindows,
++	shim_resume_nhwindows,
++	shim_create_nhwindow,
++	shim_clear_nhwindow,
++	shim_display_nhwindow,
++	shim_destroy_nhwindow,
++	shim_curs,
++	shim_putstr,
++	genl_putmixed,
++	shim_display_file,
++	shim_start_menu,
++	shim_add_menu,
++	shim_end_menu,
++	shim_select_menu,
++	shim_message_menu,
++	shim_update_inventory,
++	shim_mark_synch,
++	shim_wait_synch,
 +#ifdef CLIPPING
-+	web_cliparound,
++	shim_cliparound,
 +#endif
 +#ifdef POSITIONBAR
-+	web_update_positionbar,
++	shim_update_positionbar,
 +#endif
-+	web_print_glyph,
-+	web_raw_print,
-+	web_raw_print_bold,
-+	web_nhgetch,
-+	web_nh_poskey,
-+	web_nhbell,
-+	web_doprev_message,
-+	web_yn_function,
-+	web_getlin,
-+	web_get_ext_cmd,
-+	web_number_pad,
-+	web_delay_output,
++	shim_print_glyph,
++	shim_raw_print,
++	shim_raw_print_bold,
++	shim_nhgetch,
++	shim_nh_poskey,
++	shim_nhbell,
++	shim_doprev_message,
++	shim_yn_function,
++	shim_getlin,
++	shim_get_ext_cmd,
++	shim_number_pad,
++	shim_delay_output,
 +#ifdef CHANGE_COLOR
-+	web_change_color,
++	shim_change_color,
 +#ifdef MAC
-+	web_change_background,
-+	web_set_font_name,
++	shim_change_background,
++	shim_set_font_name,
 +#endif
-+	web_get_color_string,
++	shim_get_color_string,
 +#endif
-+	web_start_screen,
-+	web_end_screen,
-+	web_outrip,
-+	web_preference_update,
-+	web_getmsghistory,
-+	web_putmsghistory,
-+	web_status_init,
-+	web_status_finish,
-+	web_status_enablefield,
-+	web_status_update,
-+	web_can_suspend,
++	shim_start_screen,
++	shim_end_screen,
++	shim_outrip,
++	shim_preference_update,
++	shim_getmsghistory,
++	shim_putmsghistory,
++	shim_status_init,
++	genl_status_finish,
++	shim_status_enablefield,
++	shim_status_update,
++	shim_can_suspend,
 +};
-\ No newline at end of file
++
++/* convert the C callback to a JavaScript callback */
++EM_JS(void, local_callback, (const char *cb_name, const char *shim_name, void *ret_ptr, const char *fmt_str, void *args), {
++    // Asyncify.handleAsync() is the more logical choice here; however, the stack unrolling in Asyncify is performed by
++    // function call analysis during compilation. Since we are using an indirect callback (cb_name), it can't predict the stack
++    // unrolling and it crashes. Thus we use Asyncify.handleSleep() and wakeUp() to make sure that async doesn't break
++    // Asyncify. For details, see: https://emscripten.org/docs/porting/asyncify.html#optimizing
++    Asyncify.handleSleep(wakeUp => {
++        // convert callback arguments to proper JavaScript varaidic arguments
++        let name = UTF8ToString(shim_name);
++        let fmt = UTF8ToString(fmt_str);
++        let cbName = UTF8ToString(cb_name);
++        // console.log("local_callback:", cbName, fmt, name);
++
++        // get pointer / type conversion helpers
++        let getPointerValue = globalThis.nethackGlobal.helpers.getPointerValue;
++        let setPointerValue = globalThis.nethackGlobal.helpers.setPointerValue;
++
++        reentryMutexLock(name);
++
++        let argTypes = fmt.split("");
++        let retType = argTypes.shift();
++
++        // build array of JavaScript args from WASM parameters
++        let jsArgs = [];
++        for (let i = 0; i < argTypes.length; i++) {
++            let ptr = args + (4*i);
++            let val = getArg(name, ptr, argTypes[i]);
++            jsArgs.push(val);
++        }
++
++        // do the callback
++        let userCallback = globalThis[cbName];
++        runJsEventLoop(() => userCallback.call(this, name, ... jsArgs)).then((retVal) => {
++            // save the return value
++            setPointerValue(name, ret_ptr, retType, retVal);
++            // return
++            setTimeout(() => {
++                reentryMutexUnlock();
++                wakeUp();
++            }, 0);
++        });
++
++        function getArg(name, ptr, type) {
++            return (type === "o")?ptr:getPointerValue(name, getValue(ptr, "*"), type);
++        }
++
++        // setTimeout() with value of '0' is similar to setImmediate() (but setImmediate isn't standard)
++        // this lets the JS loop run for a tick so that other events can occur
++        // XXX: I also tried replacing the for(;;) in allmain.c:moveloop() with emscripten_set_main_loop()
++        // unfortunately that won't work -- if the simulate_infinite_loop arg is false, it falls through
++        // and the program ends;
++        // if is true, it throws an exception to break out of main(), but doesn't get caught because
++        // the stack isn't running under main() anymore...
++        // I think this is suboptimal, but we will have to live with it (for now?)
++        async function runJsEventLoop(cb) {
++            return new Promise((resolve) => {
++                setTimeout(() => {
++                    resolve(cb());
++                }, 0);
++            });
++        }
++
++        function reentryMutexLock(name) {
++            globalThis.nethackGlobal = globalThis.nethackGlobal || {};
++            if(globalThis.nethackGlobal.shimFunctionRunning) {
++                throw new Error(`'${name}' attempting second call to 'local_callback' before '${globalThis.nethackGlobal.shimFunctionRunning}' has finished, will crash emscripten Asyncify. For details see: emscripten.org/docs/porting/asyncify.html#reentrancy`);
++            }
++            globalThis.nethackGlobal.shimFunctionRunning = name;
++        }
++
++        function reentryMutexUnlock() {
++            globalThis.nethackGlobal.shimFunctionRunning = null;
++        }
++    });
++})

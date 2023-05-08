@@ -62,7 +62,7 @@ fs.readFile(WIN_PROCS_FILE, 'utf8', (err, data) => {
 			const match = line.match(/\(\*(win_[a-z_]+)\)/);
 			if (match) {
 				const fn = match[1];
-				const new_fn = fn.replace('win_', 'web_');
+				const new_fn = fn.replace('win_', 'shim_'); // in 3.7 it will be called shim
 				contentC += '\t' + new_fn + ',\n';
 
 				const nMatch = line.indexOf('NDECL')
@@ -116,11 +116,11 @@ fs.readFile(WIN_PROCS_FILE, 'utf8', (err, data) => {
 		console.log('Created ' + OUTPUT_C);
 	});
 
-	fs.writeFile(OUTPUT_JS, contentJS, (err) => {
-		if (err) {
-			console.error(err);
-			return;
-		}
-		console.log('Created ' + OUTPUT_JS);
-	});
+	// fs.writeFile(OUTPUT_JS, contentJS, (err) => {
+	// 	if (err) {
+	// 		console.error(err);
+	// 		return;
+	// 	}
+	// 	console.log('Created ' + OUTPUT_JS);
+	// });
 });
