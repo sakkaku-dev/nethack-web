@@ -40,7 +40,9 @@ fs.readFile(WIN_PROCS_FILE, 'utf8', (err, data) => {
 \t0L, // wincap2
 \t{1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1}, // disable colors?
 `;
-	let contentJS = '';
+	let contentJS = 'var LibraryNetHack = {\n';
+	contentJS += '\t$nethack_deps: [],\n';
+	contentJS += '\t$nethack: {\n';
 
 	let line = '';
 	normalized.split('\n').forEach((l) => {
@@ -73,15 +75,21 @@ fs.readFile(WIN_PROCS_FILE, 'utf8', (err, data) => {
 				}
 
 				if (returnType) {
-					if (nMatch !== -1)
-						functionsC += returnType + ' ' + new_fn + '();\n';
+					if (nMatch !== -1) {
+						functionsC += `extern ${returnType} ${new_fn} ();\n`;
+						contentJS += `\t${new_fn}: () => {},\n`;
+					}
 					else if (fMatch !== -1) {
 						const paramMatch = line.match(/,.*\((.*)\)\);/);
 						if (paramMatch) {
 							let varName = 'a'.charCodeAt(0);
 							const param = paramMatch[1].split(',');
 							const paramLine = param.map(p => p.trim() + ' ' + String.fromCharCode(varName++)).join(', ');
-							functionsC += `${returnType} ${new_fn}(${paramLine}){}\n`;
+							functionsC += `extern ${returnType} ${new_fn}(${paramLine}); \n`;
+
+							varName = 'a'.charCodeAt(0);
+							const paramJS = param.map(p => String.fromCharCode(varName++)).join(', ');
+							contentJS += `\t${new_fn}: (${paramJS}) => {},\n`;
 						} else {
 							console.warn('Could not find params for ' + fn);
 						}
@@ -94,6 +102,10 @@ fs.readFile(WIN_PROCS_FILE, 'utf8', (err, data) => {
 	});
 
 	contentC += '};';
+	contentJS += '\t},\n';
+	contentJS += '};\n';
+	contentJS += `autoAddDeps(LibraryNetHack, '$nethack');\n`;
+	contentJS += 'mergeInto(LibraryManager.library, LibraryNetHack);';
 
 	includes = '#include "hack.h"\n#include <emscripten/emscripten.h>\n\n';
 	fs.writeFile(OUTPUT_C, `${includes}${functionsC}\n\n${contentC}`, (err) => {
@@ -102,5 +114,13 @@ fs.readFile(WIN_PROCS_FILE, 'utf8', (err, data) => {
 			return;
 		}
 		console.log('Created ' + OUTPUT_C);
+	});
+
+	fs.writeFile(OUTPUT_JS, contentJS, (err) => {
+		if (err) {
+			console.error(err);
+			return;
+		}
+		console.log('Created ' + OUTPUT_JS);
 	});
 });
