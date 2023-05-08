@@ -19,22 +19,22 @@
     window.nethackJS.sendInput(ev.keyCode);
   };
 
-  setTimeout(() => {
-    const dataContainer = document.querySelector("#data");
-    const values = window.nethackGlobal.constants;
-    Object.keys(values).forEach((key) => {
-      const value = values[key];
-      const div = document.createElement("div");
+  // setTimeout(() => {
+  //   const dataContainer = document.querySelector("#data");
+  //   const values = window.nethackGlobal.constants;
+  //   Object.keys(values).forEach((key) => {
+  //     const value = values[key];
+  //     const div = document.createElement("div");
 
-      Object.keys(value)
-        .filter((x) => isNaN(parseInt(x)))
-        .forEach((key) => {
-          const child = document.createElement("div");
-          child.innerHTML = `${key}: ${value[key]}`;
-          div.appendChild(child);
-        });
+  //     Object.keys(value)
+  //       .filter((x) => isNaN(parseInt(x)))
+  //       .forEach((key) => {
+  //         const child = document.createElement("div");
+  //         child.innerHTML = `${key}: ${value[key]}`;
+  //         div.appendChild(child);
+  //       });
 
-      dataContainer.appendChild(div);
-    });
-  }, 2000);
+  //     dataContainer.appendChild(div);
+  //   });
+  // }, 2000);
 </script>

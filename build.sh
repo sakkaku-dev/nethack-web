@@ -5,12 +5,12 @@ MYDIR="$(pwd)"
 
 stage1() {
 pushd NetHack
-	pushd sys/unix
-		./setup.sh hints/linux
-	popd
+	# pushd sys/unix
+	# 	./setup.sh hints/linux
+	# popd
 
-	make spotless
-	make
+	# make spotless
+	# make
 
 	# Build dat files, added with --preload-file
 	make install PREFIX="$MYDIR/build"
@@ -22,7 +22,7 @@ popd
 
 stage2() {
 pushd NetHack/src
-	# touch allmain.c
+	touch allmain.c
 	make PREFIX="$MYDIR/build"
 
 	cp nethack $MYDIR/lib/nethack.js

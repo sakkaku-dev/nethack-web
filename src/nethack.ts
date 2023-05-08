@@ -14,10 +14,12 @@ Module.onRuntimeInitialized = () => {
       async: true,
     }
   );
+  console.log('Connect');
 };
 Module.preRun = [
   () => {
     Module.ENV["USER"] = "web_user"; // TODO: get name
+    console.log('Preapre');
   },
 ];
 
