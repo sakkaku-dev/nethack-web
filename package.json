@@ -2,7 +2,6 @@
   "name": "nethack-godot",
   "version": "1.0.0",
   "description": "Nethack for the web using godot as the UI.",
-  "type": "module",
   "scripts": {
     "prepare:nethack": "cd NetHack && git apply ../lib/fixes.diff",
     "setup:nethack": "cd NetHack/sys/unix && ./setup.sh hints/linux",

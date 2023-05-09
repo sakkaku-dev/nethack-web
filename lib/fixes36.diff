@@ -380,7 +380,7 @@ index 78e9d725f..2fbe8a27e 100644
 -		tilemap tileedit tile2bmp
 +		tilemap.js tileedit tile2bmp
 diff --git a/sys/unix/hints/linux b/sys/unix/hints/linux
-index 862915053..458c06b93 100644
+index 862915053..e5e4f1fa8 100644
 --- a/sys/unix/hints/linux
 +++ b/sys/unix/hints/linux
 @@ -11,37 +11,54 @@
@@ -417,23 +417,23 @@ index 862915053..458c06b93 100644
  #CFLAGS+=-DTTY_TILES_ESCCODES
  
 +CC=emcc
-+CFLAGS+= -DWEB_GRAPHICS -DNOTTYGRAPHICS
++CFLAGS+= -DWEB_GRAPHICS -DNOTTYGRAPHICS -Wno-undefined -Wno-deprecated-non-prototype
 +GAME=
 +
  LINK=$(CC)
  # Only needed for GLIBC stack trace:
 -LFLAGS=-rdynamic
-+LFLAGS =-rdynamic -lnodefs.js -s ASYNCIFY 
++LFLAGS = -rdynamic -lnodefs.js -Wno-undefined
 +LFLAGS += -s ERROR_ON_UNDEFINED_SYMBOLS=0
 +LFLAGS += -s WASM=1
 +LFLAGS += -s ALLOW_TABLE_GROWTH
++
 +LFLAGS += -s ASYNCIFY -s ASYNCIFY_IMPORTS='["local_callback"]'
 +# LFLAGS += -O3
-+LFLAGS += -s MODULARIZE
-+LFLAGS += --preload-file $(PREFIX)/nethack
-+LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback", "_mapglyph", "_display_inventory"]'
-+LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", \
-+			"removeFunction", "UTF8ToString", "getValue", "setValue"]'
++# LFLAGS += -s MODULARIZE
++# LFLAGS += --preload-file $(PREFIX)/nethack
++# LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback"]'
++# LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", "removeFunction", "UTF8ToString", "getValue", "setValue"]'
 +
 +WINWEBSRC = ../win/web/web.c tile.c
 +WINWEBOBJ = web.o tile.o
