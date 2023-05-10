@@ -271,14 +271,14 @@ index ad7607cd9..c9124e17f 100644
  # recover can be used when INSURANCE is defined in include/config.h
  # and the checkpoint option is true
 diff --git a/sys/unix/Makefile.utl b/sys/unix/Makefile.utl
-index 78e9d725f..2fbe8a27e 100644
+index 78e9d725f..b94b1d7f9 100644
 --- a/sys/unix/Makefile.utl
 +++ b/sys/unix/Makefile.utl
 @@ -102,6 +102,8 @@ NHSROOT=..
  # we avoid that by forcing it empty rather than by overriding default rules
  CPPFLAGS =
  
-+UTIL_CFLAGS = --pre-js ../win/web/mount_nodefs.js 
++UTIL_CFLAGS = --pre-js ../win/web/mount_nodefs.js
 +
  LIBS =
  
@@ -380,25 +380,22 @@ index 78e9d725f..2fbe8a27e 100644
 -		tilemap tileedit tile2bmp
 +		tilemap.js tileedit tile2bmp
 diff --git a/sys/unix/hints/linux b/sys/unix/hints/linux
-index 862915053..1287afbdd 100644
+index 862915053..9b82a0406 100644
 --- a/sys/unix/hints/linux
 +++ b/sys/unix/hints/linux
-@@ -9,39 +9,55 @@
- # for Ubuntu dapper.
+@@ -11,8 +11,8 @@
  
- 
--#PREFIX=/usr
--PREFIX=$(wildcard ~)/nh/install
+ #PREFIX=/usr
+ PREFIX=$(wildcard ~)/nh/install
 -HACKDIR=$(PREFIX)/games/lib/$(GAME)dir
 -SHELLDIR = $(PREFIX)/games
-+#PREFIX=$(wildcard ~)/nh/install
 +HACKDIR=$(PREFIX)/nethack
-+SHELLDIR = $(HACKDIR)
++SHELLDIR = $(PREFIX)/nethack
  INSTDIR=$(HACKDIR)
  VARDIR = $(HACKDIR)
  
+@@ -20,28 +20,46 @@ VARDIR = $(HACKDIR)
  
--
  POSTINSTALL=cp -n sys/unix/sysconf $(INSTDIR)/sysconf; $(CHOWN) $(GAMEUID) $(INSTDIR)/sysconf; $(CHGRP) $(GAMEGRP) $(INSTDIR)/sysconf; chmod $(VARFILEPERM) $(INSTDIR)/sysconf;
  
 -CFLAGS=-g -O -I../include -DNOTPARMDECL
@@ -434,9 +431,9 @@ index 862915053..1287afbdd 100644
 +LFLAGS += -O3
 +LFLAGS += -s ASYNCIFY -s ASYNCIFY_IMPORTS='["local_callback"]'
 +LFLAGS += -s MODULARIZE
-+LFLAGS += --preload-file $(BUILD_DIR)/nethack@/nethack
++LFLAGS += --preload-file $(PREFIX)/nethack@/nethack
 +LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback"]'
-+LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", "removeFunction", "UTF8ToString", "getValue", "setValue"]'
++LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", "removeFunction", "UTF8ToString", "getValue", "setValue", "ENV"]'
 +
 +WINWEBSRC = ../win/web/web.c tile.c
 +WINWEBOBJ = web.o tile.o
@@ -840,22 +837,10 @@ index 1e7880165..074901343 100644
 +#endif
 \ No newline at end of file
 diff --git a/util/makedefs.c b/util/makedefs.c
-index cd971bcc0..2cbc030a8 100644
+index cd971bcc0..bb36cd5f6 100644
 --- a/util/makedefs.c
 +++ b/util/makedefs.c
-@@ -7,6 +7,11 @@
- 
- #define MAKEDEFS_C /* use to conditionally include file sections */
- 
-+#include <unistd.h>
-+#include <stdio.h>
-+#include <limits.h>
-+#include <dirent.h>
-+
- #include "config.h"
- #ifdef MONITOR_HEAP
- #undef free /* makedefs doesn't use the alloc and free in src/alloc.c */
-@@ -1544,6 +1549,9 @@ build_savebones_compat_string()
+@@ -1544,6 +1544,9 @@ build_savebones_compat_string()
  }
  
  static const char *build_opts[] = {
@@ -865,7 +850,7 @@ index cd971bcc0..2cbc030a8 100644
  #ifdef AMIGA_WBENCH
      "Amiga WorkBench support",
  #endif
-@@ -1747,6 +1755,9 @@ static struct win_info window_opts[] = {
+@@ -1747,6 +1750,9 @@ static struct win_info window_opts[] = {
  #endif
      },
  #endif
@@ -875,14 +860,6 @@ index cd971bcc0..2cbc030a8 100644
  #ifdef CURSES_GRAPHICS
      { "curses", "terminal-based graphics" },
  #endif
-@@ -2790,6 +2801,7 @@ do_objs()
-     Strcat(filename, file_prefix);
- #endif
-     Sprintf(eos(filename), INCLUDE_TEMPLATE, ONAME_FILE);
-+
-     if (!(ofp = fopen(filename, WRTMODE))) {
-         perror(filename);
-         exit(EXIT_FAILURE);
 diff --git a/win/web/mount_nodefs.js b/win/web/mount_nodefs.js
 new file mode 100644
 index 000000000..cfdd94d72
@@ -915,7 +892,7 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..c09326ce0
+index 000000000..aa5e51c55
 --- /dev/null
 +++ b/win/web/web.c
 @@ -0,0 +1,268 @@
@@ -1123,7 +1100,7 @@ index 000000000..c09326ce0
 +        let name = UTF8ToString(shim_name);
 +        let fmt = UTF8ToString(fmt_str);
 +        let cbName = UTF8ToString(cb_name);
-+        console.log("local_callback:", cbName, fmt, name);
++        // console.log("local_callback:", cbName, fmt, name);
 +
 +        // get pointer / type conversion helpers
 +        let getPointerValue = globalThis.nethackGlobal.helpers.getPointerValue;

@@ -22,12 +22,11 @@ pushd NetHack
 		sed -e '/ASYNCIFY/ s/^#*/#/' -i hints/linux
 		sed -e '/MODULARIZE/ s/^#*/#/' -i hints/linux
 
-		sed -e '/PREFIX=\$/ s/^#//g' -i hints/linux
 		./setup.sh hints/linux
 	popd
 	echo "Setup Makefile for unix"
 
-	make spotless
+	# make spotless
 
 	# Cannot build from the root
 	pushd util
@@ -50,9 +49,9 @@ pushd NetHack
 
 	# Build dat files, added with --preload-file
 	make install PREFIX=$PREFIX
-	rm $MYDIR/build/nethack/nethack
-	rm $MYDIR/build/nethack/recover
-	cp $MYDIR/src/nethackrc.default $MYDIR/build/nethack/
+	rm $PREFIX/nethack/nethack
+	rm $PREFIX/nethack/recover
+	cp $MYDIR/src/nethackrc.default $PREFIX/nethack/
 	echo "Built data files in $PREFIX"
 popd
 sed -e '/"description":/a \ \ "type": "module",' -i package.json
@@ -68,12 +67,11 @@ pushd NetHack/src
 		sed -e '/ASYNCIFY/ s/^#//g' -i hints/linux
 		sed -e '/MODULARIZE/ s/^#//g' -i hints/linux
 
-		sed -e '/PREFIX=\$/ s/^#*/#/' -i hints/linux
 		./setup.sh hints/linux
 	popd
 
 	touch allmain.c
-	make BUILD_DIR="$MYDIR/build" HACKDIR=/
+	make PREFIX="$PREFIX"
 
 	cp nethack $MYDIR/lib/nethack.js
 	cp nethack.wasm $MYDIR/lib/nethack.wasm

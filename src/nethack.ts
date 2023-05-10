@@ -5,12 +5,20 @@ import { NetHackWrapper } from "./nethack-wrapper";
 
 const Module: any = {};
 Module.onRuntimeInitialized = () => {
-  Module.ccall("shim_graphics_set_callback", null, ["string"], ["nethackCallback"], {
-    async: true,
-  });
+  Module.ccall(
+    "shim_graphics_set_callback",
+    null,
+    ["string"],
+    ["nethackCallback"],
+    {
+      async: true,
+    }
+  );
 };
 Module.preRun = [
   () => {
+    console.log(Module.ENV);
+    Module.ENV["NETHACKDIR"] = "/nethack";
     // Module.ENV["USER"] = "web_user"; // TODO: get name
   },
 ];
