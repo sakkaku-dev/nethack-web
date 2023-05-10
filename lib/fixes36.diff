@@ -380,17 +380,20 @@ index 78e9d725f..2fbe8a27e 100644
 -		tilemap tileedit tile2bmp
 +		tilemap.js tileedit tile2bmp
 diff --git a/sys/unix/hints/linux b/sys/unix/hints/linux
-index 862915053..e5e4f1fa8 100644
+index 862915053..0945853e6 100644
 --- a/sys/unix/hints/linux
 +++ b/sys/unix/hints/linux
-@@ -11,37 +11,54 @@
+@@ -9,39 +9,55 @@
+ # for Ubuntu dapper.
  
- #PREFIX=/usr
- PREFIX=$(wildcard ~)/nh/install
+ 
+-#PREFIX=/usr
+-PREFIX=$(wildcard ~)/nh/install
 -HACKDIR=$(PREFIX)/games/lib/$(GAME)dir
 -SHELLDIR = $(PREFIX)/games
++#PREFIX=$(wildcard ~)/nh/install
 +HACKDIR=$(PREFIX)/nethack
-+SHELLDIR = $(PREFIX)/nethack
++SHELLDIR = $(HACKDIR)
  INSTDIR=$(HACKDIR)
  VARDIR = $(HACKDIR)
  
@@ -417,23 +420,23 @@ index 862915053..e5e4f1fa8 100644
  #CFLAGS+=-DTTY_TILES_ESCCODES
  
 +CC=emcc
-+CFLAGS+= -DWEB_GRAPHICS -DNOTTYGRAPHICS -Wno-undefined -Wno-deprecated-non-prototype
++CFLAGS+= -DWEB_GRAPHICS -DNOTTYGRAPHICS -Wno-undefined
 +GAME=
 +
  LINK=$(CC)
  # Only needed for GLIBC stack trace:
 -LFLAGS=-rdynamic
-+LFLAGS = -rdynamic -lnodefs.js -Wno-undefined
++LFLAGS = -rdynamic
++LFLAGS += -lnodefs.js -Wno-undefined
 +LFLAGS += -s ERROR_ON_UNDEFINED_SYMBOLS=0
-+LFLAGS += -s WASM=1
-+LFLAGS += -s ALLOW_TABLE_GROWTH
++# LFLAGS += -s WASM=1 -s ALLOW_TABLE_GROWTH
 +
-+LFLAGS += -s ASYNCIFY -s ASYNCIFY_IMPORTS='["local_callback"]'
++ LFLAGS += -s ASYNCIFY -s ASYNCIFY_IMPORTS='["local_callback"]'
 +# LFLAGS += -O3
-+# LFLAGS += -s MODULARIZE
-+# LFLAGS += --preload-file $(PREFIX)/nethack
-+# LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback"]'
-+# LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", "removeFunction", "UTF8ToString", "getValue", "setValue"]'
++ LFLAGS += -s MODULARIZE
++ LFLAGS += --preload-file $(BUILD_DIR)/nethack@/nethack
++ LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback"]'
++ LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", "removeFunction", "UTF8ToString", "getValue", "setValue"]'
 +
 +WINWEBSRC = ../win/web/web.c tile.c
 +WINWEBOBJ = web.o tile.o
@@ -912,10 +915,10 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..159e83762
+index 000000000..c09326ce0
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,266 @@
+@@ -0,0 +1,268 @@
 +#include "hack.h"
 +#include <emscripten/emscripten.h>
 +
@@ -1038,7 +1041,9 @@ index 000000000..159e83762
 +
 +// Not in 3.7
 +VDECLCB(shim_outrip, (winid window, int a, time_t b), "vii", P2V window, P2V a, P2V b)
-+boolean shim_can_suspend () {};
++boolean shim_can_suspend () {
++    return 0;
++};
 +
 +struct window_procs web_procs = {
 +	"web",
@@ -1118,7 +1123,7 @@ index 000000000..159e83762
 +        let name = UTF8ToString(shim_name);
 +        let fmt = UTF8ToString(fmt_str);
 +        let cbName = UTF8ToString(cb_name);
-+        // console.log("local_callback:", cbName, fmt, name);
++        console.log("local_callback:", cbName, fmt, name);
 +
 +        // get pointer / type conversion helpers
 +        let getPointerValue = globalThis.nethackGlobal.helpers.getPointerValue;

@@ -1,10 +1,16 @@
 #/bin/sh
 
+# TODO: Activate emscripten 2.0.34
+
 # Following most steps from BrowserHack build.sh
 MYDIR="$(pwd)"
 PREFIX="$MYDIR/build"
 
+# These workarounds should not be needed once we upgrade to 3.7
+# Just need to get it to work
+
 stage1() {
+# Preparing everything for the final build in stage2
 sed -e '/"type":/d' -i package.json
 npm run setup:nethack
 
@@ -15,11 +21,13 @@ pushd NetHack
 		sed -e '/EXPORTED_/ s/^#*/#/' -i hints/linux
 		sed -e '/ASYNCIFY/ s/^#*/#/' -i hints/linux
 		sed -e '/MODULARIZE/ s/^#*/#/' -i hints/linux
+
+		sed -e '/PREFIX=\$/ s/^#//g' -i hints/linux
 		./setup.sh hints/linux
 	popd
 	echo "Setup Makefile for unix"
 
-	make spotless
+	# make spotless
 
 	# Cannot build from the root
 	pushd util
@@ -37,18 +45,8 @@ pushd NetHack
 	popd
 	echo "Built tile.c"
 
-	pushd sys/unix
-		# enable emscripten specific flags again
-		sed -e '/--preload-file/s/^#//g' -i hints/linux
-		sed -e '/EXPORTED_/s/^#//g' -i hints/linux
-		sed -e '/ASYNCIFY/ s/^#//g' -i hints/linux
-		sed -e '/MODULARIZE/ s/^#//g' -i hints/linux
-		./setup.sh hints/linux
-	popd
-	echo "Setup Makefile for nethack"
-
-	make 
-	echo "Built nethack"
+	make # check if really needed
+	echo "Prepare nethack" 
 
 	# Build dat files, added with --preload-file
 	make install PREFIX=$PREFIX
@@ -61,14 +59,27 @@ sed -e '/"description":/a \ \ "type": "module",' -i package.json
 }
 
 stage2() {
+sed -e '/"type":/d' -i package.json
 pushd NetHack/src
+	pushd ../sys/unix
+		# enable emscripten specific flags again
+		sed -e '/--preload-file/s/^#//g' -i hints/linux
+		sed -e '/EXPORTED_/s/^#//g' -i hints/linux
+		sed -e '/ASYNCIFY/ s/^#//g' -i hints/linux
+		sed -e '/MODULARIZE/ s/^#//g' -i hints/linux
+
+		sed -e '/PREFIX=\$/ s/^#*/#/' -i hints/linux
+		./setup.sh hints/linux
+	popd
+
 	touch allmain.c
-	make PREFIX=$PREFIX
+	make BUILD_DIR="$MYDIR/build" HACKDIR=/
 
 	cp nethack $MYDIR/lib/nethack.js
 	cp nethack.wasm $MYDIR/lib/nethack.wasm
 	cp nethack.data $MYDIR/lib/nethack.data
 popd
+sed -e '/"description":/a \ \ "type": "module",' -i package.json
 }
 
-stage1
+stage2
