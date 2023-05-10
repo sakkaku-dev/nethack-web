@@ -5,21 +5,13 @@ import { NetHackWrapper } from "./nethack-wrapper";
 
 const Module: any = {};
 Module.onRuntimeInitialized = () => {
-  Module.ccall(
-    "shim_graphics_set_callback",
-    null,
-    ["string"],
-    ["nethackCallback"],
-    {
-      async: true,
-    }
-  );
-  console.log('Connect');
+  Module.ccall("shim_graphics_set_callback", null, ["string"], ["nethackCallback"], {
+    async: true,
+  });
 };
 Module.preRun = [
   () => {
-    Module.ENV["USER"] = "web_user"; // TODO: get name
-    console.log('Preapre');
+    // Module.ENV["USER"] = "web_user"; // TODO: get name
   },
 ];
 
@@ -47,25 +39,26 @@ Module.preRun = [
 
 // window.nethackJS = wrapper;
 
-
 let winCount = 0;
-async function doGraphics(name: string, ... args: string[]) {
-    console.log(`shim graphics: ${name} [${args}]`);
+async function doGraphics(name: string, ...args: string[]) {
+  console.log(`shim graphics: ${name} [${args}]`);
 
-    switch(name) {
+  switch (name) {
     case "shim_create_nhwindow":
-        winCount++;
-        console.log("creating window", args, "returning", winCount);
-        return winCount;
+      winCount++;
+      console.log("creating window", args, "returning", winCount);
+      return winCount;
     case "shim_yn_function":
     case "shim_message_menu":
-        return 121; // return 'y' to all questions
+      return 121; // return 'y' to all questions
     case "shim_nhgetch":
     case "shim_nh_poskey":
-        return 0; // simulates a mouse click on "exit up the stairs"
+      return 0; // simulates a mouse click on "exit up the stairs"
+    case "shim_getmsghistory":
+      return "";
     default:
-        return 0;
-    }
+      return 0;
+  }
 }
 
 window.nethackCallback = doGraphics;

@@ -380,7 +380,7 @@ index 78e9d725f..2fbe8a27e 100644
 -		tilemap tileedit tile2bmp
 +		tilemap.js tileedit tile2bmp
 diff --git a/sys/unix/hints/linux b/sys/unix/hints/linux
-index 862915053..0945853e6 100644
+index 862915053..1287afbdd 100644
 --- a/sys/unix/hints/linux
 +++ b/sys/unix/hints/linux
 @@ -9,39 +9,55 @@
@@ -431,12 +431,12 @@ index 862915053..0945853e6 100644
 +LFLAGS += -s ERROR_ON_UNDEFINED_SYMBOLS=0
 +# LFLAGS += -s WASM=1 -s ALLOW_TABLE_GROWTH
 +
-+ LFLAGS += -s ASYNCIFY -s ASYNCIFY_IMPORTS='["local_callback"]'
-+# LFLAGS += -O3
-+ LFLAGS += -s MODULARIZE
-+ LFLAGS += --preload-file $(BUILD_DIR)/nethack@/nethack
-+ LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback"]'
-+ LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", "removeFunction", "UTF8ToString", "getValue", "setValue"]'
++LFLAGS += -O3
++LFLAGS += -s ASYNCIFY -s ASYNCIFY_IMPORTS='["local_callback"]'
++LFLAGS += -s MODULARIZE
++LFLAGS += --preload-file $(BUILD_DIR)/nethack@/nethack
++LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback"]'
++LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", "removeFunction", "UTF8ToString", "getValue", "setValue"]'
 +
 +WINWEBSRC = ../win/web/web.c tile.c
 +WINWEBOBJ = web.o tile.o

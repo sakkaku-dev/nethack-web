@@ -27,7 +27,7 @@ pushd NetHack
 	popd
 	echo "Setup Makefile for unix"
 
-	# make spotless
+	make spotless
 
 	# Cannot build from the root
 	pushd util
