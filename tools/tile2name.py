@@ -5,7 +5,7 @@ import re
 import json
 
 FILES = ['monsters.txt', 'objects.txt', 'other.txt']
-DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'share')
+DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../NetHack/win', 'share')
 OUT_FILE = 'tilenames.json'
 PATTERN = re.compile(r'^# tile (\d+) \((.*?)\)$', re.MULTILINE)
 

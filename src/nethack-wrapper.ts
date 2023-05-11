@@ -29,7 +29,7 @@ export class NetHackWrapper implements NetHackJS {
     [Command.DESTROY_WINDOW]: async (winid: number) => this.onCloseDialog$.next(winid),
 
     // Text / Dialog
-    [Command.PUTSTR]: async (winid, attr, str) => (this.putStr += str + "\n"),
+    [Command.PUTSTR]: this.handlePutStr.bind(this),
     [Command.RAW_PRINT]: async (str) => this.onPrint$.next(str),
     [Command.RAW_PRINT_BOLD]: async (str) => this.onPrint$.next(str),
 
@@ -62,7 +62,7 @@ export class NetHackWrapper implements NetHackJS {
       return await firstValueFrom(this.input$);
     },
     [Command.ASK_NAME]: async () => await firstValueFrom(this.input$),
-    [Command.DISPLAY_FILE]: this.displayFile.bind(this),
+    // [Command.DISPLAY_FILE]: this.displayFile.bind(this),
 
     // TODO: message_menu
     // TODO: select_menu with yn_function
@@ -126,12 +126,12 @@ export class NetHackWrapper implements NetHackJS {
       .subscribe();
   }
 
-  private async displayFile(file: string, complain: number) {
-    const text = this.module.FS.readFile("/dat/" + file, { encoding: "utf8" });
-    this.onDialog$.next({ id: -1, text });
-    await this.waitContinueKey();
-    this.onCloseDialog$.next(-1);
-  }
+  // private async displayFile(file: string, complain: number) {
+  //   const text = this.module.FS.readFile(file, { encoding: "utf8" });
+  //   this.onDialog$.next({ id: -1, text });
+  //   await this.waitContinueKey();
+  //   this.onCloseDialog$.next(-1);
+  // }
 
   public selectMenu(items: number[]) {
     console.log("Selected menu", items);
@@ -263,16 +263,75 @@ export class NetHackWrapper implements NetHackJS {
     return 0;
   }
 
+  private async handlePutStr(winid: number, attr: any, str: string) {
+    if (winid === window.nethackGlobal.globals.WIN_STATUS) {
+      // 3.6 updates the status with putStr:
+      // Web_user the Aspirant        St:9 Dx:12 Co:15 In:9 Wi:18 Ch:12  Lawful
+      // Dlvl:1  $:0  HP:14(14) Pw:8(8) AC:7  Exp:1
+
+      const status = this.status$.value;
+      if (str.match(/St:.*Dx:.*/)) {
+        const [user, stats, align] = str.split("  ");
+
+        let m = stats.match(/St:(\d+) Dx:(\d+) Co:(\d+) In:(\d+) Wi:(\d+) Ch:(\d+)/);
+        if (m) {
+          statusMap[STATUS_FIELD.BL_STR](status, m[1]);
+          statusMap[STATUS_FIELD.BL_DX](status, m[2]);
+          statusMap[STATUS_FIELD.BL_CO](status, m[3]);
+          statusMap[STATUS_FIELD.BL_IN](status, m[4]);
+          statusMap[STATUS_FIELD.BL_WI](status, m[5]);
+          statusMap[STATUS_FIELD.BL_CH](status, m[6]);
+        }
+
+        statusMap[STATUS_FIELD.BL_ALIGN](status, align.trim());
+
+        m = user.match(/([a-zA-z]+) ([a-zA-z\s]+)/);
+        if (m) {
+          const player = m[1]; // TODO: ?
+          statusMap[STATUS_FIELD.BL_TITLE](status, m[2]);
+        }
+      } else {
+        let m = str.match(/Dlvl:(\d+)/);
+        if (m) statusMap[STATUS_FIELD.BL_LEVELDESC](status, m[1]);
+
+        m = str.match(/\$:(\d+)/);
+        if (m) statusMap[STATUS_FIELD.BL_GOLD](status, m[1]);
+
+        m = str.match(/HP:(\d+)\((\d+)\)/);
+        if (m) {
+          statusMap[STATUS_FIELD.BL_HP](status, m[1]);
+          statusMap[STATUS_FIELD.BL_HPMAX](status, m[2]);
+        }
+
+        m = str.match(/Pw:(\d+)\((\d+)\)/);
+        if (m) {
+          statusMap[STATUS_FIELD.BL_ENE](status, m[1]);
+          statusMap[STATUS_FIELD.BL_ENEMAX](status, m[2]);
+        }
+
+        m = str.match(/AC:(\d+)/);
+        if (m) statusMap[STATUS_FIELD.BL_AC](status, m[1]);
+
+        m = str.match(/EXP:(\d+)/);
+        if (m) statusMap[STATUS_FIELD.BL_XP](status, m[1]);
+      }
+
+      this.status$.next(status);
+    } else {
+      this.putStr += str + "\n";
+    }
+  }
+
   private async inventoryUpdate(items: Item[]) {
     this.inventory$.next(items);
   }
 
   private async statusUpdate(type: STATUS_FIELD, ptr: number) {
-    const ignored = [STATUS_FIELD.BL_FLUSH, STATUS_FIELD.BL_RESET];
+    // const ignored = [STATUS_FIELD.BL_FLUSH, STATUS_FIELD.BL_RESET];
 
-    if (ignored.includes(type)) {
-      return;
-    }
+    // if (ignored.includes(type)) {
+    //   return;
+    // }
 
     const mapper = statusMap[type];
     if (mapper) {

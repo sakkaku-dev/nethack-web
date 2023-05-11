@@ -112,7 +112,7 @@ interface StatusAll {
 
 export type Status = Partial<StatusAll>;
 
-export const statusMap: Partial<Record<STATUS_FIELD, (s: Status, v: string) => void>> = {
+export const statusMap: Record<STATUS_FIELD, (s: Status, v: string) => void> = {
   [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v),
   [STATUS_FIELD.BL_STR]: (s, v) => (s.str = parseInt(v)),
   [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseInt(v)),
@@ -135,38 +135,45 @@ export const statusMap: Partial<Record<STATUS_FIELD, (s: Status, v: string) => v
   [STATUS_FIELD.BL_EXP]: (s, v) => (s.exp = parseInt(v)),
   [STATUS_FIELD.BL_CONDITION]: (s, v) =>
     (s.condition = conditionMap[parseInt(v) as CONDITION] ?? undefined),
+  // [STATUS_FIELD.BL_CHARACTERISTICS]: () => {},
+  // [STATUS_FIELD.BL_RESET]: () => {},
+  // [STATUS_FIELD.BL_FLUSH]: () => {},
+  [STATUS_FIELD.BL_HD]: () => {},
+  [STATUS_FIELD.BL_TIME]: () => {},
+  // [STATUS_FIELD.MAXBLSTATS]: () => {},
 };
 
 // See mswproc.c
 export const conditionMap: Record<CONDITION, string> = {
-  [CONDITION.BL_MASK_BAREH]: "Bare",
   [CONDITION.BL_MASK_BLIND]: "Blind",
-  [CONDITION.BL_MASK_BUSY]: "Busy",
   [CONDITION.BL_MASK_CONF]: "Conf",
   [CONDITION.BL_MASK_DEAF]: "Deaf",
-  [CONDITION.BL_MASK_ELF_IRON]: "Iron",
   [CONDITION.BL_MASK_FLY]: "Fly",
   [CONDITION.BL_MASK_FOODPOIS]: "FoodPois",
-  [CONDITION.BL_MASK_GLOWHANDS]: "Glow",
-  [CONDITION.BL_MASK_GRAB]: "Grab",
   [CONDITION.BL_MASK_HALLU]: "Hallu",
-  [CONDITION.BL_MASK_HELD]: "Held",
-  [CONDITION.BL_MASK_ICY]: "Icy",
-  [CONDITION.BL_MASK_INLAVA]: "Lava",
   [CONDITION.BL_MASK_LEV]: "Lev",
-  [CONDITION.BL_MASK_PARLYZ]: "Parlyz",
   [CONDITION.BL_MASK_RIDE]: "Ride",
-  [CONDITION.BL_MASK_SLEEPING]: "Zzz",
   [CONDITION.BL_MASK_SLIME]: "Slime",
-  [CONDITION.BL_MASK_SLIPPERY]: "Slip",
   [CONDITION.BL_MASK_STONE]: "Stone",
   [CONDITION.BL_MASK_STRNGL]: "Strngl",
   [CONDITION.BL_MASK_STUN]: "Stun",
-  [CONDITION.BL_MASK_SUBMERGED]: "Sub",
   [CONDITION.BL_MASK_TERMILL]: "TermIll",
-  [CONDITION.BL_MASK_TETHERED]: "Teth",
-  [CONDITION.BL_MASK_TRAPPED]: "Trap",
-  [CONDITION.BL_MASK_UNCONSC]: "Out",
-  [CONDITION.BL_MASK_WOUNDEDL]: "Legs",
-  [CONDITION.BL_MASK_HOLDING]: "Uhold",
+
+  // [CONDITION.BL_MASK_BAREH]: "Bare",
+  // [CONDITION.BL_MASK_BUSY]: "Busy",
+  // [CONDITION.BL_MASK_ELF_IRON]: "Iron",
+  // [CONDITION.BL_MASK_GLOWHANDS]: "Glow",
+  // [CONDITION.BL_MASK_GRAB]: "Grab",
+  // [CONDITION.BL_MASK_HELD]: "Held",
+  // [CONDITION.BL_MASK_ICY]: "Icy",
+  // [CONDITION.BL_MASK_INLAVA]: "Lava",
+  // [CONDITION.BL_MASK_TETHERED]: "Teth",
+  // [CONDITION.BL_MASK_TRAPPED]: "Trap",
+  // [CONDITION.BL_MASK_UNCONSC]: "Out",
+  // [CONDITION.BL_MASK_WOUNDEDL]: "Legs",
+  // [CONDITION.BL_MASK_HOLDING]: "Uhold",
+  // [CONDITION.BL_MASK_SLIPPERY]: "Slip",
+  // [CONDITION.BL_MASK_PARLYZ]: "Parlyz",
+  // [CONDITION.BL_MASK_SLEEPING]: "Zzz",
+  // [CONDITION.BL_MASK_SUBMERGED]: "Sub",
 };

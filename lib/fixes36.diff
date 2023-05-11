@@ -380,7 +380,7 @@ index 78e9d725f..b94b1d7f9 100644
 -		tilemap tileedit tile2bmp
 +		tilemap.js tileedit tile2bmp
 diff --git a/sys/unix/hints/linux b/sys/unix/hints/linux
-index 862915053..9b82a0406 100644
+index 862915053..ef918cae5 100644
 --- a/sys/unix/hints/linux
 +++ b/sys/unix/hints/linux
 @@ -11,8 +11,8 @@
@@ -426,13 +426,13 @@ index 862915053..9b82a0406 100644
 +LFLAGS = -rdynamic
 +LFLAGS += -lnodefs.js -Wno-undefined
 +LFLAGS += -s ERROR_ON_UNDEFINED_SYMBOLS=0
-+# LFLAGS += -s WASM=1 -s ALLOW_TABLE_GROWTH
++LFLAGS += -s WASM=1 -s ALLOW_TABLE_GROWTH
 +
 +LFLAGS += -O3
 +LFLAGS += -s ASYNCIFY -s ASYNCIFY_IMPORTS='["local_callback"]'
 +LFLAGS += -s MODULARIZE
-+LFLAGS += --preload-file $(PREFIX)/nethack@/nethack
-+LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback"]'
++LFLAGS += --preload-file $(DATA_DIR)/nethack@/nethack
++LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback", "_glyph_to_tile", "_malloc"]'
 +LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", "removeFunction", "UTF8ToString", "getValue", "setValue", "ENV"]'
 +
 +WINWEBSRC = ../win/web/web.c tile.c
@@ -892,12 +892,20 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..aa5e51c55
+index 000000000..dd0ba8333
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,268 @@
+@@ -0,0 +1,299 @@
 +#include "hack.h"
++#include "dlb.h"
 +#include <emscripten/emscripten.h>
++
++extern short glyph2tile[];
++
++unsigned glyph_to_tile(int glyph)
++{
++    return glyph2tile[glyph];
++}
 +
 +/* shim_graphics_callback is the primary interface to shim graphics,
 + * call this function with your declared callback function
@@ -952,7 +960,38 @@ index 000000000..aa5e51c55
 +VDECLCB(shim_destroy_nhwindow,(winid window), "vi", A2P window)
 +VDECLCB(shim_curs,(winid a, int x, int y), "viii", A2P a, A2P x, A2P y)
 +VDECLCB(shim_putstr,(winid w, int attr, const char *str), "viis", A2P w, A2P attr, P2V str)
-+VDECLCB(shim_display_file,(const char *name, BOOLEAN_P complain), "vsi", P2V name, A2P complain)
++
++// VDECLCB(shim_display_file,(const char *name, BOOLEAN_P complain), "vsi", P2V name, A2P complain)
++// Reference: wingem.c, Gem_display_file()
++void shim_display_file(fname, complain)
++const char *fname;
++boolean complain;
++{
++    dlb *f;
++    char buf[BUFSZ];
++    char *cr;
++
++    f = dlb_fopen(fname, "r");
++    if (!f) {
++        if (complain)
++            pline("Cannot open \"%s\".", fname);
++    } else {
++        winid datawin;
++
++        datawin = shim_create_nhwindow(NHW_TEXT);
++        while (dlb_fgets(buf, BUFSZ, f)) {
++            if ((cr = index(buf, '\n')) != 0)
++                *cr = 0;
++            if (index(buf, '\t') != 0)
++                (void) tabexpand(buf);
++            shim_putstr(datawin, 0, buf);
++        }
++        (void) dlb_fclose(f);
++        shim_display_nhwindow(datawin, FALSE);
++        shim_destroy_nhwindow(datawin);
++    }
++}
++
 +VDECLCB(shim_start_menu,(winid window), "vi", A2P window)
 +VDECLCB(shim_add_menu,
 +    (winid window, int glyph, const ANY_P *identifier, CHAR_P ch, CHAR_P gch, int attr, const char *str, BOOLEAN_P preselected),
@@ -966,15 +1005,7 @@ index 000000000..aa5e51c55
 +VDECLCB(shim_wait_synch,(void), "v")
 +VDECLCB(shim_cliparound,(int x, int y), "vii", A2P x, A2P y)
 +VDECLCB(shim_update_positionbar,(char *posbar), "vp", P2V posbar)
-+
 +VDECLCB(shim_print_glyph,(winid w, int x, int y, int glyph, int bkglyph), "viiiii", A2P w, A2P x, A2P y, A2P glyph, A2P bkglyph)
-+
-+// VDECLCB(shim_print_tile,(winid w, int x, int y, int tile), "viiii", A2P w, A2P x, A2P y, A2P tile)
-+// void shim_print_glyph(winid w, int x, int y, int glyph, int bkglyph) 
-+// {
-+//     shim_print_tile(w, x, y, glyph2tile[glyph]);
-+// }
-+
 +VDECLCB(shim_raw_print,(const char *str), "vs", P2V str)
 +VDECLCB(shim_raw_print_bold,(const char *str), "vs", P2V str)
 +DECLCB(int, shim_nhgetch,(void), "i")
