@@ -60,4 +60,4 @@ func _update_exp(status_exp, lvl):
 	var ex = 0
 	if status_exp:
 		ex = status_exp
-	exp_.text = "%s (LV %s)" % [ex, lvl]
+	exp_.text = "%s (%s)" % [lvl, ex]

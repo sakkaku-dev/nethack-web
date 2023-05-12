@@ -5,10 +5,10 @@
 # npm run copy:nethack
 # npm run fix:nethack
 
-# npm run build:godot
+npm run build:godot
 npm run build:js
 
-cp src/index.html build
+# cp src/index.html build
 cp src/tilenames.json build
 
 sudo mkdir -p /srv/http/nethack

@@ -1,8 +1,7 @@
 extends Node
 
-const TILE_SOURCE = 0
+const TILE_SOURCE = 4
 const TILE_LAYER = 0
-const TILE_SIZE_X = 40
 
 @export var DIALOG: PackedScene
 @export var MENU: PackedScene
@@ -118,12 +117,6 @@ func updateInventory(args):
 
 func updateMap(args):
 	for tile in args:
-		map.set_cell(TILE_LAYER, Vector2(tile.x, tile.y), TILE_SOURCE, _to_tilev(tile.tile))
+		map.set_cell(TILE_LAYER, Vector2(tile.x, tile.y), TILE_SOURCE, Utils.to_tilev(tile.tile))
 
-func _to_tilev(tile: int) -> Vector2:
-	# TODO: map correctly -> tileset needs to be updated for 3.7
-	# https://github.com/NullCGT/SpliceHack
-	var row = floor(tile / float(TILE_SIZE_X))
-	var col = tile % TILE_SIZE_X
-	return Vector2(col, row)
 
