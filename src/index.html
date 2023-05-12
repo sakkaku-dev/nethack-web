@@ -1,22 +1,121 @@
 <!-- Simple UI for testing -->
-<input id="menu" />
-<button onclick="select()">Send</button>
+<!-- <button onclick="select()">Send</button> -->
 
-<div id="data"></div>
+<div style="width: 100%; height: 100%; display: flex">
+  <div style="display: flex; flex-direction: column; flex-grow: 1">
+    <pre style="flex-grow: 1" id="dialog"></pre>
+    <pre id="output"></pre>
+  </div>
 
-<script src="./nethack.js"></script>
+  <div style="display: flex; flex-direction: column">
+    <div style="flex-grow: 1" id="inventory"></div>
+
+    <pre id="status"></pre>
+  </div>
+</div>
+
 <script>
   function select() {
-    const input = document.querySelector("#menu");
-    const ids = input.value
-      .split(",")
-      .filter((x) => x !== "")
-      .map((x) => parseInt(x));
+    const inputs = Array.from(document.querySelectorAll("#menu input"));
+    const ids = inputs.filter((i) => i.checked && !i.disabled).map((i) => parseInt(i.value));
+    // const ids = input.value
+    //   .split(",")
+    //   .filter((x) => x !== "")
+    //   .map((x) => parseInt(x));
     window.nethackJS.selectMenu(ids);
   }
 
   document.onkeypress = (ev) => {
     window.nethackJS.sendInput(ev.keyCode);
+  };
+
+  const dialog = document.querySelector("#dialog");
+  const output = document.querySelector("#output");
+  const inventory = document.querySelector("#inventory");
+
+  const status = document.querySelector("#status");
+
+  const clear = (elem) => Array.from(elem.children).forEach((c) => elem.removeChild(c));
+
+  const createItemList = (items) => {
+    const list = document.createElement("ul");
+    items
+      .map((i) => {
+        const elem = document.createElement("li");
+        elem.style.fontWeight = i.active ? "bold" : "";
+        elem.innerHTML = `${i.accelerator} - ${i.str}`;
+      })
+      .forEach((i) => list.appendChild(i));
+  };
+
+  const createMenu = (items) => {
+    const list = document.createElement("div");
+    list.style = "display: flex; flex-direction: column;";
+    list.id = "menu";
+
+    items.forEach((i) => {
+      const div = document.createElement("div");
+      const elem = document.createElement("input");
+      const label = document.createElement("label");
+      const id = `menu-${i.identifier}`;
+      elem.type = "checkbox";
+      elem.name = "menuSelect";
+      elem.id = id;
+      elem.disabled = i.identifier === 0;
+      elem.checked = i.active;
+      elem.value = i.identifier;
+      label.htmlFor = id;
+      label.innerHTML = `${i.accelerator} - ${i.str}`;
+
+      div.appendChild(elem);
+      div.appendChild(label);
+      list.appendChild(div);
+    });
+
+    return list;
+  };
+
+  window.nethackGodot = {
+    openMenu(winid, prompt, count, ...items) {
+      clear(dialog);
+
+      const elem = document.createElement("div");
+      elem.innerHTML = prompt;
+      dialog.appendChild(elem);
+
+      dialog.appendChild(createMenu(items));
+
+      const btn = document.createElement("button");
+      btn.innerHTML = "Submit";
+      btn.onclick = select;
+      dialog.appendChild(btn);
+    },
+    openQuestion(question, ...choices) {
+      dialog.innerHTML = `${question} ${choices}`;
+    },
+    openDialog(winid, text) {
+      const p = document.createElement("pre");
+      p.appendChild(document.createTextNode(text));
+      dialog.appendChild(p);
+    },
+    closeDialog(winid) {
+      clear(dialog);
+    },
+    moveCursor(x, y) {},
+    centerView(x, y) {},
+    printLine(line) {
+      output.innerHTML += line + "\n";
+    },
+    updateMap(...tiles) {},
+    updateStatus(s) {
+      status.innerHTML = `Web_user ${s.title} ${s.align}`; // TODO: set player name
+      status.innerHTML += `\nStr: ${s.str} Dex: ${s.dex} Con: ${s.con} Int: ${s.int} Wis: ${s.wis} Cha: ${s.cha}`;
+      status.innerHTML += `\nDlvl ${s.dungeonLvl} HP: ${s.hp}/${s.hpMax} Pw: ${s.power}/${s.powerMax} AC: ${s.armor} EXP: ${s.expLvl} $: ${s.gold}`;
+    },
+    updateInventory(...items) {
+      clear(inventory);
+      inventory.appendChild(createItemList(items));
+    },
   };
 
   // setTimeout(() => {
@@ -38,3 +137,4 @@
   //   });
   // }, 2000);
 </script>
+<script src="./nethack.js"></script>

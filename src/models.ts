@@ -80,7 +80,7 @@ export enum ItemFlag {
 
 // See botl.c
 interface StatusAll {
-  str: number;
+  str: string; // Strength can be like 18/50
   dex: number;
   con: number;
   int: number;
@@ -114,7 +114,7 @@ export type Status = Partial<StatusAll>;
 
 export const statusMap: Record<STATUS_FIELD, (s: Status, v: string) => void> = {
   [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v),
-  [STATUS_FIELD.BL_STR]: (s, v) => (s.str = parseInt(v)),
+  [STATUS_FIELD.BL_STR]: (s, v) => (s.str = v),
   [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseInt(v)),
   [STATUS_FIELD.BL_CO]: (s, v) => (s.con = parseInt(v)),
   [STATUS_FIELD.BL_IN]: (s, v) => (s.int = parseInt(v)),
@@ -123,7 +123,8 @@ export const statusMap: Record<STATUS_FIELD, (s: Status, v: string) => void> = {
   [STATUS_FIELD.BL_ALIGN]: (s, v) => (s.align = v),
   [STATUS_FIELD.BL_SCORE]: (s, v) => (s.score = v),
   [STATUS_FIELD.BL_CAP]: (s, v) => (s.carryCap = v),
-  [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v.split(":")[1])),
+  // [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v.split(":")[1])),
+  [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v)),
   [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = parseInt(v)),
   [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = parseInt(v)),
   [STATUS_FIELD.BL_XP]: (s, v) => (s.expLvl = parseInt(v)),

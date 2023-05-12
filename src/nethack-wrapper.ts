@@ -270,50 +270,38 @@ export class NetHackWrapper implements NetHackJS {
       // Dlvl:1  $:0  HP:14(14) Pw:8(8) AC:7  Exp:1
 
       const status = this.status$.value;
-      if (str.match(/St:.*Dx:.*/)) {
-        const [user, stats, align] = str.split("  ");
+      let m = str.match(
+        /([a-zA-z]+) ([a-zA-z\s]+) .* St:(\d+)(\/[\d*]+)? Dx:(\d+) Co:(\d+) In:(\d+) Wi:(\d+) Ch:(\d+) .* ([a-zA-z]+)/
+      );
+      if (m) {
+        const player = m[1]; // TODO: ?
+        statusMap[STATUS_FIELD.BL_TITLE](status, m[2]);
 
-        let m = stats.match(/St:(\d+) Dx:(\d+) Co:(\d+) In:(\d+) Wi:(\d+) Ch:(\d+)/);
-        if (m) {
-          statusMap[STATUS_FIELD.BL_STR](status, m[1]);
-          statusMap[STATUS_FIELD.BL_DX](status, m[2]);
-          statusMap[STATUS_FIELD.BL_CO](status, m[3]);
-          statusMap[STATUS_FIELD.BL_IN](status, m[4]);
-          statusMap[STATUS_FIELD.BL_WI](status, m[5]);
-          statusMap[STATUS_FIELD.BL_CH](status, m[6]);
-        }
+        const str = m[3];
+        const strPercent = m[4];
+        statusMap[STATUS_FIELD.BL_STR](status, str + (strPercent || ""));
 
-        statusMap[STATUS_FIELD.BL_ALIGN](status, align.trim());
-
-        m = user.match(/([a-zA-z]+) ([a-zA-z\s]+)/);
-        if (m) {
-          const player = m[1]; // TODO: ?
-          statusMap[STATUS_FIELD.BL_TITLE](status, m[2]);
-        }
+        statusMap[STATUS_FIELD.BL_DX](status, m[5]);
+        statusMap[STATUS_FIELD.BL_CO](status, m[6]);
+        statusMap[STATUS_FIELD.BL_IN](status, m[7]);
+        statusMap[STATUS_FIELD.BL_WI](status, m[8]);
+        statusMap[STATUS_FIELD.BL_CH](status, m[9]);
+        statusMap[STATUS_FIELD.BL_ALIGN](status, m[10]);
       } else {
-        let m = str.match(/Dlvl:(\d+)/);
-        if (m) statusMap[STATUS_FIELD.BL_LEVELDESC](status, m[1]);
-
-        m = str.match(/\$:(\d+)/);
-        if (m) statusMap[STATUS_FIELD.BL_GOLD](status, m[1]);
-
-        m = str.match(/HP:(\d+)\((\d+)\)/);
+        let m = str.match(
+          /Dlvl:(\d+).*\$:(\d+).*HP:(\d+)\((\d+)\).*Pw:(\d+)\((\d+)\).*AC:(\d+).*Exp:(\d+).*([a-zA-z\s]+)/
+        );
         if (m) {
-          statusMap[STATUS_FIELD.BL_HP](status, m[1]);
-          statusMap[STATUS_FIELD.BL_HPMAX](status, m[2]);
+          statusMap[STATUS_FIELD.BL_LEVELDESC](status, m[1]);
+          statusMap[STATUS_FIELD.BL_GOLD](status, m[2]);
+          statusMap[STATUS_FIELD.BL_HP](status, m[3]);
+          statusMap[STATUS_FIELD.BL_HPMAX](status, m[4]);
+          statusMap[STATUS_FIELD.BL_ENE](status, m[5]);
+          statusMap[STATUS_FIELD.BL_ENEMAX](status, m[6]);
+          statusMap[STATUS_FIELD.BL_AC](status, m[7]);
+          statusMap[STATUS_FIELD.BL_XP](status, m[8]);
+          statusMap[STATUS_FIELD.BL_CONDITION](status, m[9]);
         }
-
-        m = str.match(/Pw:(\d+)\((\d+)\)/);
-        if (m) {
-          statusMap[STATUS_FIELD.BL_ENE](status, m[1]);
-          statusMap[STATUS_FIELD.BL_ENEMAX](status, m[2]);
-        }
-
-        m = str.match(/AC:(\d+)/);
-        if (m) statusMap[STATUS_FIELD.BL_AC](status, m[1]);
-
-        m = str.match(/EXP:(\d+)/);
-        if (m) statusMap[STATUS_FIELD.BL_XP](status, m[1]);
       }
 
       this.status$.next(status);
