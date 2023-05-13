@@ -33,6 +33,6 @@ func update(items: Array):
 func _create_new_grid() -> GridContainer:
 	var grid = GridContainer.new()
 	grid.columns = 4
-	grid.add_theme_constant_override("h_separation", 15)
+	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 5)
 	return grid

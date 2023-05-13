@@ -10,6 +10,13 @@ var select_count = 0
 var selected_ids = []
 var start_accel = 97 # a
 var previous_accel = start_accel
+var item_map = {}
+
+func _unhandled_input(ev: InputEvent):
+	if ev is InputEventKey:
+		if ev.unicode in item_map:
+			_on_pressed(item_map[ev.unicode])
+			get_viewport().set_input_as_handled()
 
 func open(prompt: String, items: Array, count: int) -> void:
 	select_count = count
@@ -35,20 +42,12 @@ func open(prompt: String, items: Array, count: int) -> void:
 				previous_accel += 1
 				
 			btn.text = "%s - %s" % [String.chr(accel), item.str]
+			item_map[accel] = item.identifier
+
 			btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			btn.toggle_mode = true
 			btn.pressed.connect(func(): self._on_pressed(item.identifier))
-			btn.shortcut = _code_to_shortcut(accel)
 			items_container.add_child(btn)
-
-func _code_to_shortcut(unicode):
-	var shortcut = Shortcut.new()
-	var key = InputEventKey.new()
-	key.device = -1
-	key.unicode = unicode
-	key.pressed = true
-	shortcut.events = [key]
-	return shortcut
 
 func _on_pressed(id: int):
 	if select_count == 1:

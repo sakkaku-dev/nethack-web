@@ -204,6 +204,8 @@ export class NetHackWrapper implements NetHackJS {
 
   private async menuSelect(winid: number, select: MENU_SELECT, selected: number) {
     if (winid === window.nethackGlobal.globals.WIN_INVEN) {
+      const activeRegex = /\((wielded( in other hand)?|in quiver|weapon in hands?|being worn|on (left|right) (hand|foreclaw|paw|pectoral fin))\)/;
+      this.menu.items.forEach(i => i.active = activeRegex.test(i.str));
       this.inventoryUpdate(this.menu.items);
       return 0;
     }

@@ -4,5 +4,3 @@ extends CenterContainer
 
 func open(text: String):
 	text_node.text = text
-
-# TODO: scroll container

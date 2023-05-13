@@ -27,7 +27,7 @@ func _ready():
 func _unhandled_input(event: InputEvent):
 	if event is InputEventKey and event.is_pressed():
 		var code = event.keycode
-		if code >= KEY_SPACE and code <= KEY_ASCIITILDE or code == KEY_ENTER: # only allow ASCII code
+		if code >= KEY_SPACE and code <= KEY_ASCIITILDE or code == KEY_ENTER or code == KEY_ESCAPE: # only allow ASCII code
 			var is_ctrl = Input.is_key_pressed(KEY_CTRL)
 			var window = JavaScriptBridge.get_interface("window")
 			var unicode = event.unicode
