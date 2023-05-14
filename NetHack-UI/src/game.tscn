@@ -5620,7 +5620,6 @@ format = 2
 texture = ExtResource("12_w7ywh")
 
 [node name="Camera2D" type="Camera2D" parent="HBoxContainer/VBoxContainer/SubViewportContainer/SubViewport/TileMap"]
-zoom = Vector2(1.5, 1.5)
 
 [node name="Messages" type="PanelContainer" parent="HBoxContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 150)

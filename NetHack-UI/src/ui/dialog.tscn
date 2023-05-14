@@ -14,16 +14,19 @@ script = ExtResource("2_dwj8u")
 text_node = NodePath("PanelContainer/ScrollContainer/MarginContainer/CenterContainer/TextLabel")
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(700, 500)
 layout_mode = 2
 
 [node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer"]
+custom_minimum_size = Vector2(0, 600)
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+horizontal_scroll_mode = 0
 
 [node name="MarginContainer" type="MarginContainer" parent="PanelContainer/ScrollContainer"]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
+size_flags_horizontal = 4
+size_flags_vertical = 4
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
@@ -31,6 +34,8 @@ theme_override_constants/margin_bottom = 20
 
 [node name="CenterContainer" type="CenterContainer" parent="PanelContainer/ScrollContainer/MarginContainer"]
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
 
 [node name="TextLabel" type="RichTextLabel" parent="PanelContainer/ScrollContainer/MarginContainer/CenterContainer"]
 layout_mode = 2

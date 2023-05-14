@@ -12,7 +12,7 @@
     "copy:nethack": "cd NetHack && cp targets/wasm/nethack.js targets/wasm/nethack.wasm targets/wasm/nethack.data ../lib",
     "fix:nethack": "sed -i '/var ENV = {}/a Module.ENV = ENV; Module.FS = FS;' ./lib/nethack.js",
     "build:js": "rollup -c rollup.config.js && cp lib/nethack.wasm lib/nethack.data build",
-    "build:godot": "cd NetHack-UI && godot --export-debug Web",
+    "build:godot": "cd NetHack-UI && godot --export-debug --headless --quit Web",
     "build": "npm run build:godot && npm run build:js"
   },
   "devDependencies": {

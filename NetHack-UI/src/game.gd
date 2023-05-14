@@ -35,6 +35,14 @@ func _unhandled_input(event: InputEvent):
 				window.nethackJS.sendInput(KEY_CTRL & code)
 			else:
 				window.nethackJS.sendInput(unicode)
+	elif event is InputEventMouseButton:
+		var zoom = camera.zoom.x
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			zoom += 0.2
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			zoom -= 0.2
+		
+		camera.zoom = Vector2(max(0, zoom), max(0, zoom))
 
 func _to_js_array(arr: Array):
 	var js_arr = JavaScriptBridge.create_object("Array")
