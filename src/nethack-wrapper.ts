@@ -27,6 +27,7 @@ export class NetHackWrapper implements NetHackJS {
   private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
     [Command.DESTROY_WINDOW]: async (winid: number) => this.onCloseDialog$.next(winid),
+    [Command.CLEAR_WINDOW]: async (winid: number) => this.putStr = "",
 
     // Text / Dialog
     [Command.PUTSTR]: this.handlePutStr.bind(this),
@@ -55,14 +56,10 @@ export class NetHackWrapper implements NetHackJS {
 
     // Waiting input
     [Command.DISPLAY_WINDOW]: this.displayWindow.bind(this),
-    [Command.GET_CHAR]: async () => await firstValueFrom(this.input$),
-    [Command.GET_POSKEY]: async () => await firstValueFrom(this.input$),
-    [Command.YN_FUNCTION]: async (question: string, choices: string[]) => {
-      this.onQuestion$.next({ question, choices });
-      return await firstValueFrom(this.input$);
-    },
-    [Command.ASK_NAME]: async () => await firstValueFrom(this.input$),
-    // [Command.DISPLAY_FILE]: this.displayFile.bind(this),
+    [Command.GET_CHAR]: this.waitInput.bind(this),
+    [Command.GET_POSKEY]: this.waitInput.bind(this),
+    [Command.YN_FUNCTION]: this.yesNoQuestion.bind(this),
+    [Command.ASK_NAME]: this.waitInput.bind(this),
 
     // TODO: message_menu
     // TODO: select_menu with yn_function
@@ -98,6 +95,16 @@ export class NetHackWrapper implements NetHackJS {
   onStatusUpdate$ = new Subject<Status>();
   onInventoryUpdate$ = new Subject<Item[]>();
 
+  private async yesNoQuestion(question: string, choices: string[]) {
+    // Question already contains the choices
+    if (/\[[a-zA-Z]+\]/.test(question)) {
+      choices = [];
+    }
+
+    this.onQuestion$.next({ question, choices });
+    return this.waitInput();
+  }
+
   constructor(private debug = false, private module: any) {
     this.printTile$
       .pipe(
@@ -126,27 +133,24 @@ export class NetHackWrapper implements NetHackJS {
       .subscribe();
   }
 
-  // private async displayFile(file: string, complain: number) {
-  //   const text = this.module.FS.readFile(file, { encoding: "utf8" });
-  //   this.onDialog$.next({ id: -1, text });
-  //   await this.waitContinueKey();
-  //   this.onCloseDialog$.next(-1);
-  // }
-
   public selectMenu(items: number[]) {
-    console.log("Selected menu", items);
+    this.log("Selected menu", items);
     this.selectedMenu$.next(items);
   }
 
   public sendInput(key: number) {
-    console.log("Receiced input", key);
+    this.log("Receiced input", key);
     this.input$.next(key);
   }
 
-  async handle(cmd: Command, ...args: any[]) {
+  private log(...args: any[]) {
     if (this.debug) {
-      console.log(cmd, args);
+      console.log(...args);
     }
+  }
+
+  async handle(cmd: Command, ...args: any[]) {
+    this.log(cmd, args);
 
     const commandHandler = this.commandMap[cmd];
     if (commandHandler) {
@@ -163,7 +167,7 @@ export class NetHackWrapper implements NetHackJS {
   private async createWindow(type: WIN_TYPE) {
     this.idCounter++;
     const id = this.idCounter;
-    console.log("Create new window of type", type, "with id", id);
+    this.log("Create new window of type", type, "with id", id);
     this.windows[id] = { type };
     return id;
   }
@@ -177,8 +181,14 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async waitContinueKey() {
+    this.log("Waiting for continue...");
     const acceptedCodes = [" ", "\n"].map((x) => x.charCodeAt(0));
     await firstValueFrom(this.input$.pipe(filter((x) => acceptedCodes.includes(x))));
+  }
+
+  private async waitInput() {
+    this.log("Waiting user input...");
+    return await firstValueFrom(this.input$);
   }
 
   private async menuAdd(
@@ -204,65 +214,73 @@ export class NetHackWrapper implements NetHackJS {
 
   private async menuSelect(winid: number, select: MENU_SELECT, selected: number) {
     if (winid === window.nethackGlobal.globals.WIN_INVEN) {
-      const activeRegex = /\((wielded( in other hand)?|in quiver|weapon in hands?|being worn|on (left|right) (hand|foreclaw|paw|pectoral fin))\)/;
-      this.menu.items.forEach(i => i.active = activeRegex.test(i.str));
+      const activeRegex =
+        /\((wielded( in other hand)?|in quiver|weapon in hands?|being worn|on (left|right) (hand|foreclaw|paw|pectoral fin))\)/;
+      this.menu.items.forEach((i) => (i.active = activeRegex.test(i.str)));
       this.inventoryUpdate(this.menu.items);
       return 0;
     }
 
-    if (this.menu.items.length > 0 && select != MENU_SELECT.PICK_NONE) {
-      if (select == MENU_SELECT.PICK_ANY) {
-        this.onMenu$.next({ ...this.menu, count: -1, winid });
-      } else if (select == MENU_SELECT.PICK_ONE) {
-        this.onMenu$.next({ ...this.menu, count: 1, winid });
-      }
-
-      const selectedIds = await firstValueFrom(this.selectedMenu$);
-      const itemIds = selectedIds.filter((id) => this.menu.items.find((x) => x.identifier === id));
-
-      if (itemIds.length === 0) {
-        return 0;
-      }
-
-      const int_size = 4;
-      const size = int_size * 3; // selected object has 3 fields
-      const total_size = size * itemIds.length;
-      const start_ptr = this.module._malloc(total_size);
-
-      // write selected items to memory
-      let ptr = start_ptr;
-      itemIds.forEach((id) => {
-        window.nethackGlobal.helpers.setPointerValue("nethack.menu.selected", ptr, Type.INT, id);
-
-        window.nethackGlobal.helpers.setPointerValue(
-          "nethack.menu.selected",
-          ptr + int_size,
-          Type.INT,
-          -1
-        );
-
-        window.nethackGlobal.helpers.setPointerValue(
-          "nethack.menu.selected",
-          ptr + int_size * 2,
-          Type.INT,
-          0
-        );
-
-        ptr += size;
-      });
-
-      // point selected to the first item
-      const selected_pp = window.nethackGlobal.helpers.getPointerValue("", selected, Type.POINTER);
-      window.nethackGlobal.helpers.setPointerValue(
-        "nethack.menu.setSelected",
-        selected_pp,
-        Type.INT,
-        start_ptr
-      );
-      return itemIds?.length ?? -1;
+    if (this.menu.items.length === 0) {
+      return 0;
     }
 
-    return 0;
+    if (select == MENU_SELECT.PICK_NONE) {
+      this.onDialog$.next({ id: winid, text: this.menu.items.map((i) => i.str).join("\n") });
+      await this.waitContinueKey();
+      return 0;
+    }
+
+    if (select == MENU_SELECT.PICK_ANY) {
+      this.onMenu$.next({ ...this.menu, count: -1, winid });
+    } else {
+      this.onMenu$.next({ ...this.menu, count: 1, winid });
+    }
+
+    this.log("Waiting for menu select...");
+    const selectedIds = await firstValueFrom(this.selectedMenu$);
+    const itemIds = selectedIds.filter((id) => this.menu.items.find((x) => x.identifier === id));
+
+    if (itemIds.length === 0) {
+      return 0;
+    }
+
+    const int_size = 4;
+    const size = int_size * 3; // selected object has 3 fields
+    const total_size = size * itemIds.length;
+    const start_ptr = this.module._malloc(total_size);
+
+    // write selected items to memory
+    let ptr = start_ptr;
+    itemIds.forEach((id) => {
+      window.nethackGlobal.helpers.setPointerValue("nethack.menu.selected", ptr, Type.INT, id);
+
+      window.nethackGlobal.helpers.setPointerValue(
+        "nethack.menu.selected",
+        ptr + int_size,
+        Type.INT,
+        -1
+      );
+
+      window.nethackGlobal.helpers.setPointerValue(
+        "nethack.menu.selected",
+        ptr + int_size * 2,
+        Type.INT,
+        0
+      );
+
+      ptr += size;
+    });
+
+    // point selected to the first item
+    const selected_pp = window.nethackGlobal.helpers.getPointerValue("", selected, Type.POINTER);
+    window.nethackGlobal.helpers.setPointerValue(
+      "nethack.menu.setSelected",
+      selected_pp,
+      Type.INT,
+      start_ptr
+    );
+    return itemIds?.length ?? -1;
   }
 
   private async handlePutStr(winid: number, attr: any, str: string) {
@@ -336,7 +354,7 @@ export class NetHackWrapper implements NetHackJS {
       mapper(status, value);
       this.status$.next(status);
     } else {
-      console.warn("Unhandled status type", STATUS_FIELD[type]);
+      this.log("Unhandled status type", STATUS_FIELD[type]);
     }
   }
 

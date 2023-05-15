@@ -41,7 +41,6 @@ export enum Command {
   STATUS_INIT = "shim_status_init",
   STATUS_UPDATE = "shim_status_update",
 
-  INIT_WINDOW = "shim_init_nhwindows",
   CREATE_WINDOW = "shim_create_nhwindow",
   DESTROY_WINDOW = "shim_destroy_nhwindow",
   DISPLAY_WINDOW = "shim_display_nhwindow",

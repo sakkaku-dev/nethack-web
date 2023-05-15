@@ -3,52 +3,67 @@
 
 <div style="width: 100%; height: 100%; display: flex">
   <div style="display: flex; flex-direction: column; flex-grow: 1">
-    <pre style="flex-grow: 1" id="dialog"></pre>
-    <pre id="output"></pre>
+    <pre style="flex-grow: 1; overflow-y: auto" id="dialog"></pre>
+    <pre style="height: 10rem; overflow-y: auto" id="output"></pre>
   </div>
 
   <div style="display: flex; flex-direction: column">
-    <div style="flex-grow: 1" id="inventory"></div>
+    <pre style="flex-grow: 1; overflow-y: auto" id="inventory"></pre>
 
-    <pre id="status"></pre>
+    <pre style="height: 10rem; overflow-y: auto" id="status"></pre>
   </div>
 </div>
 
 <script>
-  function select() {
-    const inputs = Array.from(document.querySelectorAll("#menu input"));
-    const ids = inputs.filter((i) => i.checked && !i.disabled).map((i) => parseInt(i.value));
-    // const ids = input.value
-    //   .split(",")
-    //   .filter((x) => x !== "")
-    //   .map((x) => parseInt(x));
-    window.nethackJS.selectMenu(ids);
-  }
+  document.onkeypress = (e) => {
+    if (e.ctrlKey) return; // should have been processed in keydown
+    e.preventDefault();
 
-  document.onkeypress = (ev) => {
-    window.nethackJS.sendInput(ev.keyCode);
+    window.nethackJS.sendInput(e.charCode || e.keyCode);
+  };
+
+  document.onkeydown = (e) => {
+    if (!e.ctrlKey) return; // key events without ctrl is handled in `keypress` events
+    if (e.keyCode == 17) return; // ctrl is pressed down
+    e.preventDefault();
+
+    var code = e.charCode || e.keyCode;
+    // some browsers do not `apply` the control key to charCode
+    if (code >= 65 && code <= 90) {
+      // A~Z
+      code = code - 64;
+    } else if (code >= 97 && code <= 122) {
+      code = code - 96;
+    }
+    window.nethackJS.sendInput(code);
   };
 
   const dialog = document.querySelector("#dialog");
   const output = document.querySelector("#output");
   const inventory = document.querySelector("#inventory");
-
   const status = document.querySelector("#status");
 
   const clear = (elem) => Array.from(elem.children).forEach((c) => elem.removeChild(c));
-
   const createItemList = (items) => {
     const list = document.createElement("ul");
+    list.style.listStyleType = "none";
     items
       .map((i) => {
         const elem = document.createElement("li");
         elem.style.fontWeight = i.active ? "bold" : "";
-        elem.innerHTML = `${i.accelerator} - ${i.str}`;
+        if (i.identifier === 0) {
+          elem.innerHTML = i.str;
+          elem.style.fontSize = "1.1rem";
+          elem.style.margin = "0.5rem 0";
+        } else {
+          elem.innerHTML = `${String.fromCharCode(i.accelerator)} - ${i.str}`;
+        }
+        return elem;
       })
       .forEach((i) => list.appendChild(i));
+    return list;
   };
-
-  const createMenu = (items) => {
+  const createMenu = (items, count) => {
     const list = document.createElement("div");
     list.style = "display: flex; flex-direction: column;";
     list.id = "menu";
@@ -58,14 +73,15 @@
       const elem = document.createElement("input");
       const label = document.createElement("label");
       const id = `menu-${i.identifier}`;
-      elem.type = "checkbox";
+      const accel = String.fromCharCode(i.accelerator);
+      elem.type = count === 1 ? "radio" : "checkbox";
       elem.name = "menuSelect";
       elem.id = id;
       elem.disabled = i.identifier === 0;
       elem.checked = i.active;
       elem.value = i.identifier;
       label.htmlFor = id;
-      label.innerHTML = `${i.accelerator} - ${i.str}`;
+      label.innerHTML = `${accel ? accel + " - " : ""}${i.str}`;
 
       div.appendChild(elem);
       div.appendChild(label);
@@ -73,6 +89,15 @@
     });
 
     return list;
+  };
+  const createDialogText = (text) => {
+    const p = document.createElement("p");
+    p.appendChild(document.createTextNode(text));
+    dialog.appendChild(p);
+  };
+  const appendOutputLine = (line) => {
+    output.innerHTML += line;
+    output.scrollTo(0, output.scrollHeight);
   };
 
   window.nethackGodot = {
@@ -83,30 +108,29 @@
       elem.innerHTML = prompt;
       dialog.appendChild(elem);
 
-      dialog.appendChild(createMenu(items));
+      dialog.appendChild(createMenu(items, count));
 
       const btn = document.createElement("button");
       btn.innerHTML = "Submit";
-      btn.onclick = select;
+      btn.onclick = () => {
+        const inputs = Array.from(document.querySelectorAll("#menu input"));
+        console.log(inputs);
+        const ids = inputs.filter((i) => i.checked && !i.disabled).map((i) => parseInt(i.value));
+        window.nethackJS.selectMenu(ids);
+      };
+
       dialog.appendChild(btn);
     },
-    openQuestion(question, ...choices) {
-      dialog.innerHTML = `${question} ${choices}`;
-    },
-    openDialog(winid, text) {
-      const p = document.createElement("pre");
-      p.appendChild(document.createTextNode(text));
-      dialog.appendChild(p);
-    },
-    closeDialog(winid) {
-      clear(dialog);
-    },
+
+    openQuestion: (question, ...choices) => appendOutputLine(`\n${question} ${choices}\n`),
+    openDialog: (winid, text) => createDialogText(text),
+    printLine: (line) => appendOutputLine(line + "\n"),
+    closeDialog: (winid) => clear(dialog),
+
     moveCursor(x, y) {},
     centerView(x, y) {},
-    printLine(line) {
-      output.innerHTML += line + "\n";
-    },
     updateMap(...tiles) {},
+
     updateStatus(s) {
       status.innerHTML = `Web_user ${s.title} ${s.align}`; // TODO: set player name
       status.innerHTML += `\nStr: ${s.str} Dex: ${s.dex} Con: ${s.con} Int: ${s.int} Wis: ${s.wis} Cha: ${s.cha}`;
