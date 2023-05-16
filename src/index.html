@@ -1,16 +1,45 @@
 <!-- Simple UI for testing -->
 <!-- <button onclick="select()">Send</button> -->
 
+<style>
+  #inventory {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  #status {
+    height: 10rem;
+    overflow-y: auto;
+  }
+  #output {
+    height: 10rem;
+    overflow-y: auto;
+  }
+  #dialog {
+    position: absolute;
+    top: 2rem;
+    bottom: 2rem;
+    transform: translate(-50%, 0);
+    left: 50%;
+    overflow-y: auto;
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+  }
+</style>
+
+<pre id="dialog"></pre>
+<!-- <img src="Nevanda.png" style="display: none" id="tileset" /> -->
+
 <div style="width: 100%; height: 100%; display: flex">
-  <div style="display: flex; flex-direction: column; flex-grow: 1">
-    <pre style="flex-grow: 1; overflow-y: auto" id="dialog"></pre>
-    <pre style="height: 10rem; overflow-y: auto" id="output"></pre>
+  <div class="col" style="flex-grow: 1">
+    <canvas id="map" style="flex-grow: 1"></canvas>
+    <pre id="output"></pre>
   </div>
 
-  <div style="display: flex; flex-direction: column">
-    <pre style="flex-grow: 1; overflow-y: auto" id="inventory"></pre>
-
-    <pre style="height: 10rem; overflow-y: auto" id="status"></pre>
+  <div class="col">
+    <pre id="inventory"></pre>
+    <pre id="status"></pre>
   </div>
 </div>
 
@@ -43,7 +72,33 @@
   const inventory = document.querySelector("#inventory");
   const status = document.querySelector("#status");
 
-  const clear = (elem) => Array.from(elem.children).forEach((c) => elem.removeChild(c));
+  const canvas = document.querySelector("canvas");
+  const ctx = canvas.getContext("2d");
+  // const tileset = document.querySelector("#tileset");
+  const tileset = new Image();
+  tileset.src = "Nevanda.png";
+  const tileSize = 32;
+  const tileCol = 40;
+
+  const drawTile = (x, y, tile) => {
+    const row = Math.floor(tile / tileCol);
+    const col = tile % tileCol;
+    ctx.drawImage(
+      tileset,
+      col * tileSize,
+      row * tileSize,
+      tileSize,
+      tileSize,
+      x * tileSize,
+      y * tileSize,
+      tileSize,
+      tileSize
+    );
+  };
+
+  const clear = (elem) => {
+    Array.from(elem.children).forEach((c) => elem.removeChild(c));
+  };
   const createItemList = (items) => {
     const list = document.createElement("ul");
     list.style.listStyleType = "none";
@@ -94,6 +149,7 @@
     const p = document.createElement("p");
     p.appendChild(document.createTextNode(text));
     dialog.appendChild(p);
+    dialog.style.display = "block";
   };
   const appendOutputLine = (line) => {
     output.innerHTML += line;
@@ -114,7 +170,6 @@
       btn.innerHTML = "Submit";
       btn.onclick = () => {
         const inputs = Array.from(document.querySelectorAll("#menu input"));
-        console.log(inputs);
         const ids = inputs.filter((i) => i.checked && !i.disabled).map((i) => parseInt(i.value));
         window.nethackJS.selectMenu(ids);
       };
@@ -125,14 +180,21 @@
     openQuestion: (question, ...choices) => appendOutputLine(`\n${question} ${choices}\n`),
     openDialog: (winid, text) => createDialogText(text),
     printLine: (line) => appendOutputLine(line + "\n"),
-    closeDialog: (winid) => clear(dialog),
+    closeDialog: (winid) => {
+      clear(dialog);
+      dialog.style.display = "none";
+    },
 
     moveCursor(x, y) {},
     centerView(x, y) {},
-    updateMap(...tiles) {},
+    updateMap(...tiles) {
+      tiles.forEach((tile) => {
+        drawTile(tile.x, tile.y, tile.tile);
+      });
+    },
 
     updateStatus(s) {
-      status.innerHTML = `Web_user ${s.title} ${s.align}`; // TODO: set player name
+      status.innerHTML = `${s.title} ${s.align}`; // TODO: set player name
       status.innerHTML += `\nStr: ${s.str} Dex: ${s.dex} Con: ${s.con} Int: ${s.int} Wis: ${s.wis} Cha: ${s.cha}`;
       status.innerHTML += `\nDlvl ${s.dungeonLvl} HP: ${s.hp}/${s.hpMax} Pw: ${s.power}/${s.powerMax} AC: ${s.armor} EXP: ${s.expLvl} $: ${s.gold}`;
     },
@@ -141,24 +203,5 @@
       inventory.appendChild(createItemList(items));
     },
   };
-
-  // setTimeout(() => {
-  //   const dataContainer = document.querySelector("#data");
-  //   const values = window.nethackGlobal.constants;
-  //   Object.keys(values).forEach((key) => {
-  //     const value = values[key];
-  //     const div = document.createElement("div");
-
-  //     Object.keys(value)
-  //       .filter((x) => isNaN(parseInt(x)))
-  //       .forEach((key) => {
-  //         const child = document.createElement("div");
-  //         child.innerHTML = `${key}: ${value[key]}`;
-  //         div.appendChild(child);
-  //       });
-
-  //     dataContainer.appendChild(div);
-  //   });
-  // }, 2000);
 </script>
 <script src="./nethack.js"></script>

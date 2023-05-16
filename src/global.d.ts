@@ -13,7 +13,4 @@ declare interface Window {
     };
     globals: Record<string, any>;
   };
-
-  // For debugging
-  windows: any;
 }

@@ -3,6 +3,7 @@ import { CONDITION, STATUS_FIELD } from "./generated";
 export interface NetHackJS {
   selectMenu: (items: any[]) => void; // TODO: param type
   sendInput: (key: number) => void;
+  startGame: () => void;
 }
 
 // In Godot all parameters will be in one array, so don't nest them

@@ -1,6 +1,3 @@
-// @ts-ignore
-import nethackLib from "../lib/nethack";
-
 import { NetHackWrapper } from "./nethack-wrapper";
 
 const options = [
@@ -16,15 +13,9 @@ const options = [
 
 const Module: any = {};
 Module.onRuntimeInitialized = () => {
-  Module.ccall(
-    "shim_graphics_set_callback",
-    null,
-    ["string"],
-    ["nethackCallback"],
-    {
-      async: true,
-    }
-  );
+  Module.ccall("shim_graphics_set_callback", null, ["string"], ["nethackCallback"], {
+    async: true,
+  });
 };
 Module.preRun = [
   () => {
@@ -39,9 +30,7 @@ const godot = window.nethackGodot;
 wrapper.onMenu$.subscribe(({ winid, prompt, count, items }) =>
   godot.openMenu(winid, prompt || "", count, ...items)
 );
-wrapper.onQuestion$.subscribe(({ question, choices }) =>
-  godot.openQuestion(question, ...choices)
-);
+wrapper.onQuestion$.subscribe(({ question, choices }) => godot.openQuestion(question, ...choices));
 wrapper.onDialog$.subscribe(({ id, text }) => godot.openDialog(id, text));
 wrapper.onCloseDialog$.subscribe((id) => godot.closeDialog(id));
 
@@ -51,12 +40,4 @@ wrapper.onMapCenter$.subscribe(({ x, y }) => godot.centerView(x, y));
 
 wrapper.onMapUpdate$.subscribe((tiles) => godot.updateMap(...tiles));
 wrapper.onStatusUpdate$.subscribe((status) => godot.updateStatus(status));
-wrapper.onInventoryUpdate$.subscribe((items) =>
-  godot.updateInventory(...items)
-);
-
-window.nethackJS = wrapper;
-window.nethackCallback = wrapper.handle.bind(wrapper);
-(window as any).module = Module;
-
-nethackLib(Module);
+wrapper.onInventoryUpdate$.subscribe((items) => godot.updateInventory(...items));

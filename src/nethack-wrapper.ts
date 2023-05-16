@@ -2,6 +2,9 @@ import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, t
 import { Command, Item, ItemFlag, NetHackJS, Status, Tile, statusMap } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
+// @ts-ignore
+import nethackLib from "../lib/nethack";
+
 export interface MenuSelect {
   winid: number;
   prompt?: string;
@@ -27,7 +30,7 @@ export class NetHackWrapper implements NetHackJS {
   private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
     [Command.DESTROY_WINDOW]: async (winid: number) => this.onCloseDialog$.next(winid),
-    [Command.CLEAR_WINDOW]: async (winid: number) => this.putStr = "",
+    [Command.CLEAR_WINDOW]: async (winid: number) => (this.putStr = ""),
 
     // Text / Dialog
     [Command.PUTSTR]: this.handlePutStr.bind(this),
@@ -42,7 +45,7 @@ export class NetHackWrapper implements NetHackJS {
       ]),
 
     [Command.CURSOR]: async (winid, x, y) =>
-      winid == window.nethackGlobal.globals.WIN_MAP && this.onCursorMove$.next({ x, y }),
+      winid == this.global.globals.WIN_MAP && this.onCursorMove$.next({ x, y }),
     [Command.CLIPAROUND]: async (x, y) => this.onMapCenter$.next({ x, y }),
 
     // Status
@@ -64,7 +67,6 @@ export class NetHackWrapper implements NetHackJS {
     // TODO: message_menu
     // TODO: select_menu with yn_function
 
-    // TODO: character selection
     // TODO: improve performance
     // TODO: menu accelerators
   };
@@ -95,6 +97,8 @@ export class NetHackWrapper implements NetHackJS {
   onStatusUpdate$ = new Subject<Status>();
   onInventoryUpdate$ = new Subject<Item[]>();
 
+  awaitingInput$ = new Subject<void>();
+
   private async yesNoQuestion(question: string, choices: string[]) {
     // Question already contains the choices
     if (/\[[a-zA-Z]+\]/.test(question)) {
@@ -105,7 +109,7 @@ export class NetHackWrapper implements NetHackJS {
     return this.waitInput();
   }
 
-  constructor(private debug = false, private module: any) {
+  constructor(private debug = false, private module: any, private win: typeof window = window) {
     this.printTile$
       .pipe(
         skip(1),
@@ -131,7 +135,22 @@ export class NetHackWrapper implements NetHackJS {
         tap((s) => this.onStatusUpdate$.next(s))
       )
       .subscribe();
+
+    this.win.nethackCallback = this.handle.bind(this);
+    this.win.nethackJS = this;
   }
+
+  private log(...args: any[]) {
+    if (this.debug) {
+      console.log(...args);
+    }
+  }
+
+  public startGame() {
+    nethackLib(this.module);
+  }
+
+  // Getting input from user
 
   public selectMenu(items: number[]) {
     this.log("Selected menu", items);
@@ -143,11 +162,22 @@ export class NetHackWrapper implements NetHackJS {
     this.input$.next(key);
   }
 
-  private log(...args: any[]) {
-    if (this.debug) {
-      console.log(...args);
-    }
+  // Waiting for input from user
+
+  private async waitContinueKey() {
+    this.log("Waiting for continue...");
+    const acceptedCodes = [" ", "\n"].map((x) => x.charCodeAt(0));
+    this.awaitingInput$.next();
+    await firstValueFrom(this.input$.pipe(filter((x) => acceptedCodes.includes(x))));
   }
+
+  private async waitInput() {
+    this.log("Waiting user input...");
+    this.awaitingInput$.next();
+    return await firstValueFrom(this.input$);
+  }
+
+  // Commands
 
   async handle(cmd: Command, ...args: any[]) {
     this.log(cmd, args);
@@ -180,17 +210,6 @@ export class NetHackWrapper implements NetHackJS {
     }
   }
 
-  private async waitContinueKey() {
-    this.log("Waiting for continue...");
-    const acceptedCodes = [" ", "\n"].map((x) => x.charCodeAt(0));
-    await firstValueFrom(this.input$.pipe(filter((x) => acceptedCodes.includes(x))));
-  }
-
-  private async waitInput() {
-    this.log("Waiting user input...");
-    return await firstValueFrom(this.input$);
-  }
-
   private async menuAdd(
     winid: number,
     glyph: number,
@@ -213,7 +232,7 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async menuSelect(winid: number, select: MENU_SELECT, selected: number) {
-    if (winid === window.nethackGlobal.globals.WIN_INVEN) {
+    if (winid === this.global.globals.WIN_INVEN) {
       const activeRegex =
         /\((wielded( in other hand)?|in quiver|weapon in hands?|being worn|on (left|right) (hand|foreclaw|paw|pectoral fin))\)/;
       this.menu.items.forEach((i) => (i.active = activeRegex.test(i.str)));
@@ -253,28 +272,16 @@ export class NetHackWrapper implements NetHackJS {
     // write selected items to memory
     let ptr = start_ptr;
     itemIds.forEach((id) => {
-      window.nethackGlobal.helpers.setPointerValue("nethack.menu.selected", ptr, Type.INT, id);
-
-      window.nethackGlobal.helpers.setPointerValue(
-        "nethack.menu.selected",
-        ptr + int_size,
-        Type.INT,
-        -1
-      );
-
-      window.nethackGlobal.helpers.setPointerValue(
-        "nethack.menu.selected",
-        ptr + int_size * 2,
-        Type.INT,
-        0
-      );
+      this.global.helpers.setPointerValue("nethack.menu.selected", ptr, Type.INT, id);
+      this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size, Type.INT, -1);
+      this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size * 2, Type.INT, 0);
 
       ptr += size;
     });
 
     // point selected to the first item
-    const selected_pp = window.nethackGlobal.helpers.getPointerValue("", selected, Type.POINTER);
-    window.nethackGlobal.helpers.setPointerValue(
+    const selected_pp = this.global.helpers.getPointerValue("", selected, Type.POINTER);
+    this.global.helpers.setPointerValue(
       "nethack.menu.setSelected",
       selected_pp,
       Type.INT,
@@ -284,7 +291,7 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async handlePutStr(winid: number, attr: any, str: string) {
-    if (winid === window.nethackGlobal.globals.WIN_STATUS) {
+    if (winid === this.global.globals.WIN_STATUS) {
       // 3.6 updates the status with putStr:
       // Web_user the Aspirant        St:9 Dx:12 Co:15 In:9 Wi:18 Ch:12  Lawful
       // Dlvl:1  $:0  HP:14(14) Pw:8(8) AC:7  Exp:1
@@ -359,12 +366,12 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private getPointerValue(ptr: number, type: string) {
-    const x = window.nethackGlobal.helpers.getPointerValue(
-      "nethack.pointerValue",
-      ptr,
-      Type.POINTER
-    );
-    return window.nethackGlobal.helpers.getPointerValue("nethack.pointerValue", x, type);
+    const x = this.global.helpers.getPointerValue("nethack.pointerValue", ptr, Type.POINTER);
+    return this.global.helpers.getPointerValue("nethack.pointerValue", x, type);
+  }
+
+  private get global() {
+    return this.win.nethackGlobal;
   }
 }
 
