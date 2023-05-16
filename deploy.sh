@@ -6,11 +6,7 @@
 # npm run fix:nethack
 
 # npm run build:godot
-npm run build:js
-
-cp src/index.html build
-# cp src/tilenames.json build
-# cp NetHack-UI/assets/Nevanda.png build
+npm run build:web
 
 sudo mkdir -p /srv/http/nethack
 sudo cp build/* /srv/http/nethack

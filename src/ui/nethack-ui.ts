@@ -34,8 +34,8 @@ const inventory = document.querySelector("#inventory") as HTMLElement;
 const status = document.querySelector("#status") as HTMLElement;
 const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 // TODO: set fixed or get correct size?
-canvas.width = canvas.offsetWidth;
-canvas.height = canvas.offsetHeight;
+canvas.width = 1920;
+canvas.height = 1080;
 
 const ctx = canvas.getContext("2d")!;
 const tileset = new Image();

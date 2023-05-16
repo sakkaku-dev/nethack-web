@@ -11,15 +11,11 @@ permissions:
 jobs:
   publish-web:
     runs-on: ubuntu-latest
-    container:
-      image: barichello/godot-ci:4.0.1
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: true
-          lfs: true
       - run: ./scripts/ci/prepare-templates.sh 4.0.1
-      - run: npm run build
+      - run: npm i
+      - run: npm run build:web
       - uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: build
