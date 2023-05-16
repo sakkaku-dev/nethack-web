@@ -1,0 +1,60 @@
+<!-- Simple UI for testing -->
+<!-- <button onclick="select()">Send</button> -->
+
+<style>
+  :root {
+    --bg-color: black;
+    --text-color: white;
+  }
+
+  #inventory {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  #status {
+    height: 10rem;
+    overflow-y: auto;
+  }
+  #output {
+    height: 10rem;
+    overflow-y: auto;
+  }
+  #dialog {
+    position: absolute;
+    top: 2rem;
+    bottom: 2rem;
+    transform: translate(-50%, 0);
+    left: 50%;
+    overflow-y: auto;
+    background: var(--bg-color);
+    border: var(--text-color);
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+  }
+  body {
+    background: var(--bg-color);
+    color: var(--text-color);
+  }
+</style>
+
+<pre id="dialog"></pre>
+
+<div style="width: 100%; height: 100%; display: flex">
+  <div class="col" style="flex-grow: 1">
+    <canvas id="map" style="flex-grow: 1"></canvas>
+    <pre id="output"></pre>
+  </div>
+
+  <div class="col">
+    <pre id="inventory"></pre>
+    <pre id="status"></pre>
+  </div>
+</div>
+
+<script src="./nethack-ui.js"></script>
+<script src="./nethack.js"></script>
+<script>
+  window.nethackJS.startGame();
+</script>

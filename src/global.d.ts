@@ -2,7 +2,7 @@ declare interface Window {
   nethackCallback: any;
 
   nethackJS: NetHackJS;
-  nethackGodot: NetHackGodot;
+  nethackUI: NetHackGodot;
 
   nethackGlobal: {
     helpers: {
@@ -13,7 +13,4 @@ declare interface Window {
     };
     globals: Record<string, any>;
   };
-
-  // For debugging
-  windows: any;
 }

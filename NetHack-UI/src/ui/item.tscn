@@ -1,38 +1,57 @@
-[gd_scene load_steps=3 format=3 uid="uid://bd1j8nkx65k2m"]
+[gd_scene load_steps=5 format=3 uid="uid://bd1j8nkx65k2m"]
 
 [ext_resource type="Script" path="res://src/ui/item.gd" id="1_50ecu"]
-[ext_resource type="Texture2D" uid="uid://df8pfnja0bl6x" path="res://assets/tileset.jpg" id="2_65fpx"]
+[ext_resource type="Texture2D" uid="uid://b4xotkfcjrkyg" path="res://assets/Nevanda.png" id="2_ul05b"]
+[ext_resource type="Shader" path="res://src/ui/tiled_texture.gdshader" id="3_fiavu"]
 
-[node name="Item" type="VBoxContainer" node_paths=PackedStringArray("accel_label")]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_p6tj8"]
+shader = ExtResource("3_fiavu")
+shader_parameter/pos = Vector2(33, 10)
+shader_parameter/tile_count = Vector2(40, 37)
+
+[node name="Item" type="MarginContainer" node_paths=PackedStringArray("accel_label", "sprite", "active_border")]
 tooltip_text = "Test"
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
 script = ExtResource("1_50ecu")
-accel_label = NodePath("Control3/accel")
+accel_label = NodePath("MarginContainer/accel")
+sprite = NodePath("Control2/TextureRect")
+active_border = NodePath("Control2/MarginContainer")
 
-[node name="Control3" type="Control" parent="."]
-z_index = 1
-layout_mode = 2
-size_flags_horizontal = 8
-size_flags_vertical = 8
-mouse_filter = 2
-
-[node name="accel" type="Label" parent="Control3"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 26.0
-grow_horizontal = 2
-text = "a"
-horizontal_alignment = 1
-
-[node name="Control2" type="Control" parent="."]
+[node name="Control2" type="MarginContainer" parent="."]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 4
 mouse_filter = 2
 
-[node name="Sprite2D" type="Sprite2D" parent="Control2"]
-position = Vector2(16, 16)
-texture = ExtResource("2_65fpx")
-hframes = 40
-vframes = 30
+[node name="MarginContainer" type="MarginContainer" parent="Control2"]
+layout_mode = 2
+theme_override_constants/margin_left = -2
+theme_override_constants/margin_top = -2
+theme_override_constants/margin_right = -2
+theme_override_constants/margin_bottom = -2
+
+[node name="ColorRect" type="ColorRect" parent="Control2/MarginContainer"]
+layout_mode = 2
+color = Color(0.737255, 0.45098, 0.243137, 1)
+
+[node name="TextureRect" type="TextureRect" parent="Control2"]
+material = SubResource("ShaderMaterial_p6tj8")
+layout_mode = 2
+texture = ExtResource("2_ul05b")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_top = -20
+theme_override_constants/margin_right = -25
+
+[node name="accel" type="Label" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "a"
+horizontal_alignment = 1

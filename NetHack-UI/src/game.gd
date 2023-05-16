@@ -1,8 +1,7 @@
 extends Node
 
-const TILE_SOURCE = 0
+const TILE_SOURCE = 4
 const TILE_LAYER = 0
-const TILE_SIZE_X = 40
 
 @export var DIALOG: PackedScene
 @export var MENU: PackedScene
@@ -28,7 +27,7 @@ func _ready():
 func _unhandled_input(event: InputEvent):
 	if event is InputEventKey and event.is_pressed():
 		var code = event.keycode
-		if code >= KEY_SPACE and code <= KEY_ASCIITILDE or code == KEY_ENTER: # only allow ASCII code
+		if code >= KEY_SPACE and code <= KEY_ASCIITILDE or code == KEY_ENTER or code == KEY_ESCAPE: # only allow ASCII code
 			var is_ctrl = Input.is_key_pressed(KEY_CTRL)
 			var window = JavaScriptBridge.get_interface("window")
 			var unicode = event.unicode
@@ -36,6 +35,14 @@ func _unhandled_input(event: InputEvent):
 				window.nethackJS.sendInput(KEY_CTRL & code)
 			else:
 				window.nethackJS.sendInput(unicode)
+	elif event is InputEventMouseButton:
+		var zoom = camera.zoom.x
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			zoom += 0.2
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			zoom -= 0.2
+		
+		camera.zoom = Vector2(max(0, zoom), max(0, zoom))
 
 func _to_js_array(arr: Array):
 	var js_arr = JavaScriptBridge.create_object("Array")
@@ -118,12 +125,6 @@ func updateInventory(args):
 
 func updateMap(args):
 	for tile in args:
-		map.set_cell(TILE_LAYER, Vector2(tile.x, tile.y), TILE_SOURCE, _to_tilev(tile.tile))
+		map.set_cell(TILE_LAYER, Vector2(tile.x, tile.y), TILE_SOURCE, Utils.to_tilev(tile.tile))
 
-func _to_tilev(tile: int) -> Vector2:
-	# TODO: map correctly -> tileset needs to be updated for 3.7
-	# https://github.com/NullCGT/SpliceHack
-	var row = floor(tile / float(TILE_SIZE_X))
-	var col = tile % TILE_SIZE_X
-	return Vector2(col, row)
 

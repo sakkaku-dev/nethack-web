@@ -1,0 +1,1977 @@
+diff --git a/include/config.h b/include/config.h
+index b606b5db1..17f09b57a 100644
+--- a/include/config.h
++++ b/include/config.h
+@@ -38,6 +38,10 @@
+ 
+ #include "config1.h" /* should auto-detect MSDOS, MAC, AMIGA, and WIN32 */
+ 
++#ifdef WEB_GRAPHICS
++#define DEFAULT_WINDOW_SYS "web"
++#endif
++
+ /* Windowing systems...
+  * Define all of those you want supported in your binary.
+  * Some combinations make no sense.  See the installation document.
+@@ -261,7 +265,7 @@
+  *
+  */
+ 
+-#if defined(UNIX) && !defined(ZLIB_COMP) && !defined(COMPRESS)
++#if defined(UNIX) && !defined(ZLIB_COMP) && !defined(COMPRESS) && !defined(WEB_GRAPHICS)
+ /* path and file name extension for compression program */
+ #define COMPRESS "/usr/bin/compress" /* Lempel-Ziv compression */
+ #define COMPRESS_EXTENSION ".Z"      /* compress's extension */
+diff --git a/include/global.h b/include/global.h
+index a2b70d258..fc1cc050d 100644
+--- a/include/global.h
++++ b/include/global.h
+@@ -243,7 +243,7 @@ typedef uchar nhsym;
+ #endif
+ 
+ #if defined(X11_GRAPHICS) || defined(QT_GRAPHICS) || defined(GNOME_GRAPHICS) \
+-    || defined(WIN32)
++    || defined(WIN32) || defined(WEB_GRAPHICS)
+ #ifndef USE_TILES
+ #define USE_TILES /* glyph2tile[] will be available */
+ #endif
+diff --git a/include/unixconf.h b/include/unixconf.h
+index c126d6839..f6ae00668 100644
+--- a/include/unixconf.h
++++ b/include/unixconf.h
+@@ -99,6 +99,12 @@
+  *              Ralf Brown, 7/26/89 (from v2.3 hack of 10/10/88)
+  */
+ 
++#ifdef WEB_GRAPHICS
++#define NO_FILE_LINKS
++#define LOCKDIR HACKDIR
++#define NO_SIGNAL
++#endif
++
+ /* #define NO_FILE_LINKS */                       /* if no hard links */
+ /* #define LOCKDIR "/usr/games/lib/nethackdir" */ /* where to put locks */
+ 
+diff --git a/src/windows.c b/src/windows.c
+index 94ac40f3e..9b00748e2 100644
+--- a/src/windows.c
++++ b/src/windows.c
+@@ -3,6 +3,9 @@
+ /* NetHack may be freely redistributed.  See license for details. */
+ 
+ #include "hack.h"
++#ifdef WEB_GRAPHICS
++extern struct window_procs web_procs;
++#endif
+ #ifdef TTY_GRAPHICS
+ #include "wintty.h"
+ #endif
+@@ -92,6 +95,9 @@ static struct win_choices {
+     void *FDECL((*chain_routine), (int, int, void *, void *, void *));
+ #endif
+ } winchoices[] = {
++#ifdef WEB_GRAPHICS
++    { &web_procs, 0, CHAINR(0) },
++#endif
+ #ifdef TTY_GRAPHICS
+     { &tty_procs, win_tty_init CHAINR(0) },
+ #endif
+diff --git a/sys/unix/Makefile.dat b/sys/unix/Makefile.dat
+index 00f604396..085edef11 100644
+--- a/sys/unix/Makefile.dat
++++ b/sys/unix/Makefile.dat
+@@ -13,14 +13,14 @@ VARDAT = bogusmon data engrave epitaph rumors quest.dat oracles options
+ 
+ all:	$(VARDAT) spec_levs quest_levs dungeon
+ 
+-../util/makedefs:
+-	(cd ../util ; $(MAKE) makedefs)
++../util/makedefs.js:
++	(cd ../util ; $(MAKE) makedefs.js)
+ 
+-../util/dgn_comp:
+-	(cd ../util ; $(MAKE) dgn_comp)
++../util/dgn_comp.js:
++	(cd ../util ; $(MAKE) dgn_comp.js)
+ 
+-../util/lev_comp:
+-	(cd ../util ; $(MAKE) lev_comp)
++../util/lev_comp.js:
++	(cd ../util ; $(MAKE) lev_comp.js)
+ 
+ ../util/tile2x11:
+ 	(cd ../util ; $(MAKE) tile2x11)
+@@ -100,70 +100,70 @@ GEM_RSC.RSC:
+ 	$(UUDECODE) ../win/gem/gem_rsc.uu
+ 
+ 
+-data:	data.base ../util/makedefs
+-	../util/makedefs -d
++data:	data.base ../util/makedefs.js
++	node ../util/makedefs.js -d
+ 
+-rumors:	rumors.tru rumors.fal ../util/makedefs
+-	../util/makedefs -r
++rumors:	rumors.tru rumors.fal ../util/makedefs.js
++	node ../util/makedefs.js -r
+ 
+-quest.dat:	quest.txt ../util/makedefs
+-	../util/makedefs -q
++quest.dat:	quest.txt ../util/makedefs.js
++	node ../util/makedefs.js -q
+ 
+-oracles:	oracles.txt ../util/makedefs
+-	../util/makedefs -h
++oracles:	oracles.txt ../util/makedefs.js
++	node ../util/makedefs.js -h
+ 
+-engrave:	engrave.txt ../util/makedefs
+-	../util/makedefs -s
++engrave:	engrave.txt ../util/makedefs.js
++	node ../util/makedefs.js -s
+ 
+-epitaph:	epitaph.txt ../util/makedefs
+-	../util/makedefs -s
++epitaph:	epitaph.txt ../util/makedefs.js
++	node ../util/makedefs.js -s
+ 
+-bogusmon:	bogusmon.txt ../util/makedefs
+-	../util/makedefs -s
++bogusmon:	bogusmon.txt ../util/makedefs.js
++	node ../util/makedefs.js -s
+ 
+ # note: 'options' should have already been made when include/date.h was created
+-options:	../util/makedefs
+-	../util/makedefs -v
++options:	../util/makedefs.js
++	node ../util/makedefs.js -v
+ 
+ 
+-spec_levs: ../util/lev_comp \
++spec_levs: ../util/lev_comp.js \
+ 	bigroom.des castle.des endgame.des gehennom.des knox.des medusa.des \
+ 	mines.des oracle.des sokoban.des tower.des yendor.des
+-	../util/lev_comp bigroom.des
+-	../util/lev_comp castle.des
+-	../util/lev_comp endgame.des
+-	../util/lev_comp gehennom.des
+-	../util/lev_comp knox.des
+-	../util/lev_comp medusa.des
+-	../util/lev_comp mines.des
+-	../util/lev_comp oracle.des
+-	../util/lev_comp sokoban.des
+-	../util/lev_comp tower.des
+-	../util/lev_comp yendor.des
++	node ../util/lev_comp.js bigroom.des
++	node ../util/lev_comp.js castle.des
++	node ../util/lev_comp.js endgame.des
++	node ../util/lev_comp.js gehennom.des
++	node ../util/lev_comp.js knox.des
++	node ../util/lev_comp.js medusa.des
++	node ../util/lev_comp.js mines.des
++	node ../util/lev_comp.js oracle.des
++	node ../util/lev_comp.js sokoban.des
++	node ../util/lev_comp.js tower.des
++	node ../util/lev_comp.js yendor.des
+ 	touch spec_levs
+ 
+-quest_levs: ../util/lev_comp \
++quest_levs: ../util/lev_comp.js \
+ 	Arch.des Barb.des Caveman.des Healer.des Knight.des Monk.des \
+ 	Priest.des Ranger.des Rogue.des Samurai.des Tourist.des Valkyrie.des \
+ 	Wizard.des
+-	../util/lev_comp Arch.des
+-	../util/lev_comp Barb.des
+-	../util/lev_comp Caveman.des
+-	../util/lev_comp Healer.des
+-	../util/lev_comp Knight.des
+-	../util/lev_comp Monk.des
+-	../util/lev_comp Priest.des
+-	../util/lev_comp Ranger.des
+-	../util/lev_comp Rogue.des
+-	../util/lev_comp Samurai.des
+-	../util/lev_comp Tourist.des
+-	../util/lev_comp Valkyrie.des
+-	../util/lev_comp Wizard.des
++	node ../util/lev_comp.js Arch.des
++	node ../util/lev_comp.js Barb.des
++	node ../util/lev_comp.js Caveman.des
++	node ../util/lev_comp.js Healer.des
++	node ../util/lev_comp.js Knight.des
++	node ../util/lev_comp.js Monk.des
++	node ../util/lev_comp.js Priest.des
++	node ../util/lev_comp.js Ranger.des
++	node ../util/lev_comp.js Rogue.des
++	node ../util/lev_comp.js Samurai.des
++	node ../util/lev_comp.js Tourist.des
++	node ../util/lev_comp.js Valkyrie.des
++	node ../util/lev_comp.js Wizard.des
+ 	touch quest_levs
+ 
+-dungeon: dungeon.def ../util/makedefs ../util/dgn_comp
+-	../util/makedefs -e
+-	../util/dgn_comp dungeon.pdf
++dungeon: dungeon.def ../util/makedefs.js ../util/dgn_comp.js
++	node ../util/makedefs.js -e
++	node ../util/dgn_comp.js dungeon.pdf
+ 
+ # gitinfo.txt is optionally made by src/Makefile when creating date.h
+ clean:
+diff --git a/sys/unix/Makefile.src b/sys/unix/Makefile.src
+index eeb30b9a0..c4435facb 100644
+--- a/sys/unix/Makefile.src
++++ b/sys/unix/Makefile.src
+@@ -429,7 +429,7 @@ AT_V1 := @
+ AT = $(AT_V$(QUIETCC))
+ # Verbosity, end
+ 
+-MAKEDEFS = ../util/makedefs
++MAKEDEFS = ../util/makedefs.js
+ 
+ # timestamp files to reduce `make' overhead and shorten .o dependency lists
+ CONFIG_H = ../src/config.h-t
+@@ -595,6 +595,10 @@ objects.o:
+ 	$(CC) $(CFLAGS) -c objects.c
+ 	@rm -f $(MAKEDEFS)
+ 
++web.o: ../win/web/web.c $(HACK_H) ../include/dlb.h \
++		../include/patchlevel.h
++	$(CC) $(CFLAGS) -c ../win/web/web.c
++
+ # Qt 3 windowport meta-object-compiler output
+ qt_kde0.moc: ../include/qt_kde0.h
+ 	$(QTDIR)/bin/moc -o qt_kde0.moc ../include/qt_kde0.h
+@@ -670,7 +674,7 @@ tile.c: ../win/share/tilemap.c $(HACK_H)
+ #	up to date before being executed
+ ../include/date.h:	$(VERSOURCES) $(HACK_H)
+ 	-$(SHELL) ../sys/unix/gitinfo.sh $(GITINFO) #before 'makedefs -v'
+-	../util/makedefs -v
++	node ../util/makedefs.js -v
+ 
+ 
+ lint:
+diff --git a/sys/unix/Makefile.top b/sys/unix/Makefile.top
+index ad7607cd9..c9124e17f 100644
+--- a/sys/unix/Makefile.top
++++ b/sys/unix/Makefile.top
+@@ -184,11 +184,11 @@ title.img:
+ 	( cd dat ; $(MAKE) title.img )
+ 
+ check-dlb: options
+-	@if egrep -s librarian dat/options ; then $(MAKE) dlb ; else true ; fi
++	@if egrep -s librarian dat/options ; then $(MAKE) dlb.js ; else true ; fi
+ 
+-dlb:
+-	( cd util ; $(MAKE) dlb )
+-	( cd dat ; LC_ALL=C ; ../util/dlb cf nhdat $(DATDLB) )
++dlb.js:
++	( cd util ; $(MAKE) dlb.js )
++	( cd dat ; LC_ALL=C ; node ../util/dlb.js cf nhdat $(DATDLB) )
+ 
+ # recover can be used when INSURANCE is defined in include/config.h
+ # and the checkpoint option is true
+diff --git a/sys/unix/Makefile.utl b/sys/unix/Makefile.utl
+index 78e9d725f..b94b1d7f9 100644
+--- a/sys/unix/Makefile.utl
++++ b/sys/unix/Makefile.utl
+@@ -102,6 +102,8 @@ NHSROOT=..
+ # we avoid that by forcing it empty rather than by overriding default rules
+ CPPFLAGS =
+ 
++UTIL_CFLAGS = --pre-js ../win/web/mount_nodefs.js
++
+ LIBS =
+ 
+ # If you are cross-compiling, you must use this:
+@@ -225,8 +227,8 @@ YACCDIST =
+ 
+ #	dependencies for makedefs
+ #
+-makedefs:	$(MAKEOBJS) mdgrep.h
+-	$(CC) $(LFLAGS) -o makedefs $(MAKEOBJS)
++makedefs.js:	$(MAKEOBJS) mdgrep.h
++	$(CC) $(LFLAGS) $(UTIL_CFLAGS) -o makedefs.js $(MAKEOBJS)
+ 
+ makedefs.o: makedefs.c $(CONFIG_H) ../include/permonst.h \
+ 		../include/objclass.h ../include/monsym.h \
+@@ -238,12 +240,12 @@ makedefs.o: makedefs.c $(CONFIG_H) ../include/permonst.h \
+ mdgreph: mdgrep.pl
+ 	perl mdgrep.pl
+ 
+-../include/onames.h: makedefs
+-	./makedefs -o
+-../include/pm.h: makedefs
+-	./makedefs -p
+-../include/vis_tab.h: makedefs
+-	./makedefs -z
++../include/onames.h: makedefs.js
++	node ./makedefs.js -o
++../include/pm.h: makedefs.js
++	node ./makedefs.js -p
++../include/vis_tab.h: makedefs.js
++	node ./makedefs.js -z
+ # makedefs -z makes both vis_tab.h and vis_tab.c, but writes the .h first
+ ../src/vis_tab.c: ../include/vis_tab.h
+ 
+@@ -262,8 +264,8 @@ panic.o:     panic.c $(CONFIG_H)
+ 
+ #	dependencies for lev_comp
+ #
+-lev_comp:  $(SPLEVOBJS)
+-	$(CC) $(LFLAGS) -o lev_comp $(SPLEVOBJS) $(LIBS)
++lev_comp.js:  $(SPLEVOBJS)
++	$(CC) $(LFLAGS) $(UTIL_CFLAGS) -o lev_comp.js $(SPLEVOBJS) $(LIBS)
+ 
+ lev_yacc.o:  lev_yacc.c $(HACK_H) ../include/sp_lev.h
+ lev_main.o:  lev_main.c $(HACK_H) ../include/sp_lev.h ../include/tcap.h \
+@@ -308,8 +310,8 @@ lintlev:
+ 
+ #	dependencies for dgn_comp
+ #
+-dgn_comp:  $(DGNCOMPOBJS)
+-	$(CC) $(LFLAGS) -o dgn_comp $(DGNCOMPOBJS) $(LIBS)
++dgn_comp.js:  $(DGNCOMPOBJS)
++	$(CC) $(LFLAGS) $(UTIL_CFLAGS) -o dgn_comp.js $(DGNCOMPOBJS) $(LIBS)
+ 
+ dgn_yacc.o:  dgn_yacc.c $(CONFIG_H) ../include/dgn_file.h ../include/date.h
+ dgn_main.o:  dgn_main.c $(CONFIG_H) ../include/dlb.h
+@@ -351,8 +353,8 @@ recover.o: recover.c $(CONFIG_H) ../include/date.h
+ 
+ #	dependencies for dlb
+ #
+-dlb:	$(DLBOBJS)
+-	$(CC) $(LFLAGS) -o dlb $(DLBOBJS) $(LIBS)
++dlb.js:	$(DLBOBJS)
++	$(CC) $(LFLAGS) $(UTIL_CFLAGS) -o dlb.js $(DLBOBJS) $(LIBS)
+ 
+ dlb_main.o: dlb_main.c $(CONFIG_H) ../include/dlb.h ../include/date.h
+ 	$(CC) $(CFLAGS) -c dlb_main.c
+@@ -365,7 +367,7 @@ TEXT_IO = tiletext.o tiletxt.o $(OALLOC) $(ONAMING)
+ GIFREADERS = gifread.o
+ PPMWRITERS = ppmwrite.o
+ 
+-tileutils: tilemap gif2txt txt2ppm tile2x11
++tileutils: tilemap.js gif2txt txt2ppm tile2x11
+ 
+ gif2txt: $(GIFREADERS) $(TEXT_IO)
+ 	$(CC) $(LFLAGS) -o gif2txt $(GIFREADERS) $(TEXT_IO) $(LIBS)
+@@ -392,10 +394,10 @@ tile2beos: tile2beos.o $(TEXT_IO)
+ #  that without mucking about with extra OS-specific CFLAGS and/or LFLAGS
+ #tilemap: ../win/share/tilemap.c $(HACK_H)
+ #	$(CC) $(CFLAGS) $(LFLAGS) -o tilemap ../win/share/tilemap.c $(LIBS)
+-tilemap: tilemap.o
+-	$(CC) $(LFLAGS) -o tilemap tilemap.o $(LIBS)
+-../src/tile.c: tilemap
+-	./tilemap
++tilemap.js: tilemap.o
++	$(CC) $(LFLAGS) $(UTIL_CFLAGS) -o tilemap.js tilemap.o $(LIBS)
++../src/tile.c: tilemap.js
++	node ./tilemap.js
+ 
+ ../include/tile.h: ../win/share/tile.h
+ 	cp ../win/share/tile.h ../include/tile.h
+@@ -502,6 +504,6 @@ spotless: clean
+ 	-rm -f lev_lex.c lev_yacc.c dgn_lex.c dgn_yacc.c
+ 	-rm -f ../include/lev_comp.h ../include/dgn_comp.h
+ 	-rm -f ../include/tile.h tiletxt.c
+-	-rm -f makedefs lev_comp dgn_comp recover dlb
++	-rm -f makedefs.js makedefs.wasm lev_comp.js dgn_comp.js recover dlb.js
+ 	-rm -f gif2txt txt2ppm tile2x11 tile2img.ttp xpm2img.ttp \
+-		tilemap tileedit tile2bmp
++		tilemap.js tileedit tile2bmp
+diff --git a/sys/unix/hints/linux b/sys/unix/hints/linux
+index 862915053..ef918cae5 100644
+--- a/sys/unix/hints/linux
++++ b/sys/unix/hints/linux
+@@ -11,8 +11,8 @@
+ 
+ #PREFIX=/usr
+ PREFIX=$(wildcard ~)/nh/install
+-HACKDIR=$(PREFIX)/games/lib/$(GAME)dir
+-SHELLDIR = $(PREFIX)/games
++HACKDIR=$(PREFIX)/nethack
++SHELLDIR = $(PREFIX)/nethack
+ INSTDIR=$(HACKDIR)
+ VARDIR = $(HACKDIR)
+ 
+@@ -20,28 +20,46 @@ VARDIR = $(HACKDIR)
+ 
+ POSTINSTALL=cp -n sys/unix/sysconf $(INSTDIR)/sysconf; $(CHOWN) $(GAMEUID) $(INSTDIR)/sysconf; $(CHGRP) $(GAMEGRP) $(INSTDIR)/sysconf; chmod $(VARFILEPERM) $(INSTDIR)/sysconf;
+ 
+-CFLAGS=-g -O -I../include -DNOTPARMDECL
++CFLAGS=-g -O3 -I../include -DNOTPARMDECL
+ CFLAGS+=-DDLB
+-CFLAGS+=-DCOMPRESS=\"/bin/gzip\" -DCOMPRESS_EXTENSION=\".gz\"
++# CFLAGS+=-DCOMPRESS=\"/bin/gzip\" -DCOMPRESS_EXTENSION=\".gz\"
+ CFLAGS+=-DSYSCF -DSYSCF_FILE=\"$(HACKDIR)/sysconf\" -DSECURE
+ CFLAGS+=-DTIMED_DELAY
+ CFLAGS+=-DHACKDIR=\"$(HACKDIR)\"
+ CFLAGS+=-DDUMPLOG
+ CFLAGS+=-DCONFIG_ERROR_SECURE=FALSE
+-CFLAGS+=-DCURSES_GRAPHICS
++# CFLAGS+=-DCURSES_GRAPHICS
+ #CFLAGS+=-DEXTRA_SANITY_CHECKS
+ #CFLAGS+=-DEDIT_GETLIN
+ #CFLAGS+=-DSCORE_ON_BOTL
+ #CFLAGS+=-DMSGHANDLER
+ #CFLAGS+=-DTTY_TILES_ESCCODES
+ 
++CC=emcc
++CFLAGS+= -DWEB_GRAPHICS -DNOTTYGRAPHICS -Wno-undefined
++GAME=
++
+ LINK=$(CC)
+ # Only needed for GLIBC stack trace:
+-LFLAGS=-rdynamic
++LFLAGS = -rdynamic
++LFLAGS += -lnodefs.js -Wno-undefined
++LFLAGS += -s ERROR_ON_UNDEFINED_SYMBOLS=0
++LFLAGS += -s WASM=1 -s ALLOW_TABLE_GROWTH
++
++LFLAGS += -O3
++LFLAGS += -s ASYNCIFY -s ASYNCIFY_IMPORTS='["local_callback"]'
++LFLAGS += -s MODULARIZE
++LFLAGS += --preload-file $(DATA_DIR)/nethack@/nethack
++LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback", "_glyph_to_tile", "_malloc"]'
++LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", "removeFunction", "UTF8ToString", "getValue", "setValue", "ENV"]'
++
++WINWEBSRC = ../win/web/web.c tile.c
++WINWEBOBJ = web.o tile.o
++WINWEBLIB =
+ 
+-WINSRC = $(WINTTYSRC) $(WINCURSESSRC)
+-WINOBJ = $(WINTTYOBJ) $(WINCURSESOBJ)
+-WINLIB = $(WINTTYLIB) $(WINCURSESLIB)
++WINSRC = $(WINWEBSRC)
++WINOBJ = $(WINWEBOBJ)
++WINLIB = $(WINWEBLIB)
+ 
+ # if TTY_TILES_ESCCODES
+ #WINSRC += tile.c
+diff --git a/sys/unix/unixmain.c b/sys/unix/unixmain.c
+index 1e7880165..e73aedc23 100644
+--- a/sys/unix/unixmain.c
++++ b/sys/unix/unixmain.c
+@@ -16,6 +16,13 @@
+ #include <fcntl.h>
+ #endif
+ 
++#ifdef __EMSCRIPTEN__
++#include <emscripten/emscripten.h>
++void js_helpers_init();
++void js_constants_init();
++void js_globals_init();
++#endif
++
+ #if !defined(_BULL_SOURCE) && !defined(__sgi) && !defined(_M_UNIX)
+ #if !defined(SUNOS4) && !(defined(ULTRIX) && defined(__GNUC__))
+ #if defined(POSIX_TYPES) || defined(SVR4) || defined(HPUX)
+@@ -209,6 +216,13 @@ char *argv[];
+ #ifdef WINCHAIN
+     commit_windowchain();
+ #endif
++
++#ifdef __EMSCRIPTEN__
++    js_helpers_init();
++    js_constants_init();
++    js_globals_init();
++#endif
++
+     init_nhwindows(&argc, argv); /* now we can set up window system */
+ #ifdef _M_UNIX
+     init_sco_cons();
+@@ -808,3 +822,355 @@ sys_random_seed()
+ }
+ 
+ /*unixmain.c*/
++
++
++#ifdef __EMSCRIPTEN__
++/***
++ * Helpers
++ ***/
++EM_JS(void, js_helpers_init, (), {
++    globalThis.nethackGlobal = globalThis.nethackGlobal || {};
++    globalThis.nethackGlobal.helpers = globalThis.nethackGlobal.helpers || {};
++
++    installHelper(mapglyphHelper);
++    installHelper(displayInventory);
++    installHelper(getPointerValue);
++    installHelper(setPointerValue);
++
++    // used by print_glyph
++    function mapglyphHelper(glyph, x, y, mgflags) {
++        let ochar = _malloc(4);
++        let ocolor = _malloc(4);
++        let ospecial = _malloc(4);
++
++        _mapglyph(glyph, ochar, ocolor, ospecial, x, y, mgflags);
++
++        let ch = getValue(ochar, "i32");
++        let color = getValue(ocolor, "i32");
++        let special = getValue(ospecial, "i32");
++
++        _free (ochar);
++        _free (ocolor);
++        _free (ospecial);
++
++        return {
++            glyph,
++            ch,
++            color,
++            special,
++            x,
++            y,
++            mgflags
++        };
++    }
++
++    // used by update_inventory
++    function displayInventory() {
++        // Asyncify.handleAsync(async () => {
++            return _display_inventory(0, 0);
++        // });
++    }
++
++    // convert 'ptr' to the type indicated by 'type'
++    function getPointerValue(name, ptr, type) {
++        // console.log("getPointerValue", name, "0x" + ptr.toString(16), type);
++        switch(type) {
++        case "s": // string
++            // var value = UTF8ToString(getValue(ptr, "*"));
++            return UTF8ToString(ptr);
++        case "p": // pointer
++            if(!ptr) return 0; // null pointer
++            return getValue(ptr, "*");
++        case "c": // char
++            return String.fromCharCode(getValue(ptr, "i8"));
++        case "0": /* 2^0 = 1 byte */
++            return getValue(ptr, "i8");
++        case "1": /* 2^1 = 2 bytes */
++            return getValue(ptr, "i16");
++        case "2": /* 2^2 = 4 bytes */
++        case "i": // integer
++        case "n": // number
++            return getValue(ptr, "i32");
++        case "f": // float
++            return getValue(ptr, "float");
++        case "d": // double
++            return getValue(ptr, "double");
++        case "o": // overloaded: multiple types
++        case "v":
++            return ptr;
++        default:
++            throw new TypeError ("unknown type:" + type);
++        }
++    }
++
++    // sets the return value of the function to the type expected
++    function setPointerValue(name, ptr, type, value = 0) {
++        // console.log("setPointerValue", name, "0x" + ptr.toString(16), type, value);
++        switch (type) {
++        case "p":
++            throw new Error("not implemented");
++        case "s":
++            if(typeof value !== "string")
++                throw new TypeError(`expected ${name} return type to be string`);
++            // value=value?value:"(no value)";
++            // var strPtr = getValue(ptr, "i32");
++            stringToUTF8(value, ptr, 1024); // TODO: uhh... danger will robinson
++            break;
++        case "i":
++            if(typeof value !== "number" || !Number.isInteger(value))
++                throw new TypeError(`expected ${name} return type to be integer`);
++            setValue(ptr, value, "i32");
++            break;
++        case "c":
++            if(typeof value !== "number" || value < 0 || value > 128)
++                throw new TypeError(`expected ${name} return type to be integer representing an ASCII character`);
++            setValue(ptr, value, "i8");
++            break;
++        case "f":
++            if(typeof value !== "number" || isFloat(value))
++                throw new TypeError(`expected ${name} return type to be float`);
++            // XXX: I'm not sure why 'double' works and 'float' doesn't
++            setValue(ptr, value, "double");
++            break;
++        case "d":
++            if(typeof value !== "number" || isFloat(value))
++                throw new TypeError(`expected ${name} return type to be double`);
++            setValue(ptr, value, "double");
++            break;
++        case "v":
++            break;
++        default:
++            throw new Error("unknown type");
++        }
++
++        function isFloat(n){
++            return n === +n && n !== (n|0) && !Number.isInteger(n);
++        }
++    }
++
++
++    function installHelper(fn, name) {
++        name = name || fn.name;
++        globalThis.nethackGlobal.helpers[name] = fn;
++    }
++})
++
++/***
++ * Constants
++ ***/
++#define SET_CONSTANT(scope, name) set_const(scope, #name, name);
++EM_JS(void, set_const, (char *scope_str, char *name_str, int num), {
++    let scope = UTF8ToString(scope_str);
++    let name = UTF8ToString(name_str);
++
++    globalThis.nethackGlobal.constants[scope] = globalThis.nethackGlobal.constants[scope] || {};
++    globalThis.nethackGlobal.constants[scope][name] = num;
++    globalThis.nethackGlobal.constants[scope][num] = name;
++});
++#define SET_CONSTANT_STRING(scope, name) set_const_str(scope, #name, name);
++EM_JS(void, set_const_str, (char *scope_str, char *name_str, char *input_str), {
++    let scope = UTF8ToString(scope_str);
++    let name = UTF8ToString(name_str);
++    let str = UTF8ToString(input_str);
++
++    globalThis.nethackGlobal.constants[scope] = globalThis.nethackGlobal.constants[scope] || {};
++    globalThis.nethackGlobal.constants[scope][name] = str;
++});
++
++void js_constants_init() {
++    EM_ASM({
++        globalThis.nethackGlobal = globalThis.nethackGlobal || {};
++        globalThis.nethackGlobal.constants = globalThis.nethackGlobal.constants || {};
++    });
++
++    // create_nhwindow
++    SET_CONSTANT("WIN_TYPE", NHW_MESSAGE)
++    SET_CONSTANT("WIN_TYPE", NHW_STATUS)
++    SET_CONSTANT("WIN_TYPE", NHW_MAP)
++    SET_CONSTANT("WIN_TYPE", NHW_MENU)
++    SET_CONSTANT("WIN_TYPE", NHW_TEXT)
++
++    // status_update
++    SET_CONSTANT("STATUS_FIELD", BL_TITLE)
++    SET_CONSTANT("STATUS_FIELD", BL_STR)
++    SET_CONSTANT("STATUS_FIELD", BL_DX)
++    SET_CONSTANT("STATUS_FIELD", BL_CO)
++    SET_CONSTANT("STATUS_FIELD", BL_IN)
++    SET_CONSTANT("STATUS_FIELD", BL_WI)
++    SET_CONSTANT("STATUS_FIELD", BL_CH)
++    SET_CONSTANT("STATUS_FIELD", BL_ALIGN)
++    SET_CONSTANT("STATUS_FIELD", BL_SCORE)
++    SET_CONSTANT("STATUS_FIELD", BL_CAP)
++    SET_CONSTANT("STATUS_FIELD", BL_GOLD)
++    SET_CONSTANT("STATUS_FIELD", BL_ENE)
++    SET_CONSTANT("STATUS_FIELD", BL_ENEMAX)
++    SET_CONSTANT("STATUS_FIELD", BL_XP)
++    SET_CONSTANT("STATUS_FIELD", BL_AC)
++    SET_CONSTANT("STATUS_FIELD", BL_HD)
++    SET_CONSTANT("STATUS_FIELD", BL_TIME)
++    SET_CONSTANT("STATUS_FIELD", BL_HUNGER)
++    SET_CONSTANT("STATUS_FIELD", BL_HP)
++    SET_CONSTANT("STATUS_FIELD", BL_HPMAX)
++    SET_CONSTANT("STATUS_FIELD", BL_LEVELDESC)
++    SET_CONSTANT("STATUS_FIELD", BL_EXP)
++    SET_CONSTANT("STATUS_FIELD", BL_CONDITION)
++
++    // SET_CONSTANT("STATUS_FIELD", BL_CHARACTERISTICS)
++    // SET_CONSTANT("STATUS_FIELD", BL_RESET)
++    // SET_CONSTANT("STATUS_FIELD", BL_FLUSH)
++    // SET_CONSTANT("STATUS_FIELD", MAXBLSTATS)
++
++    // text attributes
++    SET_CONSTANT("ATTR", ATR_NONE);
++    SET_CONSTANT("ATTR", ATR_ULINE);
++    SET_CONSTANT("ATTR", ATR_BOLD);
++    SET_CONSTANT("ATTR", ATR_BLINK);
++    SET_CONSTANT("ATTR", ATR_INVERSE);
++
++    // SET_CONSTANT("ATTR", ATR_URGENT);
++    // SET_CONSTANT("ATTR", ATR_NOHISTORY);
++    // SET_CONSTANT("ATTR", ATR_DIM);
++
++    // conditions
++    SET_CONSTANT("CONDITION", BL_MASK_STONE);
++    SET_CONSTANT("CONDITION", BL_MASK_SLIME);
++    SET_CONSTANT("CONDITION", BL_MASK_STRNGL);
++    SET_CONSTANT("CONDITION", BL_MASK_FOODPOIS);
++    SET_CONSTANT("CONDITION", BL_MASK_TERMILL);
++    SET_CONSTANT("CONDITION", BL_MASK_BLIND);
++    SET_CONSTANT("CONDITION", BL_MASK_DEAF);
++    SET_CONSTANT("CONDITION", BL_MASK_STUN);
++    SET_CONSTANT("CONDITION", BL_MASK_CONF);
++    SET_CONSTANT("CONDITION", BL_MASK_HALLU);
++    SET_CONSTANT("CONDITION", BL_MASK_LEV);
++    SET_CONSTANT("CONDITION", BL_MASK_FLY);
++    SET_CONSTANT("CONDITION", BL_MASK_RIDE);
++
++    // menu
++    SET_CONSTANT("MENU_SELECT", PICK_NONE);
++    SET_CONSTANT("MENU_SELECT", PICK_ONE);
++    SET_CONSTANT("MENU_SELECT", PICK_ANY);
++
++    // copyright
++    // SET_CONSTANT_STRING("COPYRIGHT", COPYRIGHT_BANNER_A);
++    // SET_CONSTANT_STRING("COPYRIGHT", COPYRIGHT_BANNER_B);
++    // XXX: not set for cross-compile
++    //SET_CONSTANT_STRING("COPYRIGHT", COPYRIGHT_BANNER_C);
++    // SET_CONSTANT_STRING("COPYRIGHT", COPYRIGHT_BANNER_D);
++
++    // glyphs
++    SET_CONSTANT("GLYPH", GLYPH_MON_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_PET_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_INVIS_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_DETECT_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_BODY_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_RIDDEN_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_OBJ_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_CMAP_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_EXPLODE_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_ZAP_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_SWALLOW_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_WARNING_OFF);
++    SET_CONSTANT("GLYPH", GLYPH_STATUE_OFF);
++
++    // SET_CONSTANT("GLYPH", GLYPH_UNEXPLORED_OFF);
++    // SET_CONSTANT("GLYPH", GLYPH_NOTHING_OFF);
++    SET_CONSTANT("GLYPH", MAX_GLYPH);
++    SET_CONSTANT("GLYPH", NO_GLYPH);
++    SET_CONSTANT("GLYPH", GLYPH_INVISIBLE);
++
++    // SET_CONSTANT("GLYPH", GLYPH_UNEXPLORED);
++    // SET_CONSTANT("GLYPH", GLYPH_NOTHING);
++
++    // colors
++    SET_CONSTANT("COLORS", CLR_BLACK);
++    SET_CONSTANT("COLORS", CLR_RED);
++    SET_CONSTANT("COLORS", CLR_GREEN);
++    SET_CONSTANT("COLORS", CLR_BROWN);
++    SET_CONSTANT("COLORS", CLR_BLUE);
++    SET_CONSTANT("COLORS", CLR_MAGENTA);
++    SET_CONSTANT("COLORS", CLR_CYAN);
++    SET_CONSTANT("COLORS", CLR_GRAY);
++    SET_CONSTANT("COLORS", NO_COLOR);
++    SET_CONSTANT("COLORS", CLR_ORANGE);
++    SET_CONSTANT("COLORS", CLR_BRIGHT_GREEN);
++    SET_CONSTANT("COLORS", CLR_YELLOW);
++    SET_CONSTANT("COLORS", CLR_BRIGHT_BLUE);
++    SET_CONSTANT("COLORS", CLR_BRIGHT_MAGENTA);
++    SET_CONSTANT("COLORS", CLR_BRIGHT_CYAN);
++    SET_CONSTANT("COLORS", CLR_WHITE);
++    SET_CONSTANT("COLORS", CLR_MAX);
++
++    // color attributes (?)
++    SET_CONSTANT("COLOR_ATTR", HL_ATTCLR_DIM);
++    SET_CONSTANT("COLOR_ATTR", HL_ATTCLR_BLINK);
++    SET_CONSTANT("COLOR_ATTR", HL_ATTCLR_ULINE);
++    SET_CONSTANT("COLOR_ATTR", HL_ATTCLR_INVERSE);
++    SET_CONSTANT("COLOR_ATTR", HL_ATTCLR_BOLD);
++    SET_CONSTANT("COLOR_ATTR", BL_ATTCLR_MAX);
++}
++
++/***
++ * Globals
++ ***/
++#define CREATE_GLOBAL(var, type) create_global(#var, (void *)&var, type);
++#define CREATE_GLOBAL_FROM_ARRAY(base, iter, path, end_expr, type) \
++    for(iter = 0; end_expr; iter++) { \
++        snprintf(buf, BUFSZ, #base ".%d." #path, iter); \
++        create_global(buf, (void *)(&(base[iter].path)), type); \
++    }
++
++void create_global (char *name, void *ptr, char *type);
++
++void js_globals_init() {
++    // int i;
++    // char buf[BUFSZ];
++
++    EM_ASM({
++        globalThis.nethackGlobal = globalThis.nethackGlobal || {};
++        globalThis.nethackGlobal.globals = globalThis.nethackGlobal.globals || {};
++    });
++
++    /* globals */
++    CREATE_GLOBAL(plname, "s");
++
++    /* window globals */
++    CREATE_GLOBAL(WIN_MAP, "i");
++    CREATE_GLOBAL(WIN_MESSAGE, "i");
++    CREATE_GLOBAL(WIN_INVEN, "i");
++    CREATE_GLOBAL(WIN_STATUS, "i");
++}
++
++EM_JS(void, create_global, (char *name_str, void *ptr, char *type_str), {
++    let name = UTF8ToString(name_str);
++    let type = UTF8ToString(type_str);
++
++    // get helpers
++    let getPointerValue = globalThis.nethackGlobal.helpers.getPointerValue;
++    let setPointerValue = globalThis.nethackGlobal.helpers.setPointerValue;
++
++    let { obj, prop } = createPath(globalThis.nethackGlobal.globals, name);
++
++    // setters / getters with bound pointers
++    Object.defineProperty(obj, prop, {
++        get: getPointerValue.bind(null, name, ptr, type),
++        set: setPointerValue.bind(null, name, ptr, type),
++        configurable: true,
++        enumerable: true
++    });
++
++    function createPath(obj, path) {
++        path = path.split(".");
++        let i;
++        for (i = 0; i < path.length - 1; i++) {
++            // obj[path[i]] = obj[path[i]] || {};
++            if (obj[path[i]] === undefined) {
++                obj[path[i]] = {};
++            }
++            obj = obj[path[i]];
++        }
++
++        return { obj, prop: path[i] };
++    }
++})
++#endif
+\ No newline at end of file
+diff --git a/util/makedefs.c b/util/makedefs.c
+index cd971bcc0..bb36cd5f6 100644
+--- a/util/makedefs.c
++++ b/util/makedefs.c
+@@ -1544,6 +1544,9 @@ build_savebones_compat_string()
+ }
+ 
+ static const char *build_opts[] = {
++#ifdef WEB_GRAPHICS
++    "Web",
++#endif
+ #ifdef AMIGA_WBENCH
+     "Amiga WorkBench support",
+ #endif
+@@ -1747,6 +1750,9 @@ static struct win_info window_opts[] = {
+ #endif
+     },
+ #endif
++#ifdef WEB_GRAPHICS
++    { "web", "Web" },
++#endif
+ #ifdef CURSES_GRAPHICS
+     { "curses", "terminal-based graphics" },
+ #endif
+diff --git a/win/web/mount_nodefs.js b/win/web/mount_nodefs.js
+new file mode 100644
+index 000000000..cfdd94d72
+--- /dev/null
++++ b/win/web/mount_nodefs.js
+@@ -0,0 +1,24 @@
++// vim: set sw=2 ts=2 et ft=javascript
++// Copyright (c) 2015 Lu Wang <coolwanglu@gmail.com>
++
++// mount local file system for util files
++// this file is supposed to be bulit with --pre-js
++
++var Module = {};
++Module['preRun'] = function() {
++  var fs = require('fs');
++  var path = require('path');
++  // find top dir
++  var cur_dir = path.normalize(process.cwd());
++  var top_dir = path.normalize(cur_dir+'/..');
++  assert(fs.existsSync(top_dir+'/README'));
++  
++  // mount directories
++  ['dat', 'include', 'src', 'util'].forEach(function(dn) {
++      var slash_dn = '/' + dn;
++      FS.mkdir(slash_dn);
++      FS.mount(NODEFS, { root: top_dir + slash_dn }, slash_dn);
++      if(cur_dir == path.normalize(top_dir + slash_dn))
++        FS.chdir(slash_dn);
++  });
++};
+diff --git a/win/web/web.c b/win/web/web.c
+new file mode 100644
+index 000000000..f102263aa
+--- /dev/null
++++ b/win/web/web.c
+@@ -0,0 +1,1078 @@
++#include "hack.h"
++#include "dlb.h"
++#include <emscripten/emscripten.h>
++
++extern short glyph2tile[];
++
++unsigned glyph_to_tile(int glyph)
++{
++    return glyph2tile[glyph];
++}
++
++/* shim_graphics_callback is the primary interface to shim graphics,
++ * call this function with your declared callback function
++ * and you will receive all the windowing calls
++ */
++/************
++ * WASM interface
++ ************/
++EMSCRIPTEN_KEEPALIVE
++static char *shim_callback_name = NULL;
++void shim_graphics_set_callback(char *cbName) {
++    if (shim_callback_name != NULL) free(shim_callback_name);
++    if(cbName && strlen(cbName) > 0) {
++        shim_callback_name = strdup(cbName);
++    } else {
++        shim_callback_name = NULL;
++    }
++    /* TODO: free(shim_callback_name) during shutdown? */
++}
++void local_callback (const char *cb_name, const char *shim_name, void *ret_ptr, const char *fmt_str, void *args);
++
++/* A2P = Argument to Pointer */
++#define A2P &
++/* P2V = Pointer to Void */
++#define P2V (void *)
++#define DECLCB(ret_type, name, fn_args, fmt, ...) \
++ret_type name fn_args { \
++    void *args[] = { __VA_ARGS__ }; \
++    ret_type ret = (ret_type) 0; \
++    if (!shim_callback_name) return ret; \
++    local_callback(shim_callback_name, #name, (void *)&ret, fmt, args); \
++    return ret; \
++}
++
++#define VDECLCB(name, fn_args, fmt, ...) \
++void name fn_args { \
++    void *args[] = { __VA_ARGS__ }; \
++    if (!shim_callback_name) return; \
++    local_callback(shim_callback_name, #name, NULL, fmt, args); \
++}
++
++VDECLCB(shim_askname,(void), "v")
++VDECLCB(shim_get_nh_event,(void), "v")
++VDECLCB(shim_exit_nhwindows,(const char *str), "vs", P2V str)
++VDECLCB(shim_suspend_nhwindows,(const char *str), "vs", P2V str)
++VDECLCB(shim_resume_nhwindows,(void), "v")
++DECLCB(winid, shim_create_nhwindow, (int type), "ii", A2P type)
++VDECLCB(shim_clear_nhwindow,(winid window), "vi", A2P window)
++VDECLCB(shim_display_nhwindow,(winid window, BOOLEAN_P blocking), "vii", A2P window, A2P blocking)
++VDECLCB(shim_destroy_nhwindow,(winid window), "vi", A2P window)
++VDECLCB(shim_curs,(winid a, int x, int y), "viii", A2P a, A2P x, A2P y)
++VDECLCB(shim_putstr,(winid w, int attr, const char *str), "viis", A2P w, A2P attr, P2V str)
++
++// VDECLCB(shim_display_file,(const char *name, BOOLEAN_P complain), "vsi", P2V name, A2P complain)
++// Reference: wingem.c, Gem_display_file()
++void shim_display_file(fname, complain)
++const char *fname;
++boolean complain;
++{
++    dlb *f;
++    char buf[BUFSZ];
++    char *cr;
++
++    f = dlb_fopen(fname, "r");
++    if (!f) {
++        if (complain)
++            pline("Cannot open \"%s\".", fname);
++    } else {
++        winid datawin;
++
++        datawin = shim_create_nhwindow(NHW_TEXT);
++        while (dlb_fgets(buf, BUFSZ, f)) {
++            if ((cr = index(buf, '\n')) != 0)
++                *cr = 0;
++            if (index(buf, '\t') != 0)
++                (void) tabexpand(buf);
++            shim_putstr(datawin, 0, buf);
++        }
++        (void) dlb_fclose(f);
++        shim_display_nhwindow(datawin, FALSE);
++        shim_destroy_nhwindow(datawin);
++    }
++}
++
++VDECLCB(shim_start_menu,(winid window), "vi", A2P window)
++VDECLCB(shim_add_menu,
++    (winid window, int glyph, const ANY_P *identifier, CHAR_P ch, CHAR_P gch, int attr, const char *str, BOOLEAN_P preselected),
++    "viipiiisi",
++    A2P window, A2P glyph, P2V identifier, A2P ch, A2P gch, A2P attr, P2V str, A2P preselected)
++VDECLCB(shim_end_menu,(winid window, const char *prompt), "vis", A2P window, P2V prompt)
++/* XXX: shim_select_menu menu_list is an output */
++DECLCB(int, shim_select_menu,(winid window, int how, MENU_ITEM_P **menu_list), "iiio", A2P window, A2P how, P2V menu_list)
++DECLCB(char, shim_message_menu,(CHAR_P let, int how, const char *mesg), "ciis", A2P let, A2P how, P2V mesg)
++VDECLCB(shim_mark_synch,(void), "v")
++VDECLCB(shim_wait_synch,(void), "v")
++VDECLCB(shim_cliparound,(int x, int y), "vii", A2P x, A2P y)
++VDECLCB(shim_update_positionbar,(char *posbar), "vp", P2V posbar)
++VDECLCB(shim_print_glyph,(winid w, int x, int y, int glyph, int bkglyph), "viiiii", A2P w, A2P x, A2P y, A2P glyph, A2P bkglyph)
++VDECLCB(shim_raw_print,(const char *str), "vs", P2V str)
++VDECLCB(shim_raw_print_bold,(const char *str), "vs", P2V str)
++DECLCB(int, shim_nhgetch,(void), "i")
++DECLCB(int, shim_nh_poskey,(int *x, int *y, int *mod), "iooo", P2V x, P2V y, P2V mod)
++VDECLCB(shim_nhbell,(void), "v")
++DECLCB(int, shim_doprev_message,(void),"iv")
++DECLCB(char, shim_yn_function,(const char *query, const char *resp, CHAR_P def), "cssi", P2V query, P2V resp, A2P def)
++VDECLCB(shim_getlin,(const char *query, char *bufp), "vso", P2V query, P2V bufp)
++DECLCB(int,shim_get_ext_cmd,(void),"iv")
++VDECLCB(shim_number_pad,(int state), "vi", A2P state)
++VDECLCB(shim_delay_output,(void), "v")
++VDECLCB(shim_change_color,(int color, long rgb, int reverse), "viii", A2P color, A2P rgb, A2P reverse)
++VDECLCB(shim_change_background,(int white_or_black), "vi", A2P white_or_black)
++DECLCB(short, set_shim_font_name,(winid window_type, char *font_name),"2is", A2P window_type, P2V font_name)
++DECLCB(char *,shim_get_color_string,(void),"sv")
++
++/* other defs that really should go away (they're tty specific) */
++VDECLCB(shim_start_screen, (void), "v")
++VDECLCB(shim_end_screen, (void), "v")
++VDECLCB(shim_preference_update, (const char *pref), "vp", P2V pref)
++DECLCB(char *,shim_getmsghistory, (BOOLEAN_P init), "si", A2P init)
++VDECLCB(shim_putmsghistory, (const char *msg, BOOLEAN_P restoring_msghist), "vsi", P2V msg, A2P restoring_msghist)
++VDECLCB(shim_status_init, (void), "v")
++VDECLCB(shim_status_enablefield,
++    (int fieldidx, const char *nm, const char *fmt, BOOLEAN_P enable),
++    "vippi",
++    A2P fieldidx, P2V nm, P2V fmt, A2P enable)
++/* XXX: the second argument to shim_status_update is sometimes an integer and sometimes a pointer */
++VDECLCB(shim_status_update,
++    (int fldidx, genericptr_t ptr, int chg, int percent, int color, unsigned long *colormasks),
++    "vioiiip",
++    A2P fldidx, P2V ptr, A2P chg, A2P percent, A2P color, P2V colormasks)
++
++	/* XXX: calling display_inventory() from shim_update_inventory() causes reentrancy that breaks emscripten Asyncify */
++/* this should be fine since according to windows.doc, the only purpose of shim_update_inventory() is to call display_inventory() */
++void shim_update_inventory() {
++    if(iflags.perm_invent) {
++        display_inventory(NULL, FALSE);
++    }
++}
++
++// Not in 3.7
++VDECLCB(shim_outrip, (winid window, int a, time_t b), "vii", P2V window, P2V a, P2V b)
++boolean shim_can_suspend () {
++    return 0;
++};
++
++// Based on wintty.c
++winid BASE_WINDOW = -1;
++
++#ifdef NHW_BASE
++#undef NHW_BASE
++#endif
++#define NHW_BASE 6
++
++void shim_init_nhwindows(int *argcp, char **argv) {
++    BASE_WINDOW = shim_create_nhwindow(NHW_BASE);
++}
++
++
++STATIC_DCL boolean NDECL(reset_role_filtering);
++STATIC_DCL void FDECL(setup_rolemenu, (winid, BOOLEAN_P, int, int, int));
++STATIC_DCL void FDECL(setup_racemenu, (winid, BOOLEAN_P, int, int, int));
++STATIC_DCL void FDECL(setup_gendmenu, (winid, BOOLEAN_P, int, int, int));
++STATIC_DCL void FDECL(setup_algnmenu, (winid, BOOLEAN_P, int, int, int));
++
++STATIC_OVL void
++bail(mesg)
++const char *mesg;
++{
++    clearlocks();
++    shim_exit_nhwindows(mesg);
++    nh_terminate(EXIT_SUCCESS);
++    /*NOTREACHED*/
++}
++
++
++#define ROLE flags.initrole
++#define RACE flags.initrace
++#define GEND flags.initgend
++#define ALGN flags.initalign
++
++STATIC_OVL boolean
++reset_role_filtering()
++{
++    winid win;
++    anything any;
++    int i, n;
++    menu_item *selected = 0;
++
++    win = create_nhwindow(NHW_MENU);
++    start_menu(win);
++    any = zeroany;
++
++    /* no extra blank line preceding this entry; end_menu supplies one */
++    add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE,
++             "Unacceptable roles", MENU_UNSELECTED);
++    setup_rolemenu(win, FALSE, ROLE_NONE, ROLE_NONE, ROLE_NONE);
++
++    add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, "", MENU_UNSELECTED);
++    add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE,
++             "Unacceptable races", MENU_UNSELECTED);
++    setup_racemenu(win, FALSE, ROLE_NONE, ROLE_NONE, ROLE_NONE);
++
++    add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, "", MENU_UNSELECTED);
++    add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE,
++             "Unacceptable genders", MENU_UNSELECTED);
++    setup_gendmenu(win, FALSE, ROLE_NONE, ROLE_NONE, ROLE_NONE);
++
++    add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, "", MENU_UNSELECTED);
++    add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE,
++             "Unacceptable alignments", MENU_UNSELECTED);
++    setup_algnmenu(win, FALSE, ROLE_NONE, ROLE_NONE, ROLE_NONE);
++
++    end_menu(win, "Pick all that apply");
++    n = select_menu(win, PICK_ANY, &selected);
++
++    if (n > 0) {
++        clearrolefilter();
++        for (i = 0; i < n; i++)
++            setrolefilter(selected[i].item.a_string);
++
++        ROLE = RACE = GEND = ALGN = ROLE_NONE;
++    }
++    if (selected)
++        free((genericptr_t) selected), selected = 0;
++    destroy_nhwindow(win);
++    return (n > 0) ? TRUE : FALSE;
++}
++
++void shim_player_selection()
++{
++    int i, k, n, choice, nextpick;
++    boolean getconfirmation, picksomething;
++    char pick4u = 'n';
++    char pbuf[QBUFSZ], plbuf[QBUFSZ];
++    winid win;
++    anything any;
++    menu_item *selected = 0;
++
++    /* Used to avoid "Is this ok?" if player has already specified all
++     * four facets of role.
++     * Note that rigid_role_checks might force any unspecified facets to
++     * have a specific value, but that will still require confirmation;
++     * player can specify the forced ones if avoiding that is demanded.
++     */
++    picksomething = (ROLE == ROLE_NONE || RACE == ROLE_NONE
++                     || GEND == ROLE_NONE || ALGN == ROLE_NONE);
++    /* Used for '-@';
++     * choose randomly without asking for all unspecified facets.
++     */
++    if (flags.randomall && picksomething) {
++        if (ROLE == ROLE_NONE)
++            ROLE = ROLE_RANDOM;
++        if (RACE == ROLE_NONE)
++            RACE = ROLE_RANDOM;
++        if (GEND == ROLE_NONE)
++            GEND = ROLE_RANDOM;
++        if (ALGN == ROLE_NONE)
++            ALGN = ROLE_RANDOM;
++    }
++
++    /* prevent unnecessary prompting if role forces race (samurai) or gender
++       (valkyrie) or alignment (rogue), or race forces alignment (orc), &c */
++    rigid_role_checks();
++
++    /* Should we randomly pick for the player? */
++    if (ROLE == ROLE_NONE || RACE == ROLE_NONE || GEND == ROLE_NONE
++        || ALGN == ROLE_NONE) {
++        int echoline;
++        char *prompt = build_plselection_prompt(pbuf, QBUFSZ,
++                                                ROLE, RACE, GEND, ALGN);
++
++        /* this prompt string ends in "[ynaq]?":
++           y - game picks role,&c then asks player to confirm;
++           n - player manually chooses via menu selections;
++           a - like 'y', but skips confirmation and starts game;
++           q - quit
++         */
++        // tty_putstr(BASE_WINDOW, 0, "");
++        // echoline = wins[BASE_WINDOW]->cury;
++        // tty_putstr(BASE_WINDOW, 0, prompt);
++
++        do {
++            // pick4u = lowc(readchar());
++            pick4u = yn(prompt);
++            if (index(quitchars, pick4u))
++                pick4u = 'y';
++        } while (!index(ynaqchars, pick4u));
++        // if ((int) strlen(prompt) + 1 < CO) {
++        //     /* Echo choice and move back down line */
++        //     tty_putsym(BASE_WINDOW, (int) strlen(prompt) + 1, echoline,
++        //                pick4u);
++        //     tty_putstr(BASE_WINDOW, 0, "");
++        // } else
++        //     /* Otherwise it's hard to tell where to echo, and things are
++        //      * wrapping a bit messily anyway, so (try to) make sure the next
++        //      * question shows up well and doesn't get wrapped at the
++        //      * bottom of the window.
++        //      */
++        //     tty_clear_nhwindow(BASE_WINDOW);
++
++        if (pick4u != 'y' && pick4u != 'a' && pick4u != 'n')
++            goto give_up;
++    }
++
++ makepicks:
++    nextpick = RS_ROLE;
++    do {
++        if (nextpick == RS_ROLE) {
++            nextpick = RS_RACE;
++            /* Select a role, if necessary;
++               we'll try to be compatible with pre-selected
++               race/gender/alignment, but may not succeed. */
++            if (ROLE < 0) {
++                /* Process the choice */
++                if (pick4u == 'y' || pick4u == 'a' || ROLE == ROLE_RANDOM) {
++                    /* Pick a random role */
++                    k = pick_role(RACE, GEND, ALGN, PICK_RANDOM);
++                    if (k < 0) {
++                        shim_putstr(BASE_WINDOW, 0, "Incompatible role!");
++                        k = randrole(FALSE);
++                    }
++                } else {
++                    /* Prompt for a role */
++                    shim_clear_nhwindow(BASE_WINDOW);
++                    role_selection_prolog(RS_ROLE, BASE_WINDOW);
++                    win = create_nhwindow(NHW_MENU);
++                    start_menu(win);
++                    /* populate the menu with role choices */
++                    setup_rolemenu(win, TRUE, RACE, GEND, ALGN);
++                    /* add miscellaneous menu entries */
++                    role_menu_extra(ROLE_RANDOM, win, TRUE);
++                    any = zeroany; /* separator, not a choice */
++                    add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, "",
++                             MENU_UNSELECTED);
++                    role_menu_extra(RS_RACE, win, FALSE);
++                    role_menu_extra(RS_GENDER, win, FALSE);
++                    role_menu_extra(RS_ALGNMNT, win, FALSE);
++                    if (gotrolefilter())
++                        role_menu_extra(RS_filter, win, FALSE);
++                    role_menu_extra(ROLE_NONE, win, FALSE); /* quit */
++                    Strcpy(pbuf, "Pick a role or profession");
++                    end_menu(win, pbuf);
++                    n = select_menu(win, PICK_ONE, &selected);
++                    /*
++                     * PICK_ONE with preselected choice behaves strangely:
++                     *  n == -1 -- <escape>, so use quit choice;
++                     *  n ==  0 -- explicitly chose preselected entry,
++                     *             toggling it off, so use it;
++                     *  n ==  1 -- implicitly chose preselected entry
++                     *             with <space> or <return>;
++                     *  n ==  2 -- explicitly chose a different entry, so
++                     *             both it and preselected one are in list.
++                     */
++                    if (n > 0) {
++                        choice = selected[0].item.a_int;
++                        if (n > 1 && choice == ROLE_RANDOM)
++                            choice = selected[1].item.a_int;
++                    } else
++                        choice = (n == 0) ? ROLE_RANDOM : ROLE_NONE;
++                    if (selected)
++                        free((genericptr_t) selected), selected = 0;
++                    destroy_nhwindow(win);
++
++                    if (choice == ROLE_NONE) {
++                        goto give_up; /* Selected quit */
++                    } else if (choice == RS_menu_arg(RS_ALGNMNT)) {
++                        ALGN = k = ROLE_NONE;
++                        nextpick = RS_ALGNMNT;
++                    } else if (choice == RS_menu_arg(RS_GENDER)) {
++                        GEND = k = ROLE_NONE;
++                        nextpick = RS_GENDER;
++                    } else if (choice == RS_menu_arg(RS_RACE)) {
++                        RACE = k = ROLE_NONE;
++                        nextpick = RS_RACE;
++                    } else if (choice == RS_menu_arg(RS_filter)) {
++                        ROLE = k = ROLE_NONE;
++                        (void) reset_role_filtering();
++                        nextpick = RS_ROLE;
++                    } else if (choice == ROLE_RANDOM) {
++                        k = pick_role(RACE, GEND, ALGN, PICK_RANDOM);
++                        if (k < 0)
++                            k = randrole(FALSE);
++                    } else {
++                        k = choice - 1;
++                    }
++                }
++                ROLE = k;
++            } /* needed role */
++        }     /* picking role */
++
++        if (nextpick == RS_RACE) {
++            nextpick = (ROLE < 0) ? RS_ROLE : RS_GENDER;
++            /* Select a race, if necessary;
++               force compatibility with role, try for compatibility
++               with pre-selected gender/alignment. */
++            if (RACE < 0 || !validrace(ROLE, RACE)) {
++                /* no race yet, or pre-selected race not valid */
++                if (pick4u == 'y' || pick4u == 'a' || RACE == ROLE_RANDOM) {
++                    k = pick_race(ROLE, GEND, ALGN, PICK_RANDOM);
++                    if (k < 0) {
++                        shim_putstr(BASE_WINDOW, 0, "Incompatible race!");
++                        k = randrace(ROLE);
++                    }
++                } else { /* pick4u == 'n' */
++                    /* Count the number of valid races */
++                    n = 0; /* number valid */
++                    k = 0; /* valid race */
++                    for (i = 0; races[i].noun; i++)
++                        if (ok_race(ROLE, i, GEND, ALGN)) {
++                            n++;
++                            k = i;
++                        }
++                    if (n == 0) {
++                        for (i = 0; races[i].noun; i++)
++                            if (validrace(ROLE, i)) {
++                                n++;
++                                k = i;
++                            }
++                    }
++                    /* Permit the user to pick, if there is more than one */
++                    if (n > 1) {
++                        shim_clear_nhwindow(BASE_WINDOW);
++                        role_selection_prolog(RS_RACE, BASE_WINDOW);
++                        win = create_nhwindow(NHW_MENU);
++                        start_menu(win);
++                        any = zeroany; /* zero out all bits */
++                        /* populate the menu with role choices */
++                        setup_racemenu(win, TRUE, ROLE, GEND, ALGN);
++                        /* add miscellaneous menu entries */
++                        role_menu_extra(ROLE_RANDOM, win, TRUE);
++                        any.a_int = 0; /* separator, not a choice */
++                        add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, "",
++                                 MENU_UNSELECTED);
++                        role_menu_extra(RS_ROLE, win, FALSE);
++                        role_menu_extra(RS_GENDER, win, FALSE);
++                        role_menu_extra(RS_ALGNMNT, win, FALSE);
++                        if (gotrolefilter())
++                            role_menu_extra(RS_filter, win, FALSE);
++                        role_menu_extra(ROLE_NONE, win, FALSE); /* quit */
++                        Strcpy(pbuf, "Pick a race or species");
++                        end_menu(win, pbuf);
++                        n = select_menu(win, PICK_ONE, &selected);
++                        if (n > 0) {
++                            choice = selected[0].item.a_int;
++                            if (n > 1 && choice == ROLE_RANDOM)
++                                choice = selected[1].item.a_int;
++                        } else
++                            choice = (n == 0) ? ROLE_RANDOM : ROLE_NONE;
++                        if (selected)
++                            free((genericptr_t) selected), selected = 0;
++                        destroy_nhwindow(win);
++
++                        if (choice == ROLE_NONE) {
++                            goto give_up; /* Selected quit */
++                        } else if (choice == RS_menu_arg(RS_ALGNMNT)) {
++                            ALGN = k = ROLE_NONE;
++                            nextpick = RS_ALGNMNT;
++                        } else if (choice == RS_menu_arg(RS_GENDER)) {
++                            GEND = k = ROLE_NONE;
++                            nextpick = RS_GENDER;
++                        } else if (choice == RS_menu_arg(RS_ROLE)) {
++                            ROLE = k = ROLE_NONE;
++                            nextpick = RS_ROLE;
++                        } else if (choice == RS_menu_arg(RS_filter)) {
++                            RACE = k = ROLE_NONE;
++                            if (reset_role_filtering())
++                                nextpick = RS_ROLE;
++                            else
++                                nextpick = RS_RACE;
++                        } else if (choice == ROLE_RANDOM) {
++                            k = pick_race(ROLE, GEND, ALGN, PICK_RANDOM);
++                            if (k < 0)
++                                k = randrace(ROLE);
++                        } else {
++                            k = choice - 1;
++                        }
++                    }
++                }
++                RACE = k;
++            } /* needed race */
++        }     /* picking race */
++
++        if (nextpick == RS_GENDER) {
++            nextpick = (ROLE < 0) ? RS_ROLE : (RACE < 0) ? RS_RACE
++                       : RS_ALGNMNT;
++            /* Select a gender, if necessary;
++               force compatibility with role/race, try for compatibility
++               with pre-selected alignment. */
++            if (GEND < 0 || !validgend(ROLE, RACE, GEND)) {
++                /* no gender yet, or pre-selected gender not valid */
++                if (pick4u == 'y' || pick4u == 'a' || GEND == ROLE_RANDOM) {
++                    k = pick_gend(ROLE, RACE, ALGN, PICK_RANDOM);
++                    if (k < 0) {
++                        shim_putstr(BASE_WINDOW, 0, "Incompatible gender!");
++                        k = randgend(ROLE, RACE);
++                    }
++                } else { /* pick4u == 'n' */
++                    /* Count the number of valid genders */
++                    n = 0; /* number valid */
++                    k = 0; /* valid gender */
++                    for (i = 0; i < ROLE_GENDERS; i++)
++                        if (ok_gend(ROLE, RACE, i, ALGN)) {
++                            n++;
++                            k = i;
++                        }
++                    if (n == 0) {
++                        for (i = 0; i < ROLE_GENDERS; i++)
++                            if (validgend(ROLE, RACE, i)) {
++                                n++;
++                                k = i;
++                            }
++                    }
++                    /* Permit the user to pick, if there is more than one */
++                    if (n > 1) {
++                        shim_clear_nhwindow(BASE_WINDOW);
++                        role_selection_prolog(RS_GENDER, BASE_WINDOW);
++                        win = create_nhwindow(NHW_MENU);
++                        start_menu(win);
++                        any = zeroany; /* zero out all bits */
++                        /* populate the menu with gender choices */
++                        setup_gendmenu(win, TRUE, ROLE, RACE, ALGN);
++                        /* add miscellaneous menu entries */
++                        role_menu_extra(ROLE_RANDOM, win, TRUE);
++                        any.a_int = 0; /* separator, not a choice */
++                        add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, "",
++                                 MENU_UNSELECTED);
++                        role_menu_extra(RS_ROLE, win, FALSE);
++                        role_menu_extra(RS_RACE, win, FALSE);
++                        role_menu_extra(RS_ALGNMNT, win, FALSE);
++                        if (gotrolefilter())
++                            role_menu_extra(RS_filter, win, FALSE);
++                        role_menu_extra(ROLE_NONE, win, FALSE); /* quit */
++                        Strcpy(pbuf, "Pick a gender or sex");
++                        end_menu(win, pbuf);
++                        n = select_menu(win, PICK_ONE, &selected);
++                        if (n > 0) {
++                            choice = selected[0].item.a_int;
++                            if (n > 1 && choice == ROLE_RANDOM)
++                                choice = selected[1].item.a_int;
++                        } else
++                            choice = (n == 0) ? ROLE_RANDOM : ROLE_NONE;
++                        if (selected)
++                            free((genericptr_t) selected), selected = 0;
++                        destroy_nhwindow(win);
++
++                        if (choice == ROLE_NONE) {
++                            goto give_up; /* Selected quit */
++                        } else if (choice == RS_menu_arg(RS_ALGNMNT)) {
++                            ALGN = k = ROLE_NONE;
++                            nextpick = RS_ALGNMNT;
++                        } else if (choice == RS_menu_arg(RS_RACE)) {
++                            RACE = k = ROLE_NONE;
++                            nextpick = RS_RACE;
++                        } else if (choice == RS_menu_arg(RS_ROLE)) {
++                            ROLE = k = ROLE_NONE;
++                            nextpick = RS_ROLE;
++                        } else if (choice == RS_menu_arg(RS_filter)) {
++                            GEND = k = ROLE_NONE;
++                            if (reset_role_filtering())
++                                nextpick = RS_ROLE;
++                            else
++                                nextpick = RS_GENDER;
++                        } else if (choice == ROLE_RANDOM) {
++                            k = pick_gend(ROLE, RACE, ALGN, PICK_RANDOM);
++                            if (k < 0)
++                                k = randgend(ROLE, RACE);
++                        } else {
++                            k = choice - 1;
++                        }
++                    }
++                }
++                GEND = k;
++            } /* needed gender */
++        }     /* picking gender */
++
++        if (nextpick == RS_ALGNMNT) {
++            nextpick = (ROLE < 0) ? RS_ROLE : (RACE < 0) ? RS_RACE : RS_GENDER;
++            /* Select an alignment, if necessary;
++               force compatibility with role/race/gender. */
++            if (ALGN < 0 || !validalign(ROLE, RACE, ALGN)) {
++                /* no alignment yet, or pre-selected alignment not valid */
++                if (pick4u == 'y' || pick4u == 'a' || ALGN == ROLE_RANDOM) {
++                    k = pick_align(ROLE, RACE, GEND, PICK_RANDOM);
++                    if (k < 0) {
++                        shim_putstr(BASE_WINDOW, 0, "Incompatible alignment!");
++                        k = randalign(ROLE, RACE);
++                    }
++                } else { /* pick4u == 'n' */
++                    /* Count the number of valid alignments */
++                    n = 0; /* number valid */
++                    k = 0; /* valid alignment */
++                    for (i = 0; i < ROLE_ALIGNS; i++)
++                        if (ok_align(ROLE, RACE, GEND, i)) {
++                            n++;
++                            k = i;
++                        }
++                    if (n == 0) {
++                        for (i = 0; i < ROLE_ALIGNS; i++)
++                            if (validalign(ROLE, RACE, i)) {
++                                n++;
++                                k = i;
++                            }
++                    }
++                    /* Permit the user to pick, if there is more than one */
++                    if (n > 1) {
++                        shim_clear_nhwindow(BASE_WINDOW);
++                        role_selection_prolog(RS_ALGNMNT, BASE_WINDOW);
++                        win = create_nhwindow(NHW_MENU);
++                        start_menu(win);
++                        any = zeroany; /* zero out all bits */
++                        setup_algnmenu(win, TRUE, ROLE, RACE, GEND);
++                        role_menu_extra(ROLE_RANDOM, win, TRUE);
++                        any.a_int = 0; /* separator, not a choice */
++                        add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, "",
++                                 MENU_UNSELECTED);
++                        role_menu_extra(RS_ROLE, win, FALSE);
++                        role_menu_extra(RS_RACE, win, FALSE);
++                        role_menu_extra(RS_GENDER, win, FALSE);
++                        if (gotrolefilter())
++                            role_menu_extra(RS_filter, win, FALSE);
++                        role_menu_extra(ROLE_NONE, win, FALSE); /* quit */
++                        Strcpy(pbuf, "Pick an alignment or creed");
++                        end_menu(win, pbuf);
++                        n = select_menu(win, PICK_ONE, &selected);
++                        if (n > 0) {
++                            choice = selected[0].item.a_int;
++                            if (n > 1 && choice == ROLE_RANDOM)
++                                choice = selected[1].item.a_int;
++                        } else
++                            choice = (n == 0) ? ROLE_RANDOM : ROLE_NONE;
++                        if (selected)
++                            free((genericptr_t) selected), selected = 0;
++                        destroy_nhwindow(win);
++
++                        if (choice == ROLE_NONE) {
++                            goto give_up; /* Selected quit */
++                        } else if (choice == RS_menu_arg(RS_GENDER)) {
++                            GEND = k = ROLE_NONE;
++                            nextpick = RS_GENDER;
++                        } else if (choice == RS_menu_arg(RS_RACE)) {
++                            RACE = k = ROLE_NONE;
++                            nextpick = RS_RACE;
++                        } else if (choice == RS_menu_arg(RS_ROLE)) {
++                            ROLE = k = ROLE_NONE;
++                            nextpick = RS_ROLE;
++                        } else if (choice == RS_menu_arg(RS_filter)) {
++                            ALGN = k = ROLE_NONE;
++                            if (reset_role_filtering())
++                                nextpick = RS_ROLE;
++                            else
++                                nextpick = RS_ALGNMNT;
++                        } else if (choice == ROLE_RANDOM) {
++                            k = pick_align(ROLE, RACE, GEND, PICK_RANDOM);
++                            if (k < 0)
++                                k = randalign(ROLE, RACE);
++                        } else {
++                            k = choice - 1;
++                        }
++                    }
++                }
++                ALGN = k;
++            } /* needed alignment */
++        }     /* picking alignment */
++
++    } while (ROLE < 0 || RACE < 0 || GEND < 0 || ALGN < 0);
++
++    /*
++     *  Role, race, &c have now been determined;
++     *  ask for confirmation and maybe go back to choose all over again.
++     *
++     *  Uses ynaq for familiarity, although 'a' is usually a
++     *  superset of 'y' but here is an alternate form of 'n'.
++     *  Menu layout:
++     *   title:  Is this ok? [ynaq]
++     *   blank:
++     *    text:  $name, $alignment $gender $race $role
++     *   blank:
++     *    menu:  y + yes; play
++     *           n - no; pick again
++     *   maybe:  a - no; rename hero
++     *           q - quit
++     *           (end)
++     */
++    getconfirmation = (picksomething && pick4u != 'a' && !flags.randomall);
++    while (getconfirmation) {
++        shim_clear_nhwindow(BASE_WINDOW);
++        role_selection_prolog(ROLE_NONE, BASE_WINDOW);
++        win = create_nhwindow(NHW_MENU);
++        start_menu(win);
++        any = zeroany; /* zero out all bits */
++        any.a_int = 0;
++        if (!roles[ROLE].name.f
++            && (roles[ROLE].allow & ROLE_GENDMASK)
++                   == (ROLE_MALE | ROLE_FEMALE))
++            Sprintf(plbuf, " %s", genders[GEND].adj);
++        else
++            *plbuf = '\0'; /* omit redundant gender */
++        Sprintf(pbuf, "%s, %s%s %s %s", plname, aligns[ALGN].adj, plbuf,
++                races[RACE].adj,
++                (GEND == 1 && roles[ROLE].name.f) ? roles[ROLE].name.f
++                                                  : roles[ROLE].name.m);
++        add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, pbuf,
++                 MENU_UNSELECTED);
++        /* blank separator */
++        any.a_int = 0;
++        add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, "", MENU_UNSELECTED);
++        /* [ynaq] menu choices */
++        any.a_int = 1;
++        add_menu(win, NO_GLYPH, &any, 'y', 0, ATR_NONE, "Yes; start game",
++                 MENU_SELECTED);
++        any.a_int = 2;
++        add_menu(win, NO_GLYPH, &any, 'n', 0, ATR_NONE,
++                 "No; choose role again", MENU_UNSELECTED);
++        if (iflags.renameallowed) {
++            any.a_int = 3;
++            add_menu(win, NO_GLYPH, &any, 'a', 0, ATR_NONE,
++                     "Not yet; choose another name", MENU_UNSELECTED);
++        }
++        any.a_int = -1;
++        add_menu(win, NO_GLYPH, &any, 'q', 0, ATR_NONE, "Quit",
++                 MENU_UNSELECTED);
++        Sprintf(pbuf, "Is this ok? [yn%sq]", iflags.renameallowed ? "a" : "");
++        end_menu(win, pbuf);
++        n = select_menu(win, PICK_ONE, &selected);
++        /* [pick-one menus with a preselected entry behave oddly...] */
++        choice = (n > 0) ? selected[n - 1].item.a_int : (n == 0) ? 1 : -1;
++        if (selected)
++            free((genericptr_t) selected), selected = 0;
++        destroy_nhwindow(win);
++
++        switch (choice) {
++        default:          /* 'q' or ESC */
++            goto give_up; /* quit */
++            break;
++        case 3: { /* 'a' */
++            /*
++             * TODO: what, if anything, should be done if the name is
++             * changed to or from "wizard" after port-specific startup
++             * code has set flags.debug based on the original name?
++             */
++            int saveROLE, saveRACE, saveGEND, saveALGN;
++
++            iflags.renameinprogress = TRUE;
++            /* plnamesuffix() can change any or all of ROLE, RACE,
++               GEND, ALGN; we'll override that and honor only the name */
++            saveROLE = ROLE, saveRACE = RACE, saveGEND = GEND,
++                saveALGN = ALGN;
++            *plname = '\0';
++            plnamesuffix(); /* calls askname() when plname[] is empty */
++            ROLE = saveROLE, RACE = saveRACE, GEND = saveGEND,
++                ALGN = saveALGN;
++            break; /* getconfirmation is still True */
++        }
++        case 2:    /* 'n' */
++            /* start fresh, but bypass "shall I pick everything for you?"
++               step; any partial role selection via config file, command
++               line, or name suffix is discarded this time */
++            pick4u = 'n';
++            ROLE = RACE = GEND = ALGN = ROLE_NONE;
++            goto makepicks;
++            break;
++        case 1: /* 'y' or Space or Return/Enter */
++            /* success; drop out through end of function */
++            getconfirmation = FALSE;
++            break;
++        }
++    }
++
++    /* Success! */
++    shim_display_nhwindow(BASE_WINDOW, FALSE);
++    return;
++
++ give_up:
++    /* Quit */
++    if (selected)
++        free((genericptr_t) selected); /* [obsolete] */
++    bail((char *) 0);
++    /*NOTREACHED*/
++    return;
++}
++
++#undef ROLE
++#undef RACE
++#undef GEND
++#undef ALGN
++
++/* add entries a-Archeologist, b-Barbarian, &c to menu being built in 'win' */
++STATIC_OVL void
++setup_rolemenu(win, filtering, race, gend, algn)
++winid win;
++boolean filtering; /* True => exclude filtered roles; False => filter reset */
++int race, gend, algn; /* all ROLE_NONE for !filtering case */
++{
++    anything any;
++    int i;
++    boolean role_ok;
++    char thisch, lastch = '\0', rolenamebuf[50];
++
++    any = zeroany; /* zero out all bits */
++    for (i = 0; roles[i].name.m; i++) {
++        role_ok = ok_role(i, race, gend, algn);
++        if (filtering && !role_ok)
++            continue;
++        if (filtering)
++            any.a_int = i + 1;
++        else
++            any.a_string = roles[i].name.m;
++        thisch = lowc(*roles[i].name.m);
++        if (thisch == lastch)
++            thisch = highc(thisch);
++        Strcpy(rolenamebuf, roles[i].name.m);
++        if (roles[i].name.f) {
++            /* role has distinct name for female (C,P) */
++            if (gend == 1) {
++                /* female already chosen; replace male name */
++                Strcpy(rolenamebuf, roles[i].name.f);
++            } else if (gend < 0) {
++                /* not chosen yet; append slash+female name */
++                Strcat(rolenamebuf, "/");
++                Strcat(rolenamebuf, roles[i].name.f);
++            }
++        }
++        /* !filtering implies reset_role_filtering() where we want to
++           mark this role as preseleted if current filter excludes it */
++        add_menu(win, NO_GLYPH, &any, thisch, 0, ATR_NONE, an(rolenamebuf),
++                 (!filtering && !role_ok) ? MENU_SELECTED : MENU_UNSELECTED);
++        lastch = thisch;
++    }
++}
++
++STATIC_OVL void
++setup_racemenu(win, filtering, role, gend, algn)
++winid win;
++boolean filtering;
++int role, gend, algn;
++{
++    anything any;
++    boolean race_ok;
++    int i;
++    char this_ch;
++
++    any = zeroany;
++    for (i = 0; races[i].noun; i++) {
++        race_ok = ok_race(role, i, gend, algn);
++        if (filtering && !race_ok)
++            continue;
++        if (filtering)
++            any.a_int = i + 1;
++        else
++            any.a_string = races[i].noun;
++        this_ch = *races[i].noun;
++        /* filtering: picking race, so choose by first letter, with
++           capital letter as unseen accelerator;
++           !filtering: resetting filter rather than picking, choose by
++           capital letter since lowercase role letters will be present */
++        add_menu(win, NO_GLYPH, &any,
++                 filtering ? this_ch : highc(this_ch),
++                 filtering ? highc(this_ch) : 0,
++                 ATR_NONE, races[i].noun,
++                 (!filtering && !race_ok) ? MENU_SELECTED : MENU_UNSELECTED);
++    }
++}
++
++STATIC_DCL void
++setup_gendmenu(win, filtering, role, race, algn)
++winid win;
++boolean filtering;
++int role, race, algn;
++{
++    anything any;
++    boolean gend_ok;
++    int i;
++    char this_ch;
++
++    any = zeroany;
++    for (i = 0; i < ROLE_GENDERS; i++) {
++        gend_ok = ok_gend(role, race, i, algn);
++        if (filtering && !gend_ok)
++            continue;
++        if (filtering)
++            any.a_int = i + 1;
++        else
++            any.a_string = genders[i].adj;
++        this_ch = *genders[i].adj;
++        /* (see setup_racemenu for explanation of selector letters
++           and setup_rolemenu for preselection) */
++        add_menu(win, NO_GLYPH, &any,
++                 filtering ? this_ch : highc(this_ch),
++                 filtering ? highc(this_ch) : 0,
++                 ATR_NONE, genders[i].adj,
++                 (!filtering && !gend_ok) ? MENU_SELECTED : MENU_UNSELECTED);
++    }
++}
++
++STATIC_DCL void
++setup_algnmenu(win, filtering, role, race, gend)
++winid win;
++boolean filtering;
++int role, race, gend;
++{
++    anything any;
++    boolean algn_ok;
++    int i;
++    char this_ch;
++
++    any = zeroany;
++    for (i = 0; i < ROLE_ALIGNS; i++) {
++        algn_ok = ok_align(role, race, gend, i);
++        if (filtering && !algn_ok)
++            continue;
++        if (filtering)
++            any.a_int = i + 1;
++        else
++            any.a_string = aligns[i].adj;
++        this_ch = *aligns[i].adj;
++        /* (see setup_racemenu for explanation of selector letters
++           and setup_rolemenu for preselection) */
++        add_menu(win, NO_GLYPH, &any,
++                 filtering ? this_ch : highc(this_ch),
++                 filtering ? highc(this_ch) : 0,
++                 ATR_NONE, aligns[i].adj,
++                 (!filtering && !algn_ok) ? MENU_SELECTED : MENU_UNSELECTED);
++    }
++}
++
++struct window_procs web_procs = {
++	"web",
++	WC_HILITE_PET | WC_MOUSE_SUPPORT,
++	0L, // wincap2
++	{1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1}, // disable colors?
++	shim_init_nhwindows,
++	shim_player_selection,
++	shim_askname,
++	shim_get_nh_event,
++	shim_exit_nhwindows,
++	shim_suspend_nhwindows,
++	shim_resume_nhwindows,
++	shim_create_nhwindow,
++	shim_clear_nhwindow,
++	shim_display_nhwindow,
++	shim_destroy_nhwindow,
++	shim_curs,
++	shim_putstr,
++	genl_putmixed,
++	shim_display_file,
++	shim_start_menu,
++	shim_add_menu,
++	shim_end_menu,
++	shim_select_menu,
++	shim_message_menu,
++	shim_update_inventory,
++	shim_mark_synch,
++	shim_wait_synch,
++#ifdef CLIPPING
++	shim_cliparound,
++#endif
++#ifdef POSITIONBAR
++	shim_update_positionbar,
++#endif
++	shim_print_glyph,
++	shim_raw_print,
++	shim_raw_print_bold,
++	shim_nhgetch,
++	shim_nh_poskey,
++	shim_nhbell,
++	shim_doprev_message,
++	shim_yn_function,
++	shim_getlin,
++	shim_get_ext_cmd,
++	shim_number_pad,
++	shim_delay_output,
++#ifdef CHANGE_COLOR
++	shim_change_color,
++#ifdef MAC
++	shim_change_background,
++	shim_set_font_name,
++#endif
++	shim_get_color_string,
++#endif
++	shim_start_screen,
++	shim_end_screen,
++	shim_outrip,
++	shim_preference_update,
++	shim_getmsghistory,
++	shim_putmsghistory,
++	shim_status_init,
++	genl_status_finish,
++	shim_status_enablefield,
++	shim_status_update,
++	shim_can_suspend,
++};
++
++
++/* convert the C callback to a JavaScript callback */
++EM_JS(void, local_callback, (const char *cb_name, const char *shim_name, void *ret_ptr, const char *fmt_str, void *args), {
++    // Asyncify.handleAsync() is the more logical choice here; however, the stack unrolling in Asyncify is performed by
++    // function call analysis during compilation. Since we are using an indirect callback (cb_name), it can't predict the stack
++    // unrolling and it crashes. Thus we use Asyncify.handleSleep() and wakeUp() to make sure that async doesn't break
++    // Asyncify. For details, see: https://emscripten.org/docs/porting/asyncify.html#optimizing
++    Asyncify.handleSleep(wakeUp => {
++        // convert callback arguments to proper JavaScript varaidic arguments
++        let name = UTF8ToString(shim_name);
++        let fmt = UTF8ToString(fmt_str);
++        let cbName = UTF8ToString(cb_name);
++        // console.log("local_callback:", cbName, fmt, name);
++
++        // get pointer / type conversion helpers
++        let getPointerValue = globalThis.nethackGlobal.helpers.getPointerValue;
++        let setPointerValue = globalThis.nethackGlobal.helpers.setPointerValue;
++
++        reentryMutexLock(name);
++
++        let argTypes = fmt.split("");
++        let retType = argTypes.shift();
++
++        // build array of JavaScript args from WASM parameters
++        let jsArgs = [];
++        for (let i = 0; i < argTypes.length; i++) {
++            let ptr = args + (4*i);
++            let val = getArg(name, ptr, argTypes[i]);
++            jsArgs.push(val);
++        }
++
++        // do the callback
++        let userCallback = globalThis[cbName];
++        runJsEventLoop(() => userCallback.call(this, name, ... jsArgs)).then((retVal) => {
++            // save the return value
++            setPointerValue(name, ret_ptr, retType, retVal);
++            // return
++            setTimeout(() => {
++                reentryMutexUnlock();
++                wakeUp();
++            }, 0);
++        });
++
++        function getArg(name, ptr, type) {
++            return (type === "o")?ptr:getPointerValue(name, getValue(ptr, "*"), type);
++        }
++
++        // setTimeout() with value of '0' is similar to setImmediate() (but setImmediate isn't standard)
++        // this lets the JS loop run for a tick so that other events can occur
++        // XXX: I also tried replacing the for(;;) in allmain.c:moveloop() with emscripten_set_main_loop()
++        // unfortunately that won't work -- if the simulate_infinite_loop arg is false, it falls through
++        // and the program ends;
++        // if is true, it throws an exception to break out of main(), but doesn't get caught because
++        // the stack isn't running under main() anymore...
++        // I think this is suboptimal, but we will have to live with it (for now?)
++        async function runJsEventLoop(cb) {
++            return new Promise((resolve) => {
++                setTimeout(() => {
++                    resolve(cb());
++                }, 0);
++            });
++        }
++
++        function reentryMutexLock(name) {
++            globalThis.nethackGlobal = globalThis.nethackGlobal || {};
++            if(globalThis.nethackGlobal.shimFunctionRunning) {
++                throw new Error(`'${name}' attempting second call to 'local_callback' before '${globalThis.nethackGlobal.shimFunctionRunning}' has finished, will crash emscripten Asyncify. For details see: emscripten.org/docs/porting/asyncify.html#reentrancy`);
++            }
++            globalThis.nethackGlobal.shimFunctionRunning = name;
++        }
++
++        function reentryMutexUnlock() {
++            globalThis.nethackGlobal.shimFunctionRunning = null;
++        }
++    });
++})
