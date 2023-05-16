@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: ./scripts/ci/prepare-templates.sh 4.0.1
       - run: npm i
       - run: npm run build:web
       - uses: JamesIves/github-pages-deploy-action@v4
