@@ -223,7 +223,7 @@ export class NetHackWrapper implements NetHackJS {
     this.menu.items.push({
       tile: this.module._glyph_to_tile(glyph),
       identifier,
-      accelerator,
+      accelerator: parseInt(accelerator),
       groupAcc,
       attr,
       str,

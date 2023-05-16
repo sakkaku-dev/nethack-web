@@ -11,5 +11,13 @@ export default [
 			format: 'esm'
 		},
 		plugins: [nodePolyfills(), resolve(), commonjs(), typescript()],
+	},
+	{
+		input: 'src/ui/nethack-ui.ts',
+		output: {
+			dir: 'build',
+			format: 'esm'
+		},
+		plugins: [typescript()],
 	}
 ]

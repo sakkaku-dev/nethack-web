@@ -2,7 +2,7 @@ declare interface Window {
   nethackCallback: any;
 
   nethackJS: NetHackJS;
-  nethackGodot: NetHackGodot;
+  nethackUI: NetHackGodot;
 
   nethackGlobal: {
     helpers: {

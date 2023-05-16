@@ -25,7 +25,7 @@ Module.preRun = [
 ];
 
 const wrapper = new NetHackWrapper(true, Module);
-const godot = window.nethackGodot;
+const godot = window.nethackUI;
 
 wrapper.onMenu$.subscribe(({ winid, prompt, count, items }) =>
   godot.openMenu(winid, prompt || "", count, ...items)

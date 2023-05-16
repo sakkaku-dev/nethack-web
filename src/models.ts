@@ -7,7 +7,7 @@ export interface NetHackJS {
 }
 
 // In Godot all parameters will be in one array, so don't nest them
-export interface NetHackGodot {
+export interface NetHackUI {
   openMenu: (id: number, prompt: string, count: number, ...items: Item[]) => void;
   openDialog: (id: number, msg: string) => void;
   openQuestion: (question: string, ...choices: string[]) => void;
@@ -64,7 +64,7 @@ export enum Command {
 
 export interface Item {
   tile: number;
-  accelerator: string;
+  accelerator: number;
   groupAcc: string;
   attr: number;
   str: string;
@@ -139,8 +139,8 @@ export const statusMap: Record<STATUS_FIELD, (s: Status, v: string) => void> = {
   // [STATUS_FIELD.BL_CHARACTERISTICS]: () => {},
   // [STATUS_FIELD.BL_RESET]: () => {},
   // [STATUS_FIELD.BL_FLUSH]: () => {},
-  [STATUS_FIELD.BL_HD]: () => {},
-  [STATUS_FIELD.BL_TIME]: () => {},
+  [STATUS_FIELD.BL_HD]: () => { },
+  [STATUS_FIELD.BL_TIME]: () => { },
   // [STATUS_FIELD.MAXBLSTATS]: () => {},
 };
 
