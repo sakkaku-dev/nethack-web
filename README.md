@@ -1,6 +1,6 @@
 # Nethack port for Web
 
-Nethack for the web using godot as the UI.
+Nethack for the web using godot as the UI. (maybe in the future, Godot 4 Web support is not good right now)
 
 ## Build
 
@@ -10,27 +10,12 @@ Emscripten should be installed. I needed the patch in `lib/fixes.diff`.
 Current build is from `NetHack-3.6.7_Released (ed600d9f0)` and
 using emscripten `v2.0.34 (0d24418f0eac4828f096ee070dae8472d427edaa)`
 
-Apply changes needed for build, if it still works
+For NetHack 3.6: (might need to uncomment `make spotless`, if you want a clean install)
 
-- `npm run prepare:nethack` (only once)
-
-`tile.c` has to be generated using `tilemap.c`:
-
-- `npm run build:nethack:tiles`
-
-Build nethack
-
-- `npm run setup:nethack`
-- `npm run build:nethack`
-- `npm run copy:nethack`
-
-Fix Problems
-
-- `npm run fix:nethack`
-
-Build final application
-
-- `npm run build`
+- apply changes of `lib/fixes36.diff` in the `NetHack` submodule.
+- run `build.sh` stage1: it should create the folder `build/nethack` with some files in it. These are the required data files for the actual build.
+- run `build.sh` stage2: actual build of the game. It will update `lib/nethack.*`
+- build the UI with `npm run build:web`
 
 ### Fixes 3.6
 
