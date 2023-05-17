@@ -1227,103 +1227,6 @@ var COLOR_ATTR;
     COLOR_ATTR[COLOR_ATTR["BL_ATTCLR_MAX"] = 21] = "BL_ATTCLR_MAX";
 })(COLOR_ATTR || (COLOR_ATTR = {}));
 
-var Command;
-(function (Command) {
-    Command["YN_FUNCTION"] = "shim_yn_function";
-    Command["GET_CHAR"] = "shim_nhgetch";
-    Command["GET_NH_EVENT"] = "shim_get_nh_event";
-    Command["GET_POSKEY"] = "shim_nh_poskey";
-    Command["ASK_NAME"] = "shim_askname";
-    Command["GET_HISTORY"] = "shim_getmsghistory";
-    Command["MESSAGE_MENU"] = "shim_message_menu";
-    Command["STATUS_INIT"] = "shim_status_init";
-    Command["STATUS_UPDATE"] = "shim_status_update";
-    Command["CREATE_WINDOW"] = "shim_create_nhwindow";
-    Command["DESTROY_WINDOW"] = "shim_destroy_nhwindow";
-    Command["DISPLAY_WINDOW"] = "shim_display_nhwindow";
-    Command["CLEAR_WINDOW"] = "shim_clear_nhwindow";
-    Command["MENU_START"] = "shim_start_menu";
-    Command["MENU_END"] = "shim_end_menu";
-    Command["MENU_ADD"] = "shim_add_menu";
-    Command["MENU_SELECT"] = "shim_select_menu";
-    Command["PRINT_GLYPH"] = "shim_print_glyph";
-    Command["CURSOR"] = "shim_curs";
-    Command["CLIPAROUND"] = "shim_cliparound";
-    Command["PUTSTR"] = "shim_putstr";
-    Command["RAW_PRINT"] = "shim_raw_print";
-    Command["RAW_PRINT_BOLD"] = "shim_raw_print_bold";
-    Command["DISPLAY_FILE"] = "shim_display_file";
-})(Command || (Command = {}));
-var ItemFlag;
-(function (ItemFlag) {
-    ItemFlag[ItemFlag["NONE"] = 0] = "NONE";
-    ItemFlag[ItemFlag["SELECTED"] = 1] = "SELECTED";
-    ItemFlag[ItemFlag["SKIPINVERT"] = 2] = "SKIPINVERT";
-})(ItemFlag || (ItemFlag = {}));
-const statusMap = {
-    [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v),
-    [STATUS_FIELD.BL_STR]: (s, v) => (s.str = v),
-    [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseInt(v)),
-    [STATUS_FIELD.BL_CO]: (s, v) => (s.con = parseInt(v)),
-    [STATUS_FIELD.BL_IN]: (s, v) => (s.int = parseInt(v)),
-    [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = parseInt(v)),
-    [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = parseInt(v)),
-    [STATUS_FIELD.BL_ALIGN]: (s, v) => (s.align = v),
-    [STATUS_FIELD.BL_SCORE]: (s, v) => (s.score = v),
-    [STATUS_FIELD.BL_CAP]: (s, v) => (s.carryCap = v),
-    // [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v.split(":")[1])),
-    [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v)),
-    [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = parseInt(v)),
-    [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = parseInt(v)),
-    [STATUS_FIELD.BL_XP]: (s, v) => (s.expLvl = parseInt(v)),
-    [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = parseInt(v)),
-    [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = v),
-    [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = parseInt(v)),
-    [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = parseInt(v)),
-    [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v),
-    [STATUS_FIELD.BL_EXP]: (s, v) => (s.exp = parseInt(v)),
-    [STATUS_FIELD.BL_CONDITION]: (s, v) => { var _a; return (s.condition = (_a = conditionMap[parseInt(v)]) !== null && _a !== void 0 ? _a : undefined); },
-    // [STATUS_FIELD.BL_CHARACTERISTICS]: () => {},
-    // [STATUS_FIELD.BL_RESET]: () => {},
-    // [STATUS_FIELD.BL_FLUSH]: () => {},
-    [STATUS_FIELD.BL_HD]: () => { },
-    [STATUS_FIELD.BL_TIME]: () => { },
-    // [STATUS_FIELD.MAXBLSTATS]: () => {},
-};
-// See mswproc.c
-const conditionMap = {
-    [CONDITION.BL_MASK_BLIND]: "Blind",
-    [CONDITION.BL_MASK_CONF]: "Conf",
-    [CONDITION.BL_MASK_DEAF]: "Deaf",
-    [CONDITION.BL_MASK_FLY]: "Fly",
-    [CONDITION.BL_MASK_FOODPOIS]: "FoodPois",
-    [CONDITION.BL_MASK_HALLU]: "Hallu",
-    [CONDITION.BL_MASK_LEV]: "Lev",
-    [CONDITION.BL_MASK_RIDE]: "Ride",
-    [CONDITION.BL_MASK_SLIME]: "Slime",
-    [CONDITION.BL_MASK_STONE]: "Stone",
-    [CONDITION.BL_MASK_STRNGL]: "Strngl",
-    [CONDITION.BL_MASK_STUN]: "Stun",
-    [CONDITION.BL_MASK_TERMILL]: "TermIll",
-    // [CONDITION.BL_MASK_BAREH]: "Bare",
-    // [CONDITION.BL_MASK_BUSY]: "Busy",
-    // [CONDITION.BL_MASK_ELF_IRON]: "Iron",
-    // [CONDITION.BL_MASK_GLOWHANDS]: "Glow",
-    // [CONDITION.BL_MASK_GRAB]: "Grab",
-    // [CONDITION.BL_MASK_HELD]: "Held",
-    // [CONDITION.BL_MASK_ICY]: "Icy",
-    // [CONDITION.BL_MASK_INLAVA]: "Lava",
-    // [CONDITION.BL_MASK_TETHERED]: "Teth",
-    // [CONDITION.BL_MASK_TRAPPED]: "Trap",
-    // [CONDITION.BL_MASK_UNCONSC]: "Out",
-    // [CONDITION.BL_MASK_WOUNDEDL]: "Legs",
-    // [CONDITION.BL_MASK_HOLDING]: "Uhold",
-    // [CONDITION.BL_MASK_SLIPPERY]: "Slip",
-    // [CONDITION.BL_MASK_PARLYZ]: "Parlyz",
-    // [CONDITION.BL_MASK_SLEEPING]: "Zzz",
-    // [CONDITION.BL_MASK_SUBMERGED]: "Sub",
-};
-
 function getDefaultExportFromCjs (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 }
@@ -1638,38 +1541,124 @@ var require$$1 = /*@__PURE__*/getAugmentedNamespace(path$1);
 var nethackExports = nethack.exports;
 var nethackLib = /*@__PURE__*/getDefaultExportFromCjs(nethackExports);
 
+var Command;
+(function (Command) {
+    Command["YN_FUNCTION"] = "shim_yn_function";
+    Command["GET_CHAR"] = "shim_nhgetch";
+    Command["GET_NH_EVENT"] = "shim_get_nh_event";
+    Command["GET_POSKEY"] = "shim_nh_poskey";
+    Command["ASK_NAME"] = "shim_askname";
+    Command["GET_HISTORY"] = "shim_getmsghistory";
+    Command["MESSAGE_MENU"] = "shim_message_menu";
+    Command["STATUS_INIT"] = "shim_status_init";
+    Command["STATUS_UPDATE"] = "shim_status_update";
+    Command["CREATE_WINDOW"] = "shim_create_nhwindow";
+    Command["DESTROY_WINDOW"] = "shim_destroy_nhwindow";
+    Command["DISPLAY_WINDOW"] = "shim_display_nhwindow";
+    Command["CLEAR_WINDOW"] = "shim_clear_nhwindow";
+    Command["MENU_START"] = "shim_start_menu";
+    Command["MENU_END"] = "shim_end_menu";
+    Command["MENU_ADD"] = "shim_add_menu";
+    Command["MENU_SELECT"] = "shim_select_menu";
+    Command["PRINT_GLYPH"] = "shim_print_glyph";
+    Command["CURSOR"] = "shim_curs";
+    Command["CLIPAROUND"] = "shim_cliparound";
+    Command["PUTSTR"] = "shim_putstr";
+    Command["RAW_PRINT"] = "shim_raw_print";
+    Command["RAW_PRINT_BOLD"] = "shim_raw_print_bold";
+    Command["DISPLAY_FILE"] = "shim_display_file";
+})(Command || (Command = {}));
+var ItemFlag;
+(function (ItemFlag) {
+    ItemFlag[ItemFlag["NONE"] = 0] = "NONE";
+    ItemFlag[ItemFlag["SELECTED"] = 1] = "SELECTED";
+    ItemFlag[ItemFlag["SKIPINVERT"] = 2] = "SKIPINVERT";
+})(ItemFlag || (ItemFlag = {}));
+const statusMap = {
+    [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v),
+    [STATUS_FIELD.BL_STR]: (s, v) => (s.str = v),
+    [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseInt(v)),
+    [STATUS_FIELD.BL_CO]: (s, v) => (s.con = parseInt(v)),
+    [STATUS_FIELD.BL_IN]: (s, v) => (s.int = parseInt(v)),
+    [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = parseInt(v)),
+    [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = parseInt(v)),
+    [STATUS_FIELD.BL_ALIGN]: (s, v) => (s.align = v),
+    [STATUS_FIELD.BL_SCORE]: (s, v) => (s.score = v),
+    [STATUS_FIELD.BL_CAP]: (s, v) => (s.carryCap = v),
+    // [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v.split(":")[1])),
+    [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v)),
+    [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = parseInt(v)),
+    [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = parseInt(v)),
+    [STATUS_FIELD.BL_XP]: (s, v) => (s.expLvl = parseInt(v)),
+    [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = parseInt(v)),
+    [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = v),
+    [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = parseInt(v)),
+    [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = parseInt(v)),
+    [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v),
+    [STATUS_FIELD.BL_EXP]: (s, v) => (s.exp = parseInt(v)),
+    [STATUS_FIELD.BL_CONDITION]: (s, v) => { var _a; return (s.condition = (_a = conditionMap[parseInt(v)]) !== null && _a !== void 0 ? _a : undefined); },
+    // [STATUS_FIELD.BL_CHARACTERISTICS]: () => {},
+    // [STATUS_FIELD.BL_RESET]: () => {},
+    // [STATUS_FIELD.BL_FLUSH]: () => {},
+    [STATUS_FIELD.BL_HD]: () => { },
+    [STATUS_FIELD.BL_TIME]: () => { },
+    // [STATUS_FIELD.MAXBLSTATS]: () => {},
+};
+// See mswproc.c
+const conditionMap = {
+    [CONDITION.BL_MASK_BLIND]: "Blind",
+    [CONDITION.BL_MASK_CONF]: "Conf",
+    [CONDITION.BL_MASK_DEAF]: "Deaf",
+    [CONDITION.BL_MASK_FLY]: "Fly",
+    [CONDITION.BL_MASK_FOODPOIS]: "FoodPois",
+    [CONDITION.BL_MASK_HALLU]: "Hallu",
+    [CONDITION.BL_MASK_LEV]: "Lev",
+    [CONDITION.BL_MASK_RIDE]: "Ride",
+    [CONDITION.BL_MASK_SLIME]: "Slime",
+    [CONDITION.BL_MASK_STONE]: "Stone",
+    [CONDITION.BL_MASK_STRNGL]: "Strngl",
+    [CONDITION.BL_MASK_STUN]: "Stun",
+    [CONDITION.BL_MASK_TERMILL]: "TermIll",
+    // [CONDITION.BL_MASK_BAREH]: "Bare",
+    // [CONDITION.BL_MASK_BUSY]: "Busy",
+    // [CONDITION.BL_MASK_ELF_IRON]: "Iron",
+    // [CONDITION.BL_MASK_GLOWHANDS]: "Glow",
+    // [CONDITION.BL_MASK_GRAB]: "Grab",
+    // [CONDITION.BL_MASK_HELD]: "Held",
+    // [CONDITION.BL_MASK_ICY]: "Icy",
+    // [CONDITION.BL_MASK_INLAVA]: "Lava",
+    // [CONDITION.BL_MASK_TETHERED]: "Teth",
+    // [CONDITION.BL_MASK_TRAPPED]: "Trap",
+    // [CONDITION.BL_MASK_UNCONSC]: "Out",
+    // [CONDITION.BL_MASK_WOUNDEDL]: "Legs",
+    // [CONDITION.BL_MASK_HOLDING]: "Uhold",
+    // [CONDITION.BL_MASK_SLIPPERY]: "Slip",
+    // [CONDITION.BL_MASK_PARLYZ]: "Parlyz",
+    // [CONDITION.BL_MASK_SLEEPING]: "Zzz",
+    // [CONDITION.BL_MASK_SUBMERGED]: "Sub",
+};
+
 class NetHackWrapper {
-    async yesNoQuestion(question, choices) {
-        // Question already contains the choices
-        if (/\[[a-zA-Z]+\]/.test(question)) {
-            choices = [];
-        }
-        this.onQuestion$.next({ question, choices });
-        return this.waitInput();
-    }
     constructor(debug = false, module, win = window) {
         this.debug = debug;
         this.module = module;
         this.win = win;
         this.commandMap = {
             [Command.CREATE_WINDOW]: this.createWindow.bind(this),
-            [Command.DESTROY_WINDOW]: async (winid) => this.onCloseDialog$.next(winid),
+            [Command.DESTROY_WINDOW]: async (winid) => this.ui.closeDialog(winid),
             [Command.CLEAR_WINDOW]: async (winid) => (this.putStr = ""),
             // Text / Dialog
             [Command.PUTSTR]: this.handlePutStr.bind(this),
-            [Command.RAW_PRINT]: async (str) => this.onPrint$.next(str),
-            [Command.RAW_PRINT_BOLD]: async (str) => this.onPrint$.next(str),
+            [Command.RAW_PRINT]: async (str) => this.ui.printLine(str),
+            [Command.RAW_PRINT_BOLD]: async (str) => this.ui.printLine(str),
             // Map
-            [Command.PRINT_GLYPH]: async (winid, x, y, glyph) => this.printTile$.next([
-                ...this.printTile$.value,
-                { x, y, tile: this.module._glyph_to_tile(glyph) },
-            ]),
-            [Command.CURSOR]: async (winid, x, y) => winid == this.global.globals.WIN_MAP && this.onCursorMove$.next({ x, y }),
-            [Command.CLIPAROUND]: async (x, y) => this.onMapCenter$.next({ x, y }),
+            [Command.PRINT_GLYPH]: async (winid, x, y, glyph) => this.tiles$.next([...this.tiles$.value, { x, y, tile: this.toTile(glyph) }]),
+            [Command.CURSOR]: async (winid, x, y) => winid == this.global.globals.WIN_MAP && this.ui.moveCursor(x, y),
+            [Command.CLIPAROUND]: async (x, y) => this.ui.centerView(x, y),
             // Status
             [Command.STATUS_UPDATE]: this.statusUpdate.bind(this),
             // Menu
-            [Command.MENU_START]: async () => (this.menu = { winid: 0, items: [], count: 0 }),
+            [Command.MENU_START]: async () => (this.menu = { winid: 0, items: [], count: 0, prompt: "" }),
             [Command.MENU_END]: async (winid, prompt) => (this.menu.prompt = prompt),
             [Command.MENU_ADD]: this.menuAdd.bind(this),
             [Command.MENU_SELECT]: this.menuSelect.bind(this),
@@ -1681,40 +1670,26 @@ class NetHackWrapper {
             [Command.ASK_NAME]: this.waitInput.bind(this),
             // TODO: message_menu
             // TODO: select_menu with yn_function
-            // TODO: improve performance
             // TODO: menu accelerators
         };
         this.idCounter = 0;
-        this.menu = { winid: 0, items: [], count: 0 };
+        this.menu = { winid: 0, items: [], count: 0, prompt: "" };
         this.putStr = "";
-        this.windows = {};
         this.input$ = new Subject();
         this.selectedMenu$ = new Subject();
         this.status$ = new BehaviorSubject({});
-        this.printTile$ = new BehaviorSubject([]);
         this.inventory$ = new Subject();
-        this.onMenu$ = new Subject();
-        this.onDialog$ = new Subject();
-        this.onQuestion$ = new Subject();
-        this.onCloseDialog$ = new Subject();
-        this.onPrint$ = new Subject();
-        this.onCursorMove$ = new Subject();
-        this.onMapCenter$ = new Subject();
-        this.onMapUpdate$ = new Subject();
-        this.onStatusUpdate$ = new Subject();
-        this.onInventoryUpdate$ = new Subject();
-        this.awaitingInput$ = new Subject();
-        this.printTile$
-            .pipe(skip(1), filter$1((x) => x.length > 0), debounceTime(100), tap((tiles) => this.onMapUpdate$.next(tiles)), tap(() => this.printTile$.next([])))
+        this.tiles$ = new BehaviorSubject([]);
+        this.tiles$
+            .pipe(skip(1), filter$1((x) => x.length > 0), debounceTime(100), tap((tiles) => this.ui.updateMap(...tiles)), tap(() => this.tiles$.next([])))
             .subscribe();
         this.inventory$
-            .pipe(filter$1((x) => x.length > 0), debounceTime(300), tap((items) => this.onInventoryUpdate$.next(items)))
+            .pipe(filter$1((x) => x.length > 0), debounceTime(500), tap((items) => this.ui.updateInventory(...items)))
             .subscribe();
         this.status$
-            .pipe(skip(1), debounceTime(100), tap((s) => this.onStatusUpdate$.next(s)))
+            .pipe(skip(1), debounceTime(100), tap((s) => this.ui.updateStatus(s)))
             .subscribe();
         this.win.nethackCallback = this.handle.bind(this);
-        this.win.nethackJS = this;
     }
     log(...args) {
         if (this.debug) {
@@ -1737,12 +1712,11 @@ class NetHackWrapper {
     async waitContinueKey() {
         this.log("Waiting for continue...");
         const acceptedCodes = [" ", "\n"].map((x) => x.charCodeAt(0));
-        this.awaitingInput$.next();
+        acceptedCodes.push(27); // Escape
         await firstValueFrom(this.input$.pipe(filter$1((x) => acceptedCodes.includes(x))));
     }
     async waitInput() {
         this.log("Waiting user input...");
-        this.awaitingInput$.next();
         return await firstValueFrom(this.input$);
     }
     // Commands
@@ -1757,23 +1731,28 @@ class NetHackWrapper {
         }
         return 0;
     }
+    async yesNoQuestion(question, choices) {
+        // Question already contains the choices
+        if (/\[[a-zA-Z]+\]/.test(question)) {
+            choices = [];
+        }
+        this.ui.openQuestion(question, ...choices);
+        return this.waitInput();
+    }
     async createWindow(type) {
         this.idCounter++;
-        const id = this.idCounter;
-        this.log("Create new window of type", type, "with id", id);
-        this.windows[id] = { type };
-        return id;
+        return this.idCounter;
     }
     async displayWindow(winid, blocking) {
         if (this.putStr !== "") {
-            this.onDialog$.next({ id: winid, text: this.putStr });
+            this.ui.openDialog(winid, this.putStr);
             await this.waitContinueKey();
             this.putStr = "";
         }
     }
     async menuAdd(winid, glyph, identifier, accelerator, groupAcc, attr, str, flag) {
         this.menu.items.push({
-            tile: this.module._glyph_to_tile(glyph),
+            tile: this.toTile(glyph),
             identifier,
             accelerator: parseInt(accelerator),
             groupAcc,
@@ -1787,22 +1766,22 @@ class NetHackWrapper {
         if (winid === this.global.globals.WIN_INVEN) {
             const activeRegex = /\((wielded( in other hand)?|in quiver|weapon in hands?|being worn|on (left|right) (hand|foreclaw|paw|pectoral fin))\)/;
             this.menu.items.forEach((i) => (i.active = activeRegex.test(i.str)));
-            this.inventoryUpdate(this.menu.items);
+            this.inventory$.next(this.menu.items);
             return 0;
         }
         if (this.menu.items.length === 0) {
             return 0;
         }
         if (select == MENU_SELECT.PICK_NONE) {
-            this.onDialog$.next({ id: winid, text: this.menu.items.map((i) => i.str).join("\n") });
+            this.ui.openDialog(winid, this.menu.items.map((i) => i.str).join("\n"));
             await this.waitContinueKey();
             return 0;
         }
         if (select == MENU_SELECT.PICK_ANY) {
-            this.onMenu$.next({ ...this.menu, count: -1, winid });
+            this.ui.openMenu(winid, this.menu.prompt, -1, ...this.menu.items);
         }
         else {
-            this.onMenu$.next({ ...this.menu, count: 1, winid });
+            this.ui.openMenu(winid, this.menu.prompt, 1, ...this.menu.items);
         }
         this.log("Waiting for menu select...");
         const selectedIds = await firstValueFrom(this.selectedMenu$);
@@ -1810,21 +1789,7 @@ class NetHackWrapper {
         if (itemIds.length === 0) {
             return 0;
         }
-        const int_size = 4;
-        const size = int_size * 3; // selected object has 3 fields
-        const total_size = size * itemIds.length;
-        const start_ptr = this.module._malloc(total_size);
-        // write selected items to memory
-        let ptr = start_ptr;
-        itemIds.forEach((id) => {
-            this.global.helpers.setPointerValue("nethack.menu.selected", ptr, Type.INT, id);
-            this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size, Type.INT, -1);
-            this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size * 2, Type.INT, 0);
-            ptr += size;
-        });
-        // point selected to the first item
-        const selected_pp = this.global.helpers.getPointerValue("", selected, Type.POINTER);
-        this.global.helpers.setPointerValue("nethack.menu.setSelected", selected_pp, Type.INT, start_ptr);
+        this.selectItems(itemIds, selected);
         return (_a = itemIds === null || itemIds === void 0 ? void 0 : itemIds.length) !== null && _a !== void 0 ? _a : -1;
     }
     async handlePutStr(winid, attr, str) {
@@ -1867,9 +1832,6 @@ class NetHackWrapper {
             this.putStr += str + "\n";
         }
     }
-    async inventoryUpdate(items) {
-        this.inventory$.next(items);
-    }
     async statusUpdate(type, ptr) {
         // const ignored = [STATUS_FIELD.BL_FLUSH, STATUS_FIELD.BL_RESET];
         // if (ignored.includes(type)) {
@@ -1892,12 +1854,36 @@ class NetHackWrapper {
             this.log("Unhandled status type", STATUS_FIELD[type]);
         }
     }
+    // Utils
+    selectItems(itemIds, selectedPointer) {
+        const int_size = 4;
+        const size = int_size * 3; // selected object has 3 fields
+        const total_size = size * itemIds.length;
+        const start_ptr = this.module._malloc(total_size);
+        // write selected items to memory
+        let ptr = start_ptr;
+        itemIds.forEach((id) => {
+            this.global.helpers.setPointerValue("nethack.menu.selected", ptr, Type.INT, id);
+            this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size, Type.INT, -1);
+            this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size * 2, Type.INT, 0);
+            ptr += size;
+        });
+        // point selected to the first item
+        const selected_pp = this.global.helpers.getPointerValue("", selectedPointer, Type.POINTER);
+        this.global.helpers.setPointerValue("nethack.menu.setSelected", selected_pp, Type.INT, start_ptr);
+    }
+    toTile(glyph) {
+        return this.module._glyph_to_tile(glyph);
+    }
     getPointerValue(ptr, type) {
         const x = this.global.helpers.getPointerValue("nethack.pointerValue", ptr, Type.POINTER);
         return this.global.helpers.getPointerValue("nethack.pointerValue", x, type);
     }
     get global() {
         return this.win.nethackGlobal;
+    }
+    get ui() {
+        return this.win.nethackUI;
     }
 }
 var Type;
@@ -1929,15 +1915,4 @@ Module.preRun = [
         Module.ENV.NETHACKOPTIONS = options.join(",");
     },
 ];
-const wrapper = new NetHackWrapper(true, Module);
-const godot = window.nethackUI;
-wrapper.onMenu$.subscribe(({ winid, prompt, count, items }) => godot.openMenu(winid, prompt || "", count, ...items));
-wrapper.onQuestion$.subscribe(({ question, choices }) => godot.openQuestion(question, ...choices));
-wrapper.onDialog$.subscribe(({ id, text }) => godot.openDialog(id, text));
-wrapper.onCloseDialog$.subscribe((id) => godot.closeDialog(id));
-wrapper.onPrint$.subscribe(godot.printLine);
-wrapper.onCursorMove$.subscribe(({ x, y }) => godot.moveCursor(x, y));
-wrapper.onMapCenter$.subscribe(({ x, y }) => godot.centerView(x, y));
-wrapper.onMapUpdate$.subscribe((tiles) => godot.updateMap(...tiles));
-wrapper.onStatusUpdate$.subscribe((status) => godot.updateStatus(status));
-wrapper.onInventoryUpdate$.subscribe((items) => godot.updateInventory(...items));
+window.nethackJS = new NetHackWrapper(true, Module);
