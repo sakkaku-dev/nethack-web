@@ -1,20 +1,16 @@
 import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
-import { Command, Item, ItemFlag, NetHackJS, Status, Tile, statusMap } from "./models";
+import { Item, NetHackJS, Status, NetHackUI, Tile } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
 // @ts-ignore
 import nethackLib from "../lib/nethack";
+import { Command, ItemFlag, statusMap } from "./nethack-models";
 
 export interface MenuSelect {
   winid: number;
-  prompt?: string;
+  prompt: string;
   count: number;
   items: Item[];
-}
-
-export interface Coordinate {
-  x: number;
-  y: number;
 }
 
 export interface Question {
@@ -29,30 +25,27 @@ export interface Window {
 export class NetHackWrapper implements NetHackJS {
   private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
-    [Command.DESTROY_WINDOW]: async (winid: number) => this.onCloseDialog$.next(winid),
+    [Command.DESTROY_WINDOW]: async (winid: number) => this.ui.closeDialog(winid),
     [Command.CLEAR_WINDOW]: async (winid: number) => (this.putStr = ""),
 
     // Text / Dialog
     [Command.PUTSTR]: this.handlePutStr.bind(this),
-    [Command.RAW_PRINT]: async (str) => this.onPrint$.next(str),
-    [Command.RAW_PRINT_BOLD]: async (str) => this.onPrint$.next(str),
+    [Command.RAW_PRINT]: async (str) => this.ui.printLine(str),
+    [Command.RAW_PRINT_BOLD]: async (str) => this.ui.printLine(str),
 
     // Map
     [Command.PRINT_GLYPH]: async (winid, x, y, glyph) =>
-      this.printTile$.next([
-        ...this.printTile$.value,
-        { x, y, tile: this.module._glyph_to_tile(glyph) },
-      ]),
+      this.tiles$.next([...this.tiles$.value, { x, y, tile: this.toTile(glyph) }]),
 
     [Command.CURSOR]: async (winid, x, y) =>
-      winid == this.global.globals.WIN_MAP && this.onCursorMove$.next({ x, y }),
-    [Command.CLIPAROUND]: async (x, y) => this.onMapCenter$.next({ x, y }),
+      winid == this.global.globals.WIN_MAP && this.ui.moveCursor(x, y),
+    [Command.CLIPAROUND]: async (x, y) => this.ui.centerView(x, y),
 
     // Status
     [Command.STATUS_UPDATE]: this.statusUpdate.bind(this),
 
     // Menu
-    [Command.MENU_START]: async () => (this.menu = { winid: 0, items: [], count: 0 }),
+    [Command.MENU_START]: async () => (this.menu = { winid: 0, items: [], count: 0, prompt: "" }),
     [Command.MENU_END]: async (winid, prompt) => (this.menu.prompt = prompt),
     [Command.MENU_ADD]: this.menuAdd.bind(this),
     [Command.MENU_SELECT]: this.menuSelect.bind(this),
@@ -66,65 +59,36 @@ export class NetHackWrapper implements NetHackJS {
 
     // TODO: message_menu
     // TODO: select_menu with yn_function
-
-    // TODO: improve performance
     // TODO: menu accelerators
   };
 
   private idCounter = 0;
-  private menu: MenuSelect = { winid: 0, items: [], count: 0 };
+  private menu: MenuSelect = { winid: 0, items: [], count: 0, prompt: "" };
   private putStr = "";
-  private windows: Record<number, Window> = {};
 
   private input$ = new Subject<number>();
   private selectedMenu$ = new Subject<number[]>();
 
   private status$ = new BehaviorSubject<Status>({});
-  private printTile$ = new BehaviorSubject<Tile[]>([]);
   private inventory$ = new Subject<Item[]>();
-
-  onMenu$ = new Subject<MenuSelect>();
-  onDialog$ = new Subject<{ id: number; text: string }>();
-  onQuestion$ = new Subject<Question>();
-
-  onCloseDialog$ = new Subject<number>();
-
-  onPrint$ = new Subject<string>();
-  onCursorMove$ = new Subject<Coordinate>();
-  onMapCenter$ = new Subject<Coordinate>();
-
-  onMapUpdate$ = new Subject<Tile[]>();
-  onStatusUpdate$ = new Subject<Status>();
-  onInventoryUpdate$ = new Subject<Item[]>();
-
-  awaitingInput$ = new Subject<void>();
-
-  private async yesNoQuestion(question: string, choices: string[]) {
-    // Question already contains the choices
-    if (/\[[a-zA-Z]+\]/.test(question)) {
-      choices = [];
-    }
-
-    this.onQuestion$.next({ question, choices });
-    return this.waitInput();
-  }
+  private tiles$ = new BehaviorSubject<Tile[]>([]);
 
   constructor(private debug = false, private module: any, private win: typeof window = window) {
-    this.printTile$
+    this.tiles$
       .pipe(
         skip(1),
         filter((x) => x.length > 0),
         debounceTime(100),
-        tap((tiles) => this.onMapUpdate$.next(tiles)),
-        tap(() => this.printTile$.next([]))
+        tap((tiles) => this.ui.updateMap(...tiles)),
+        tap(() => this.tiles$.next([]))
       )
       .subscribe();
 
     this.inventory$
       .pipe(
         filter((x) => x.length > 0),
-        debounceTime(300),
-        tap((items) => this.onInventoryUpdate$.next(items))
+        debounceTime(500),
+        tap((items) => this.ui.updateInventory(...items))
       )
       .subscribe();
 
@@ -132,12 +96,11 @@ export class NetHackWrapper implements NetHackJS {
       .pipe(
         skip(1),
         debounceTime(100),
-        tap((s) => this.onStatusUpdate$.next(s))
+        tap((s) => this.ui.updateStatus(s))
       )
       .subscribe();
 
     this.win.nethackCallback = this.handle.bind(this);
-    this.win.nethackJS = this;
   }
 
   private log(...args: any[]) {
@@ -167,13 +130,13 @@ export class NetHackWrapper implements NetHackJS {
   private async waitContinueKey() {
     this.log("Waiting for continue...");
     const acceptedCodes = [" ", "\n"].map((x) => x.charCodeAt(0));
-    this.awaitingInput$.next();
+    acceptedCodes.push(27); // Escape
+
     await firstValueFrom(this.input$.pipe(filter((x) => acceptedCodes.includes(x))));
   }
 
   private async waitInput() {
     this.log("Waiting user input...");
-    this.awaitingInput$.next();
     return await firstValueFrom(this.input$);
   }
 
@@ -194,17 +157,24 @@ export class NetHackWrapper implements NetHackJS {
     return 0;
   }
 
+  private async yesNoQuestion(question: string, choices: string[]) {
+    // Question already contains the choices
+    if (/\[[a-zA-Z]+\]/.test(question)) {
+      choices = [];
+    }
+
+    this.ui.openQuestion(question, ...choices);
+    return this.waitInput();
+  }
+
   private async createWindow(type: WIN_TYPE) {
     this.idCounter++;
-    const id = this.idCounter;
-    this.log("Create new window of type", type, "with id", id);
-    this.windows[id] = { type };
-    return id;
+    return this.idCounter;
   }
 
   private async displayWindow(winid: number, blocking: number) {
     if (this.putStr !== "") {
-      this.onDialog$.next({ id: winid, text: this.putStr });
+      this.ui.openDialog(winid, this.putStr);
       await this.waitContinueKey();
       this.putStr = "";
     }
@@ -221,7 +191,7 @@ export class NetHackWrapper implements NetHackJS {
     flag: number
   ) {
     this.menu.items.push({
-      tile: this.module._glyph_to_tile(glyph),
+      tile: this.toTile(glyph),
       identifier,
       accelerator: parseInt(accelerator),
       groupAcc,
@@ -236,7 +206,7 @@ export class NetHackWrapper implements NetHackJS {
       const activeRegex =
         /\((wielded( in other hand)?|in quiver|weapon in hands?|being worn|on (left|right) (hand|foreclaw|paw|pectoral fin))\)/;
       this.menu.items.forEach((i) => (i.active = activeRegex.test(i.str)));
-      this.inventoryUpdate(this.menu.items);
+      this.inventory$.next(this.menu.items);
       return 0;
     }
 
@@ -245,15 +215,15 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     if (select == MENU_SELECT.PICK_NONE) {
-      this.onDialog$.next({ id: winid, text: this.menu.items.map((i) => i.str).join("\n") });
+      this.ui.openDialog(winid, this.menu.items.map((i) => i.str).join("\n"));
       await this.waitContinueKey();
       return 0;
     }
 
     if (select == MENU_SELECT.PICK_ANY) {
-      this.onMenu$.next({ ...this.menu, count: -1, winid });
+      this.ui.openMenu(winid, this.menu.prompt, -1, ...this.menu.items);
     } else {
-      this.onMenu$.next({ ...this.menu, count: 1, winid });
+      this.ui.openMenu(winid, this.menu.prompt, 1, ...this.menu.items);
     }
 
     this.log("Waiting for menu select...");
@@ -264,29 +234,7 @@ export class NetHackWrapper implements NetHackJS {
       return 0;
     }
 
-    const int_size = 4;
-    const size = int_size * 3; // selected object has 3 fields
-    const total_size = size * itemIds.length;
-    const start_ptr = this.module._malloc(total_size);
-
-    // write selected items to memory
-    let ptr = start_ptr;
-    itemIds.forEach((id) => {
-      this.global.helpers.setPointerValue("nethack.menu.selected", ptr, Type.INT, id);
-      this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size, Type.INT, -1);
-      this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size * 2, Type.INT, 0);
-
-      ptr += size;
-    });
-
-    // point selected to the first item
-    const selected_pp = this.global.helpers.getPointerValue("", selected, Type.POINTER);
-    this.global.helpers.setPointerValue(
-      "nethack.menu.setSelected",
-      selected_pp,
-      Type.INT,
-      start_ptr
-    );
+    this.selectItems(itemIds, selected);
     return itemIds?.length ?? -1;
   }
 
@@ -337,10 +285,6 @@ export class NetHackWrapper implements NetHackJS {
     }
   }
 
-  private async inventoryUpdate(items: Item[]) {
-    this.inventory$.next(items);
-  }
-
   private async statusUpdate(type: STATUS_FIELD, ptr: number) {
     // const ignored = [STATUS_FIELD.BL_FLUSH, STATUS_FIELD.BL_RESET];
 
@@ -365,6 +309,37 @@ export class NetHackWrapper implements NetHackJS {
     }
   }
 
+  // Utils
+  private selectItems(itemIds: number[], selectedPointer: number) {
+    const int_size = 4;
+    const size = int_size * 3; // selected object has 3 fields
+    const total_size = size * itemIds.length;
+    const start_ptr = this.module._malloc(total_size);
+
+    // write selected items to memory
+    let ptr = start_ptr;
+    itemIds.forEach((id) => {
+      this.global.helpers.setPointerValue("nethack.menu.selected", ptr, Type.INT, id);
+      this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size, Type.INT, -1);
+      this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size * 2, Type.INT, 0);
+
+      ptr += size;
+    });
+
+    // point selected to the first item
+    const selected_pp = this.global.helpers.getPointerValue("", selectedPointer, Type.POINTER);
+    this.global.helpers.setPointerValue(
+      "nethack.menu.setSelected",
+      selected_pp,
+      Type.INT,
+      start_ptr
+    );
+  }
+
+  private toTile(glyph: number): number {
+    return this.module._glyph_to_tile(glyph);
+  }
+
   private getPointerValue(ptr: number, type: string) {
     const x = this.global.helpers.getPointerValue("nethack.pointerValue", ptr, Type.POINTER);
     return this.global.helpers.getPointerValue("nethack.pointerValue", x, type);
@@ -372,6 +347,10 @@ export class NetHackWrapper implements NetHackJS {
 
   private get global() {
     return this.win.nethackGlobal;
+  }
+
+  private get ui(): NetHackUI {
+    return this.win.nethackUI;
   }
 }
 

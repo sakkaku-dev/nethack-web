@@ -13,7 +13,8 @@
     "fix:nethack": "sed -i '/var ENV = {}/a Module.ENV = ENV; Module.FS = FS;' ./lib/nethack.js",
     "build:js": "rollup -c rollup.config.js && cp lib/nethack.wasm lib/nethack.data build",
     "build:godot": "cd NetHack-UI && godot --export-debug --headless --quit Web",
-    "build:web": "npm run build:js && cp src/ui/index.html NetHack-UI/assets/Nevanda.png build",
+    "build:web": "npm run build:js && cp src/ui/index.html NetHack-UI/assets/Nevanda.png NetHack-UI/assets/cursor.png build",
+    "build:watch": "rollup -c rollup.config.js --watch",
     "test": "jest"
   },
   "devDependencies": {
