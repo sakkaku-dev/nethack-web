@@ -24,20 +24,4 @@ Module.preRun = [
   },
 ];
 
-const wrapper = new NetHackWrapper(true, Module);
-const godot = window.nethackUI;
-
-wrapper.onMenu$.subscribe(({ winid, prompt, count, items }) =>
-  godot.openMenu(winid, prompt || "", count, ...items)
-);
-wrapper.onQuestion$.subscribe(({ question, choices }) => godot.openQuestion(question, ...choices));
-wrapper.onDialog$.subscribe(({ id, text }) => godot.openDialog(id, text));
-wrapper.onCloseDialog$.subscribe((id) => godot.closeDialog(id));
-
-wrapper.onPrint$.subscribe(godot.printLine);
-wrapper.onCursorMove$.subscribe(({ x, y }) => godot.moveCursor(x, y));
-wrapper.onMapCenter$.subscribe(({ x, y }) => godot.centerView(x, y));
-
-wrapper.onMapUpdate$.subscribe((tiles) => godot.updateMap(...tiles));
-wrapper.onStatusUpdate$.subscribe((status) => godot.updateStatus(status));
-wrapper.onInventoryUpdate$.subscribe((items) => godot.updateInventory(...items));
+window.nethackJS = new NetHackWrapper(true, Module);

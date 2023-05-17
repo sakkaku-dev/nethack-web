@@ -18,6 +18,6 @@ export default [
 			dir: 'build',
 			format: 'esm'
 		},
-		plugins: [typescript()],
+		plugins: [resolve(), typescript()],
 	}
 ]

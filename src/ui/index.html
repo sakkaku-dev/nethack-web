@@ -1,57 +1,75 @@
-<!-- Simple UI for testing -->
-<!-- <button onclick="select()">Send</button> -->
-
 <style>
   :root {
     --bg-color: black;
     --text-color: white;
   }
 
+  body {
+    background: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+  }
+
   #inventory {
     flex-grow: 1;
     overflow-y: auto;
+    background: var(--bg-color);
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 8rem;
   }
   #status {
-    height: 10rem;
-    overflow-y: auto;
+    position: absolute;
+    right: 0;
+    bottom: 0;
   }
+
   #output {
-    height: 10rem;
     overflow-y: auto;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 8rem;
   }
-  #dialog {
+
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+  #cursor {
+    z-index: 1;
+    top: 50%;
+    left: 50%;
+    position: absolute;
+  }
+
+  .dialog {
     position: absolute;
     top: 2rem;
-    bottom: 2rem;
+    margin-top: -100%;
     transform: translate(-50%, 0);
     left: 50%;
     overflow-y: auto;
     background: var(--bg-color);
-    border: var(--text-color);
+    border: 1px solid var(--text-color);
+    transition: 0.3s all ease;
+    padding: 1rem;
+    z-index: 10;
   }
-  .col {
-    display: flex;
-    flex-direction: column;
-  }
-  body {
-    background: var(--bg-color);
-    color: var(--text-color);
+  .dialog.open {
+    margin-top: 0;
   }
 </style>
 
-<pre id="dialog"></pre>
+<img id="cursor" src="cursor.png" />
+<canvas id="map"></canvas>
 
-<div style="width: 100%; height: 100%; display: flex">
-  <div class="col" style="flex-grow: 1">
-    <canvas id="map" style="flex-grow: 1"></canvas>
-    <pre id="output"></pre>
-  </div>
-
-  <div class="col">
-    <pre id="inventory"></pre>
-    <pre id="status"></pre>
-  </div>
-</div>
+<pre id="output"></pre>
+<pre id="inventory"></pre>
+<pre id="status"></pre>
 
 <script src="./nethack-ui.js"></script>
 <script src="./nethack.js"></script>
