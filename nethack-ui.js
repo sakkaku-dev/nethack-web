@@ -1017,15 +1017,31 @@ function mult(v1, v2) {
 
 class TileSet {
     constructor(file, tileSize, tileCol) {
+        this.file = file;
         this.tileSize = tileSize;
         this.tileCol = tileCol;
         this.image = new Image();
         this.image.src = file;
     }
-    getCoordinateForTile(tile) {
+    getTilePosition(tile) {
         const row = Math.floor(tile / this.tileCol);
         const col = tile % this.tileCol;
-        return { x: col * this.tileSize, y: row * this.tileSize };
+        return { x: col, y: row };
+    }
+    getCoordinateForTile(tile) {
+        const pos = this.getTilePosition(tile);
+        return { x: pos.x * this.tileSize, y: pos.y * this.tileSize };
+    }
+    createBackgroundImage(tile) {
+        const div = document.createElement('div');
+        div.style.width = `${this.tileSize}px`;
+        div.style.height = `${this.tileSize}px`;
+        div.style.backgroundImage = `url('${this.file}')`;
+        div.style.backgroundRepeat = 'no-repeat';
+        const pos = this.getTilePosition(tile);
+        const realPos = mult(pos, { x: this.tileSize, y: this.tileSize });
+        div.style.backgroundPosition = `-${realPos.x}px -${realPos.y}px`;
+        return div;
     }
 }
 class TileMap {
@@ -1072,7 +1088,6 @@ class TileMap {
             this.tiles[tile.x] = [];
         this.tiles[tile.x][tile.y] = tile.tile;
         this.drawTile(tile.x, tile.y);
-        console.log("add tile");
     }
     drawTile(x, y) {
         const tile = this.tiles[x][y];
@@ -1101,8 +1116,93 @@ class TileMap {
     }
 }
 
+// From BrowserHack
+const parse_inventory_description = (item) => {
+    // parse count
+    let description = item.str;
+    let r = description.split(/^(a|an|\d+)\s+/);
+    let count = 1;
+    if (r.length == 3) {
+        description = r[2];
+        count = parseInt(r[1]) || 1;
+    }
+    // parse BCU
+    let bcu = null;
+    r = description.split(/^(blessed|uncursed|cursed)\s+/);
+    if (r.length == 3) {
+        description = r[2];
+        bcu = r[1];
+    }
+    return {
+        count: count,
+        bcu: bcu,
+        description: description
+    };
+};
+class Inventory {
+    constructor(elem, tileset) {
+        this.elem = elem;
+        this.tileset = tileset;
+    }
+    clear() {
+        Array.from(this.elem.children).forEach((c) => this.elem.removeChild(c));
+    }
+    updateItems(items) {
+        this.clear();
+        this.createInventoryRows(items).forEach(row => this.elem.appendChild(row));
+    }
+    createInventoryRows(items) {
+        const rows = [];
+        const newRow = () => {
+            const row = document.createElement("div");
+            row.classList.add('row');
+            return row;
+        };
+        let current = newRow();
+        items
+            .forEach((item) => {
+            if (item.identifier === 0) {
+                if (current.childNodes.length > 0) {
+                    rows.push(current);
+                    current = newRow();
+                }
+                current.innerHTML = item.str;
+                current.classList.add('title');
+                rows.push(current);
+                current = newRow();
+            }
+            else {
+                const img = this.tileset.createBackgroundImage(item.tile);
+                // Inventory should always have accelerator
+                const accel = document.createElement('div');
+                accel.innerHTML = String.fromCharCode(item.accelerator);
+                accel.classList.add('accel');
+                img.appendChild(accel);
+                const desc = parse_inventory_description(item);
+                if (desc.count > 1) {
+                    const count = document.createElement('div');
+                    count.classList.add('count');
+                    count.innerHTML = `${desc.count}`;
+                    img.appendChild(count);
+                }
+                img.classList.add('item');
+                if (item.active) {
+                    img.classList.add('active');
+                }
+                img.title = item.str;
+                current.appendChild(img);
+            }
+        });
+        if (current.childNodes.length > 0) {
+            rows.push(current);
+            current = newRow();
+        }
+        return rows;
+    }
+    ;
+}
+
 const output = document.querySelector("#output");
-const inventory = document.querySelector("#inventory");
 const status = document.querySelector("#status");
 const canvas = document.querySelector("canvas");
 const cursor = document.querySelector("#cursor");
@@ -1127,29 +1227,7 @@ const tilemap = new TileMap(canvas, cursor, tileset);
 const resize$ = new Subject();
 document.body.onresize = (e) => resize$.next();
 resize$.pipe(debounceTime(200)).subscribe(() => tilemap.onResize());
-const clear = (elem) => {
-    Array.from(elem.children).forEach((c) => elem.removeChild(c));
-};
-const createItemList = (items) => {
-    const list = document.createElement("ul");
-    list.style.listStyleType = "none";
-    items
-        .map((i) => {
-        const elem = document.createElement("li");
-        elem.style.fontWeight = i.active ? "bold" : "";
-        if (i.identifier === 0) {
-            elem.innerHTML = i.str;
-            elem.style.fontSize = "1.1rem";
-            elem.style.margin = "0.5rem 0";
-        }
-        else {
-            elem.innerHTML = `${String.fromCharCode(i.accelerator)} - ${i.str}`;
-        }
-        return elem;
-    })
-        .forEach((i) => list.appendChild(i));
-    return list;
-};
+const inventory = new Inventory(document.querySelector('#inventory'), tileset);
 const createMenu = (items, count) => {
     const list = document.createElement("div");
     list.style.display = "flex";
@@ -1220,8 +1298,5 @@ window.nethackUI = {
         status.innerHTML += `\nStr: ${s.str} Dex: ${s.dex} Con: ${s.con} Int: ${s.int} Wis: ${s.wis} Cha: ${s.cha}`;
         status.innerHTML += `\nDlvl ${s.dungeonLvl} HP: ${s.hp}/${s.hpMax} Pw: ${s.power}/${s.powerMax} AC: ${s.armor} EXP: ${s.expLvl} $: ${s.gold}`;
     },
-    updateInventory(...items) {
-        clear(inventory);
-        inventory.appendChild(createItemList(items));
-    },
+    updateInventory: (...items) => inventory.updateItems(items),
 };
