@@ -1,9 +1,9 @@
-import { BehaviorSubject, Subject, debounceTime } from "rxjs";
+import { Subject, debounceTime } from "rxjs";
 import { Item, Status, Tile } from "../models";
 import { TileMap, TileSet } from "./tilemap";
+import { Inventory } from "./inventory";
 
 const output = document.querySelector("#output") as HTMLElement;
-const inventory = document.querySelector("#inventory") as HTMLElement;
 const status = document.querySelector("#status") as HTMLElement;
 const canvas = document.querySelector("canvas") as HTMLCanvasElement;
 const cursor = document.querySelector("#cursor") as HTMLElement;
@@ -30,29 +30,8 @@ const resize$ = new Subject<void>();
 document.body.onresize = (e) => resize$.next();
 resize$.pipe(debounceTime(200)).subscribe(() => tilemap.onResize());
 
+const inventory = new Inventory(document.querySelector('#inventory') as HTMLElement, tileset);
 
-const clear = (elem: HTMLElement) => {
-  Array.from(elem.children).forEach((c) => elem.removeChild(c));
-};
-const createItemList = (items: Item[]) => {
-  const list = document.createElement("ul");
-  list.style.listStyleType = "none";
-  items
-    .map((i) => {
-      const elem = document.createElement("li");
-      elem.style.fontWeight = i.active ? "bold" : "";
-      if (i.identifier === 0) {
-        elem.innerHTML = i.str;
-        elem.style.fontSize = "1.1rem";
-        elem.style.margin = "0.5rem 0";
-      } else {
-        elem.innerHTML = `${String.fromCharCode(i.accelerator)} - ${i.str}`;
-      }
-      return elem;
-    })
-    .forEach((i) => list.appendChild(i));
-  return list;
-};
 const createMenu = (items: Item[], count: number) => {
   const list = document.createElement("div");
   list.style.display = "flex";
@@ -132,8 +111,5 @@ window.nethackUI = {
     status.innerHTML += `\nStr: ${s.str} Dex: ${s.dex} Con: ${s.con} Int: ${s.int} Wis: ${s.wis} Cha: ${s.cha}`;
     status.innerHTML += `\nDlvl ${s.dungeonLvl} HP: ${s.hp}/${s.hpMax} Pw: ${s.power}/${s.powerMax} AC: ${s.armor} EXP: ${s.expLvl} $: ${s.gold}`;
   },
-  updateInventory(...items: Item[]) {
-    clear(inventory);
-    inventory.appendChild(createItemList(items));
-  },
+  updateInventory: (...items: Item[]) => inventory.updateItems(items),
 };

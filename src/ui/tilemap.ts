@@ -3,16 +3,34 @@ import { Vector, Tile, mult, add, sub } from "../models";
 export class TileSet {
   image: HTMLImageElement;
 
-  constructor(file: string, public tileSize: number, private tileCol: number) {
+  constructor(private file: string, public tileSize: number, private tileCol: number) {
     this.image = new Image();
     this.image.src = file;
   }
 
-  getCoordinateForTile(tile: number): Vector {
+  private getTilePosition(tile: number) {
     const row = Math.floor(tile / this.tileCol);
     const col = tile % this.tileCol;
 
-    return { x: col * this.tileSize, y: row * this.tileSize };
+    return { x: col, y: row };
+  }
+
+  getCoordinateForTile(tile: number): Vector {
+    const pos = this.getTilePosition(tile);
+    return { x: pos.x * this.tileSize, y: pos.y * this.tileSize };
+  }
+
+  createBackgroundImage(tile: number) {
+    const div = document.createElement('div');
+    div.style.width = `${this.tileSize}px`;
+    div.style.height = `${this.tileSize}px`;
+    div.style.backgroundImage = `url('${this.file}')`;
+    div.style.backgroundRepeat = 'no-repeat';
+
+    const pos = this.getTilePosition(tile);
+    const realPos = mult(pos, { x: this.tileSize, y: this.tileSize });
+    div.style.backgroundPosition = `-${realPos.x}px -${realPos.y}px`;
+    return div;
   }
 }
 
@@ -65,7 +83,6 @@ export class TileMap {
     if (!this.tiles[tile.x]) this.tiles[tile.x] = [];
     this.tiles[tile.x][tile.y] = tile.tile;
     this.drawTile(tile.x, tile.y);
-    console.log("add tile");
   }
 
   private drawTile(x: number, y: number) {
