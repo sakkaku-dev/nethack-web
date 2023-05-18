@@ -1,4 +1,4 @@
-import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
+import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, race, skip, tap } from "rxjs";
 import { Item, NetHackJS, Status, NetHackUI, Tile } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
@@ -127,14 +127,6 @@ export class NetHackWrapper implements NetHackJS {
 
   // Waiting for input from user
 
-  private async waitContinueKey() {
-    this.log("Waiting for continue...");
-    const acceptedCodes = [" ", "\n"].map((x) => x.charCodeAt(0));
-    acceptedCodes.push(27); // Escape
-
-    await firstValueFrom(this.input$.pipe(filter((x) => acceptedCodes.includes(x))));
-  }
-
   private async waitInput() {
     this.log("Waiting user input...");
     return await firstValueFrom(this.input$);
@@ -175,7 +167,7 @@ export class NetHackWrapper implements NetHackJS {
   private async displayWindow(winid: number, blocking: number) {
     if (this.putStr !== "") {
       this.ui.openDialog(winid, this.putStr);
-      await this.waitContinueKey();
+      await this.waitInput();
       this.putStr = "";
     }
   }
@@ -216,7 +208,7 @@ export class NetHackWrapper implements NetHackJS {
 
     if (select == MENU_SELECT.PICK_NONE) {
       this.ui.openDialog(winid, this.menu.items.map((i) => i.str).join("\n"));
-      await this.waitContinueKey();
+      await this.waitInput();
       return 0;
     }
 
@@ -231,7 +223,7 @@ export class NetHackWrapper implements NetHackJS {
     const itemIds = selectedIds.filter((id) => this.menu.items.find((x) => x.identifier === id));
 
     if (itemIds.length === 0) {
-      return 0;
+      return -1;
     }
 
     this.selectItems(itemIds, selected);
