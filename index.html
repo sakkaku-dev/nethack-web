@@ -20,9 +20,11 @@
     top: 0;
     bottom: 8rem;
     padding: 0.5rem;
+    margin: 0;
   }
   #inventory .row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.5rem;
   }
   #inventory .active {

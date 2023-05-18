@@ -1167,6 +1167,7 @@ class Inventory {
                     current = newRow();
                 }
                 current.innerHTML = item.str;
+                current.classList.remove('row');
                 current.classList.add('title');
                 rows.push(current);
                 current = newRow();
