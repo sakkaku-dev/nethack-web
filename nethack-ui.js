@@ -1,3 +1,29 @@
+const CONTINUE_KEY = ['Enter', ' '];
+const CANCEL_KEY = ['Escape'];
+
+class Dialog {
+    constructor(text) {
+        this.onClose = () => { };
+        this.elem = document.createElement('pre');
+        this.elem.innerHTML = text;
+        this.elem.classList.add("dialog");
+        setTimeout(() => {
+            this.elem.classList.add("open");
+        }, 100);
+    }
+    onInput(e) {
+        if ([...CANCEL_KEY, ...CONTINUE_KEY].includes(e.key)) {
+            this.onClose();
+        }
+    }
+    static removeAll() {
+        document.querySelectorAll(`.dialog`).forEach((elem) => {
+            elem.classList.remove("open");
+            setTimeout(() => elem.remove(), 200);
+        });
+    }
+}
+
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -1083,11 +1109,13 @@ class TileMap {
         }
         this.cursor.style.display = 'block';
     }
-    addTile(tile) {
-        if (!this.tiles[tile.x])
-            this.tiles[tile.x] = [];
-        this.tiles[tile.x][tile.y] = tile.tile;
-        this.drawTile(tile.x, tile.y);
+    addTile(...tiles) {
+        tiles.forEach(tile => {
+            if (!this.tiles[tile.x])
+                this.tiles[tile.x] = [];
+            this.tiles[tile.x][tile.y] = tile.tile;
+            this.drawTile(tile.x, tile.y);
+        });
     }
     drawTile(x, y) {
         const tile = this.tiles[x][y];
@@ -1203,101 +1231,173 @@ class Inventory {
     ;
 }
 
-const output = document.querySelector("#output");
-const status = document.querySelector("#status");
-const canvas = document.querySelector("canvas");
-const cursor = document.querySelector("#cursor");
-document.onkeydown = (e) => {
-    if (e.key === "Control" || e.key === "Shift")
-        return;
-    e.preventDefault();
-    let code = e.key.charCodeAt(0);
-    if (e.ctrlKey) {
-        if (code >= 65 && code <= 90) {
-            // A~Z
-            code = code - 64;
+class Console {
+    constructor(elem) {
+        this.elem = elem;
+    }
+    appendLine(line) {
+        this.elem.innerHTML += line + '\n';
+        this.elem.scrollTo(0, this.elem.scrollHeight);
+    }
+}
+
+class StatusLine {
+    constructor(elem) {
+        this.elem = elem;
+    }
+    update(s) {
+        this.elem.innerHTML = `${s.title} ${s.align}`; // TODO: set player name
+        this.elem.innerHTML += `\nStr: ${s.str} Dex: ${s.dex} Con: ${s.con} Int: ${s.int} Wis: ${s.wis} Cha: ${s.cha}`;
+        this.elem.innerHTML += `\nDlvl ${s.dungeonLvl} HP: ${s.hp}/${s.hpMax} Pw: ${s.power}/${s.powerMax} AC: ${s.armor} EXP: ${s.expLvl} $: ${s.gold}`;
+    }
+}
+
+class Menu extends Dialog {
+    constructor(prompt, items, count, tileset) {
+        super(prompt);
+        this.count = count;
+        this.tileset = tileset;
+        this.onSelect = (ids) => { };
+        this.accelMap = {};
+        this.elem.appendChild(this.createMenu(items, count));
+        this.submitButton = this.createSelectButton();
+        this.elem.appendChild(this.submitButton);
+    }
+    onInput(e) {
+        if (CANCEL_KEY.includes(e.key)) {
+            this.onSelect([]);
         }
-        else if (code >= 97 && code <= 122) {
-            code = code - 96;
+        else if (CONTINUE_KEY.includes(e.key)) {
+            this.submitButton.click();
+        }
+        else {
+            const option = this.accelMap[e.key];
+            if (option && !option.disabled) {
+                option.checked = !option.checked;
+                // if (this.count === 1) {
+                //     this.submitButton.click();
+                // }
+            }
         }
     }
-    window.nethackJS.sendInput(code);
-};
-const tileset = new TileSet("Nevanda.png", 32, 40);
-const tilemap = new TileMap(canvas, cursor, tileset);
-const resize$ = new Subject();
-document.body.onresize = (e) => resize$.next();
-resize$.pipe(debounceTime(200)).subscribe(() => tilemap.onResize());
-const inventory = new Inventory(document.querySelector('#inventory'), tileset);
-const createMenu = (items, count) => {
-    const list = document.createElement("div");
-    list.style.display = "flex";
-    list.style.flexDirection = "column";
-    list.id = "menu";
-    items.forEach((i) => {
-        const div = document.createElement("div");
-        const elem = document.createElement("input");
-        const label = document.createElement("label");
-        const id = `menu-${i.identifier}`;
-        const hasAccel = i.accelerator !== 0;
-        const accel = String.fromCharCode(i.accelerator);
-        elem.type = count === 1 ? "radio" : "checkbox";
-        elem.name = "menuSelect";
-        elem.id = id;
-        elem.disabled = i.identifier === 0;
-        elem.checked = i.active;
-        elem.value = `${i.identifier}`;
-        label.htmlFor = id;
-        label.innerHTML = `${hasAccel ? accel : " "} - ${i.str}`;
-        div.appendChild(elem);
-        div.appendChild(label);
-        list.appendChild(div);
-    });
-    return list;
-};
-const createDialogText = (id, text) => {
-    const dialog = document.createElement("pre");
-    dialog.classList.add("dialog");
-    dialog.innerHTML = text;
-    document.body.appendChild(dialog);
-    setTimeout(() => {
-        dialog.classList.add("open");
-    }, 100);
-    return dialog;
-};
-const appendOutputLine = (line) => {
-    output.innerHTML += line;
-    output.scrollTo(0, output.scrollHeight);
-};
-window.nethackUI = {
-    openMenu(winid, prompt, count, ...items) {
-        const dialog = createDialogText(winid, prompt);
-        dialog.appendChild(createMenu(items, count));
+    createSelectButton() {
         const btn = document.createElement("button");
         btn.innerHTML = "Submit";
         btn.onclick = () => {
             const inputs = Array.from(document.querySelectorAll("#menu input"));
             const ids = inputs.filter((i) => i.checked && !i.disabled).map((i) => parseInt(i.value));
-            window.nethackJS.selectMenu(ids);
+            this.onSelect(ids);
         };
-        dialog.appendChild(btn);
-    },
-    openQuestion: (question, ...choices) => appendOutputLine(`\n${question} ${choices}\n`),
-    openDialog: (winid, text) => createDialogText(winid, text),
-    printLine: (line) => appendOutputLine(line + "\n"),
-    closeDialog: (winid) => {
-        document.querySelectorAll(`.dialog`).forEach((elem) => {
-            elem.classList.remove("open");
-            setTimeout(() => elem.remove(), 100);
+        return btn;
+    }
+    createMenu(items, count) {
+        let accelStart = 'a'.charCodeAt(0);
+        this.accelMap = {};
+        const list = document.createElement("div");
+        list.style.display = "flex";
+        list.style.flexDirection = "column";
+        list.id = "menu";
+        items.forEach((i) => {
+            const div = document.createElement("div");
+            if (i.identifier !== 0) {
+                const elem = document.createElement("input");
+                const label = document.createElement("label");
+                const id = `menu-${i.identifier}`;
+                const hasAccel = i.accelerator !== 0;
+                // Hopefully when accel does not exist, then none of the items have one
+                const accel = String.fromCharCode(hasAccel ? i.accelerator : accelStart);
+                accelStart += 1;
+                this.accelMap[accel] = elem;
+                elem.type = count === 1 ? "radio" : "checkbox";
+                elem.name = "menuSelect";
+                elem.id = id;
+                elem.disabled = i.identifier === 0;
+                elem.checked = i.active;
+                elem.value = `${i.identifier}`;
+                label.htmlFor = id;
+                label.innerHTML = `${accel} - ${i.str}`;
+                div.appendChild(elem);
+                div.appendChild(label);
+            }
+            else {
+                div.appendChild(document.createTextNode(i.str || ' '));
+            }
+            list.appendChild(div);
         });
-    },
-    moveCursor: (x, y) => tilemap.recenter({ x, y }),
-    centerView: (x, y) => tilemap.recenter({ x, y }),
-    updateMap: (...tiles) => tiles.forEach((tile) => tilemap.addTile(tile)),
-    updateStatus(s) {
-        status.innerHTML = `${s.title} ${s.align}`; // TODO: set player name
-        status.innerHTML += `\nStr: ${s.str} Dex: ${s.dex} Con: ${s.con} Int: ${s.int} Wis: ${s.wis} Cha: ${s.cha}`;
-        status.innerHTML += `\nDlvl ${s.dungeonLvl} HP: ${s.hp}/${s.hpMax} Pw: ${s.power}/${s.powerMax} AC: ${s.armor} EXP: ${s.expLvl} $: ${s.gold}`;
-    },
-    updateInventory: (...items) => inventory.updateItems(items),
+        return list;
+    }
+    ;
+}
+
+class Game {
+    constructor() {
+        this.resize$ = new Subject();
+        this.inputHandler = this;
+        document.onkeydown = (e) => {
+            console.log(e.key);
+            this.inputHandler.onInput(e);
+        };
+        document.body.onresize = (e) => this.resize$.next();
+        this.resize$.pipe(debounceTime(200)).subscribe(() => this.tilemap.onResize());
+        const canvas = document.querySelector("canvas");
+        const cursor = document.querySelector("#cursor");
+        this.tileset = new TileSet("Nevanda.png", 32, 40);
+        this.tilemap = new TileMap(canvas, cursor, this.tileset);
+        this.inventory = new Inventory(document.querySelector('#inventory'), this.tileset);
+        this.console = new Console(document.querySelector("#output"));
+        this.status = new StatusLine(document.querySelector("#status"));
+    }
+    onInput(e) {
+        if (e.key === "Control" || e.key === "Shift")
+            return;
+        e.preventDefault();
+        if (e.key.length === 1) {
+            let code = e.key.charCodeAt(0);
+            if (e.ctrlKey) {
+                if (code >= 65 && code <= 90) {
+                    // A~Z
+                    code = code - 64;
+                }
+                else if (code >= 97 && code <= 122) {
+                    code = code - 96;
+                }
+            }
+            window.nethackJS.sendInput(code);
+        }
+        else {
+            console.log('Unhandled key: ', e.key);
+        }
+    }
+    createMenu(prompt, count, items) {
+        const menu = new Menu(prompt, items, count, this.tileset);
+        menu.onSelect = ids => {
+            window.nethackJS.selectMenu(ids);
+            this.inputHandler = this;
+        };
+        this.inputHandler = menu;
+        document.body.append(menu.elem);
+    }
+    createDialog(text) {
+        const dialog = new Dialog(text);
+        dialog.onClose = () => {
+            window.nethackJS.sendInput(0);
+            this.inputHandler = this;
+        };
+        this.inputHandler = dialog;
+        document.body.append(dialog.elem);
+    }
+}
+
+const game = new Game();
+window.nethackUI = {
+    openMenu: (winid, prompt, count, ...items) => game.createMenu(prompt, count, items),
+    openQuestion: (question, ...choices) => game.console.appendLine(`\n${question} ${choices}`),
+    printLine: (line) => game.console.appendLine(line),
+    openDialog: (winid, text) => game.createDialog(text),
+    closeDialog: (winid) => Dialog.removeAll(),
+    moveCursor: (x, y) => game.tilemap.recenter({ x, y }),
+    centerView: (x, y) => game.tilemap.recenter({ x, y }),
+    updateMap: (...tiles) => game.tilemap.addTile(...tiles),
+    updateStatus: (s) => game.status.update(s),
+    updateInventory: (...items) => game.inventory.updateItems(items),
 };

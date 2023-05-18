@@ -1709,12 +1709,6 @@ class NetHackWrapper {
         this.input$.next(key);
     }
     // Waiting for input from user
-    async waitContinueKey() {
-        this.log("Waiting for continue...");
-        const acceptedCodes = [" ", "\n"].map((x) => x.charCodeAt(0));
-        acceptedCodes.push(27); // Escape
-        await firstValueFrom(this.input$.pipe(filter$1((x) => acceptedCodes.includes(x))));
-    }
     async waitInput() {
         this.log("Waiting user input...");
         return await firstValueFrom(this.input$);
@@ -1746,7 +1740,7 @@ class NetHackWrapper {
     async displayWindow(winid, blocking) {
         if (this.putStr !== "") {
             this.ui.openDialog(winid, this.putStr);
-            await this.waitContinueKey();
+            await this.waitInput();
             this.putStr = "";
         }
     }
@@ -1774,7 +1768,7 @@ class NetHackWrapper {
         }
         if (select == MENU_SELECT.PICK_NONE) {
             this.ui.openDialog(winid, this.menu.items.map((i) => i.str).join("\n"));
-            await this.waitContinueKey();
+            await this.waitInput();
             return 0;
         }
         if (select == MENU_SELECT.PICK_ANY) {
@@ -1787,7 +1781,7 @@ class NetHackWrapper {
         const selectedIds = await firstValueFrom(this.selectedMenu$);
         const itemIds = selectedIds.filter((id) => this.menu.items.find((x) => x.identifier === id));
         if (itemIds.length === 0) {
-            return 0;
+            return -1;
         }
         this.selectItems(itemIds, selected);
         return (_a = itemIds === null || itemIds === void 0 ? void 0 : itemIds.length) !== null && _a !== void 0 ? _a : -1;
