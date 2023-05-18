@@ -6,7 +6,7 @@
 # npm run fix:nethack
 
 # npm run build:godot
-# npm run build:web
+npm run build:web
 # npx rollup -c rollup.config.js
 
 sudo mkdir -p /srv/http/nethack
