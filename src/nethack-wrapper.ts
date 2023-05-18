@@ -66,11 +66,8 @@ export class NetHackWrapper implements NetHackJS {
   private menu: MenuSelect = { winid: 0, items: [], count: 0, prompt: "" };
   private putStr = "";
 
-  private ESCAPE = String.fromCharCode(27);
-  private acceptedCodes = [" ", "\n", this.ESCAPE].map((x) => x.charCodeAt(0));
   private input$ = new Subject<number>();
   private selectedMenu$ = new Subject<number[]>();
-  private continue$ = this.input$.pipe(filter((x) => this.acceptedCodes.includes(x)));
 
   private status$ = new BehaviorSubject<Status>({});
   private inventory$ = new Subject<Item[]>();
