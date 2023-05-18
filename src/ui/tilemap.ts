@@ -79,10 +79,12 @@ export class TileMap {
     this.cursor.style.display = 'block';
   }
 
-  addTile(tile: Tile) {
-    if (!this.tiles[tile.x]) this.tiles[tile.x] = [];
-    this.tiles[tile.x][tile.y] = tile.tile;
-    this.drawTile(tile.x, tile.y);
+  addTile(...tiles: Tile[]) {
+    tiles.forEach(tile => {
+      if (!this.tiles[tile.x]) this.tiles[tile.x] = [];
+      this.tiles[tile.x][tile.y] = tile.tile;
+      this.drawTile(tile.x, tile.y);
+    });
   }
 
   private drawTile(x: number, y: number) {
