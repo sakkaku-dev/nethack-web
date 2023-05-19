@@ -213,7 +213,7 @@ export class NetHackWrapper implements NetHackJS {
         file = '/nethack/save/' + file;
         try {
           const data = btoa(String.fromCharCode.apply(null, this.module.FS.readFile(file, { encoding: 'binary' })));
-          localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, JSON.stringify(data));
+          localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, data);
         } catch (e) {
           console.warn('Failed to sync save file', file);
         }
@@ -230,6 +230,21 @@ export class NetHackWrapper implements NetHackJS {
         console.warn('Failed to sync FS. Save might not work', err);
       }
     });
+
+  }
+
+  private loadBackupSaveFile(file: string) {
+    const strData = localStorage.getItem(`${SAVE_FILES_STORAGE_KEY}-${file}`);
+    if (strData) {
+      try {
+        const data = atob(strData);
+        var buf = new ArrayBuffer(data.length);
+        var array = new Uint8Array(buf);
+        for (var i = 0; i < data.length; ++i)
+          array[i] = data.charCodeAt(i);
+        this.module.FS.writeFile(file, array, { encoding: 'binary' });
+      } catch (e) { }
+    }
   }
 
   private async menuAdd(
