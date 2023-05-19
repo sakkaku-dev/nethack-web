@@ -104,6 +104,8 @@ export class NetHackWrapper implements NetHackJS {
       )
       .subscribe();
 
+    this.input$.subscribe(() => this.awaitingInput$.next(false));
+
     this.win.nethackCallback = this.handle.bind(this);
     this.win.onbeforeunload = (e) => {
       if (this.playing$.value) {
