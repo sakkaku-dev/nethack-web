@@ -46,11 +46,10 @@ pushd NetHack
 	# make # check if really needed
 	# echo "Prepare nethack"
 
-	# Build dat files, added with --preload-file
+	# Build dat files, added with --preload-file in stage 2
 	make install PREFIX=$PREFIX
 	rm $PREFIX/nethack/nethack
 	rm $PREFIX/nethack/recover
-	cp $MYDIR/src/nethackrc.default $PREFIX/nethack/
 	echo "Built data files in $PREFIX"
 popd
 sed -e '/"description":/a \ \ "type": "module",' -i package.json

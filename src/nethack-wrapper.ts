@@ -22,11 +22,14 @@ export interface Window {
   type: WIN_TYPE;
 }
 
+const SAVE_FILES_STORAGE_KEY = 'sakkaku-dev-nethack-savefiles';
+
 export class NetHackWrapper implements NetHackJS {
   private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
     [Command.DESTROY_WINDOW]: async (winid: number) => this.ui.closeDialog(winid),
     [Command.CLEAR_WINDOW]: async (winid: number) => (this.putStr = ""),
+    [Command.EXIT_WINDOWS]: this.exitWindows.bind(this),
 
     // Text / Dialog
     [Command.PUTSTR]: this.handlePutStr.bind(this),
@@ -59,7 +62,6 @@ export class NetHackWrapper implements NetHackJS {
 
     // TODO: message_menu
     // TODO: select_menu with yn_function
-    // TODO: menu accelerators
   };
 
   private idCounter = 0;
@@ -72,6 +74,8 @@ export class NetHackWrapper implements NetHackJS {
   private status$ = new BehaviorSubject<Status>({});
   private inventory$ = new Subject<Item[]>();
   private tiles$ = new BehaviorSubject<Tile[]>([]);
+  private awaitingInput$ = new BehaviorSubject(false);
+  private playing$ = new BehaviorSubject(false);
 
   constructor(private debug = false, private module: any, private win: typeof window = window) {
     this.tiles$
@@ -100,7 +104,20 @@ export class NetHackWrapper implements NetHackJS {
       )
       .subscribe();
 
+    this.input$.subscribe(() => this.awaitingInput$.next(false));
+
     this.win.nethackCallback = this.handle.bind(this);
+    this.win.onbeforeunload = (e) => {
+      if (this.playing$.value) {
+        // TODO: auto save?
+        return e.returnValue = 'Game progress will be lost if not saved.';
+      }
+    }
+
+    if (!this.module.preRun) {
+      this.module.preRun = [];
+    }
+    this.module.preRun.push(() => this.loadSaveFiles());
   }
 
   private log(...args: any[]) {
@@ -110,6 +127,7 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   public startGame() {
+    this.playing$.next(true);
     nethackLib(this.module);
   }
 
@@ -129,6 +147,7 @@ export class NetHackWrapper implements NetHackJS {
 
   private async waitInput() {
     this.log("Waiting user input...");
+    this.awaitingInput$.next(true);
     return await firstValueFrom(this.input$);
   }
 
@@ -170,6 +189,47 @@ export class NetHackWrapper implements NetHackJS {
       await this.waitInput();
       this.putStr = "";
     }
+  }
+
+  private async exitWindows(str: string) {
+    this.syncSaveFiles();
+    this.playing$.next(false);
+  }
+
+  private syncSaveFiles() {
+    console.log("Syncing save files");
+    this.module.FS.syncfs((err: any) => {
+      if (err) {
+        console.warn('Failed to sync FS. Save might not work', err);
+      }
+    })
+
+    // backup save files in case user forgets to save
+    try {
+      const savefiles = this.module.FS.readdir('/nethack/save');
+      for (let i = 0; i < savefiles.length; ++i) {
+        let file = savefiles[i];
+        if (file == '.' || file == '..') continue;
+        file = '/nethack/save/' + file;
+        try {
+          const data = btoa(String.fromCharCode.apply(null, this.module.FS.readFile(file, { encoding: 'binary' })));
+          localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, JSON.stringify(data));
+        } catch (e) {
+          console.warn('Failed to sync save file', file);
+        }
+      }
+    } catch (e) { }
+  }
+
+  private loadSaveFiles() {
+    const mod = this.module;
+    try { mod.FS.mkdir('/nethack/save'); } catch (e) { }
+    mod.FS.mount(mod.IDBFS, {}, '/nethack/save');
+    mod.FS.syncfs(true, (err: any) => {
+      if (err) {
+        console.warn('Failed to sync FS. Save might not work', err);
+      }
+    });
   }
 
   private async menuAdd(
