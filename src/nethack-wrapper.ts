@@ -22,6 +22,8 @@ export interface Window {
   type: WIN_TYPE;
 }
 
+const SAVE_FILES_STORAGE_KEY = 'sakkaku-dev-nethack-savefiles';
+
 export class NetHackWrapper implements NetHackJS {
   private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
@@ -109,6 +111,11 @@ export class NetHackWrapper implements NetHackJS {
         return e.returnValue = 'Game progress will be lost if not saved.';
       }
     }
+
+    if (!this.module.preRun) {
+      this.module.preRun = [];
+    }
+    this.module.preRun.push(() => this.loadSaveFiles());
   }
 
   private log(...args: any[]) {
@@ -194,6 +201,33 @@ export class NetHackWrapper implements NetHackJS {
         console.warn('Failed to sync FS. Save might not work', err);
       }
     })
+
+    // backup save files in case user forgets to save
+    try {
+      const savefiles = this.module.FS.readdir('/nethack/save');
+      for (let i = 0; i < savefiles.length; ++i) {
+        let file = savefiles[i];
+        if (file == '.' || file == '..') continue;
+        file = '/nethack/save/' + file;
+        try {
+          const data = btoa(String.fromCharCode.apply(null, this.module.FS.readFile(file, { encoding: 'binary' })));
+          localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, JSON.stringify(data));
+        } catch (e) {
+          console.warn('Failed to sync save file', file);
+        }
+      }
+    } catch (e) { }
+  }
+
+  private loadSaveFiles() {
+    const mod = this.module;
+    try { mod.FS.mkdir('/nethack/save'); } catch (e) { }
+    mod.FS.mount(mod.IDBFS, {}, '/nethack/save');
+    mod.FS.syncfs(true, (err: any) => {
+      if (err) {
+        console.warn('Failed to sync FS. Save might not work', err);
+      }
+    });
   }
 
   private async menuAdd(
