@@ -21,6 +21,15 @@ Module.preRun = [
   () => {
     // Module.ENV["USER"] = "web_user"; // TODO: get name
     Module.ENV.NETHACKOPTIONS = options.join(",");
+    Module.noExitRuntime = false;
+
+    try { Module.FS.mkdir('/nethack/save'); } catch (e) { }
+    Module.FS.mount(Module.IDBFS, {}, '/nethack/save');
+    Module.FS.syncfs(true, (err: any) => {
+      if (err) {
+        console.warn('Failed to sync FS. Save might not work', err);
+      }
+    });
   },
 ];
 

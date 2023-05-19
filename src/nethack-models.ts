@@ -18,6 +18,7 @@ export enum Command {
   DESTROY_WINDOW = "shim_destroy_nhwindow",
   DISPLAY_WINDOW = "shim_display_nhwindow",
   CLEAR_WINDOW = "shim_clear_nhwindow",
+  EXIT_WINDOWS = "shim_exit_nhwindows",
 
   MENU_START = "shim_start_menu",
   MENU_END = "shim_end_menu",
@@ -67,8 +68,8 @@ export const statusMap: Record<STATUS_FIELD, (s: Status, v: string) => void> = {
   // [STATUS_FIELD.BL_CHARACTERISTICS]: () => {},
   // [STATUS_FIELD.BL_RESET]: () => {},
   // [STATUS_FIELD.BL_FLUSH]: () => {},
-  [STATUS_FIELD.BL_HD]: () => {},
-  [STATUS_FIELD.BL_TIME]: () => {},
+  [STATUS_FIELD.BL_HD]: () => { },
+  [STATUS_FIELD.BL_TIME]: () => { },
   // [STATUS_FIELD.MAXBLSTATS]: () => {},
 };
 

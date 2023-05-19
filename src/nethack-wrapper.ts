@@ -27,6 +27,7 @@ export class NetHackWrapper implements NetHackJS {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
     [Command.DESTROY_WINDOW]: async (winid: number) => this.ui.closeDialog(winid),
     [Command.CLEAR_WINDOW]: async (winid: number) => (this.putStr = ""),
+    [Command.EXIT_WINDOWS]: this.exitWindows.bind(this),
 
     // Text / Dialog
     [Command.PUTSTR]: this.handlePutStr.bind(this),
@@ -59,7 +60,6 @@ export class NetHackWrapper implements NetHackJS {
 
     // TODO: message_menu
     // TODO: select_menu with yn_function
-    // TODO: menu accelerators
   };
 
   private idCounter = 0;
@@ -170,6 +170,26 @@ export class NetHackWrapper implements NetHackJS {
       await this.waitInput();
       this.putStr = "";
     }
+  }
+
+  private async exitWindows(str: string) {
+    this.saveGame();
+    this.exitGame();
+  }
+
+  private saveGame() {
+    console.log("Saving game");
+    this.module.FS.syncfs((err: any) => {
+      if (err) {
+        console.warn('Failed to sync FS. Save might not work', err);
+      }
+    })
+  }
+
+  private exitGame() {
+    console.log("Exiting game");
+    this.module.noExitRunTime = false;
+    // TODO: cannot exit game manually?
   }
 
   private async menuAdd(

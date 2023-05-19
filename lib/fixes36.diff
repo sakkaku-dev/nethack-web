@@ -52,6 +52,60 @@ index c126d6839..f6ae00668 100644
  /* #define NO_FILE_LINKS */                       /* if no hard links */
  /* #define LOCKDIR "/usr/games/lib/nethackdir" */ /* where to put locks */
  
+diff --git a/src/files.c b/src/files.c
+index 60d9aa56a..0a18744b0 100644
+--- a/src/files.c
++++ b/src/files.c
+@@ -5,6 +5,10 @@
+ 
+ #define NEED_VARARGS
+ 
++#ifdef WEB_GRAPHICS
++#include <emscripten.h>
++#endif
++
+ #include "hack.h"
+ #include "dlb.h"
+ 
+@@ -1058,6 +1062,10 @@ int
+ delete_savefile()
+ {
+     (void) unlink(fqname(SAVEF, SAVEPREFIX, 0));
++#ifdef WEB_GRAPHICS
++    /* need manual sync for emscripten */
++    EM_ASM( FS.syncfs(function (err) { if(err) console.log('Cannot sync FS, savegame may not work!'); }););
++#endif
+     return 0; /* for restore_saved_game() (ex-xxxmain.c) test */
+ }
+ 
+diff --git a/src/save.c b/src/save.c
+index e0af4b8d2..27d056c46 100644
+--- a/src/save.c
++++ b/src/save.c
+@@ -6,6 +6,10 @@
+ #include "hack.h"
+ #include "lev.h"
+ 
++#ifdef WEB_GRAPHICS
++#include <emscripten.h>
++#endif
++
+ #ifndef NO_SIGNAL
+ #include <signal.h>
+ #endif
+@@ -270,6 +274,12 @@ dosave0()
+     delete_levelfile(ledger_no(&u.uz));
+     delete_levelfile(0);
+     nh_compress(fq_save);
++
++#ifdef WEB_GRAPHICS
++    /* need manual sync for emscripten */
++    EM_ASM( FS.syncfs(function (err) { if(err) console.log('Cannot sync FS, savegame may not work!'); }););
++#endif
++
+     /* this should probably come sooner... */
+     program_state.something_worth_saving = 0;
+     return 1;
 diff --git a/src/windows.c b/src/windows.c
 index 94ac40f3e..9b00748e2 100644
 --- a/src/windows.c
@@ -380,7 +434,7 @@ index 78e9d725f..b94b1d7f9 100644
 -		tilemap tileedit tile2bmp
 +		tilemap.js tileedit tile2bmp
 diff --git a/sys/unix/hints/linux b/sys/unix/hints/linux
-index 862915053..ef918cae5 100644
+index 862915053..1144f8a13 100644
 --- a/sys/unix/hints/linux
 +++ b/sys/unix/hints/linux
 @@ -11,8 +11,8 @@
@@ -424,7 +478,7 @@ index 862915053..ef918cae5 100644
  # Only needed for GLIBC stack trace:
 -LFLAGS=-rdynamic
 +LFLAGS = -rdynamic
-+LFLAGS += -lnodefs.js -Wno-undefined
++LFLAGS += -lnodefs.js -Wno-undefined -lidbfs.js
 +LFLAGS += -s ERROR_ON_UNDEFINED_SYMBOLS=0
 +LFLAGS += -s WASM=1 -s ALLOW_TABLE_GROWTH
 +
@@ -433,7 +487,7 @@ index 862915053..ef918cae5 100644
 +LFLAGS += -s MODULARIZE
 +LFLAGS += --preload-file $(DATA_DIR)/nethack@/nethack
 +LFLAGS += -s EXPORTED_FUNCTIONS='["_main", "_shim_graphics_set_callback", "_glyph_to_tile", "_malloc"]'
-+LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", "removeFunction", "UTF8ToString", "getValue", "setValue", "ENV"]'
++LFLAGS += -s EXPORTED_RUNTIME_METHODS='["cwrap", "ccall", "addFunction", "removeFunction", "UTF8ToString", "getValue", "setValue", "ENV", "FS", "IDBFS"]'
 +
 +WINWEBSRC = ../win/web/web.c tile.c
 +WINWEBOBJ = web.o tile.o
