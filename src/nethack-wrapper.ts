@@ -72,6 +72,8 @@ export class NetHackWrapper implements NetHackJS {
   private status$ = new BehaviorSubject<Status>({});
   private inventory$ = new Subject<Item[]>();
   private tiles$ = new BehaviorSubject<Tile[]>([]);
+  private awaitingInput$ = new BehaviorSubject(false);
+  private playing$ = new BehaviorSubject(false);
 
   constructor(private debug = false, private module: any, private win: typeof window = window) {
     this.tiles$
@@ -101,6 +103,12 @@ export class NetHackWrapper implements NetHackJS {
       .subscribe();
 
     this.win.nethackCallback = this.handle.bind(this);
+    this.win.onbeforeunload = (e) => {
+      if (this.playing$.value) {
+        // TODO: auto save?
+        return e.returnValue = 'Game progress will be lost if not saved.';
+      }
+    }
   }
 
   private log(...args: any[]) {
@@ -110,6 +118,7 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   public startGame() {
+    this.playing$.next(true);
     nethackLib(this.module);
   }
 
@@ -129,6 +138,7 @@ export class NetHackWrapper implements NetHackJS {
 
   private async waitInput() {
     this.log("Waiting user input...");
+    this.awaitingInput$.next(true);
     return await firstValueFrom(this.input$);
   }
 
@@ -173,23 +183,17 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async exitWindows(str: string) {
-    this.saveGame();
-    this.exitGame();
+    this.syncSaveFiles();
+    this.playing$.next(false);
   }
 
-  private saveGame() {
-    console.log("Saving game");
+  private syncSaveFiles() {
+    console.log("Syncing save files");
     this.module.FS.syncfs((err: any) => {
       if (err) {
         console.warn('Failed to sync FS. Save might not work', err);
       }
     })
-  }
-
-  private exitGame() {
-    console.log("Exiting game");
-    this.module.noExitRunTime = false;
-    // TODO: cannot exit game manually?
   }
 
   private async menuAdd(
