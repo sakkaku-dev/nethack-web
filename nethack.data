@@ -93,14 +93,6 @@ in particular, your modified NetHack or program containing parts of NetHack
 must remain freely available as provided in this License Agreement.  In
 other words, go ahead and share NetHack, but don't try to stop anyone else
 from sharing it farther.
-# Options for BrowserHack
-# Changes will be applied after the game is reloaded (you can save & quit)
-# To restore this file to default, clear everything and reload the game
-
-# For a list of options, read http://nethackwiki.com/wiki/Options
-# Note that not all the NetHack options are supported by BrowserHack
-
-OPTIONS=number_pad:0, cmdassist, hilite_pet, !autopickup, autoquiver
   1      138     1636     3056  1259307
 nDirectory        0
 nhelp     3056
