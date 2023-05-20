@@ -1329,6 +1329,58 @@ class Menu extends Dialog {
     ;
 }
 
+class Line extends Dialog {
+    constructor(question, autocomplete) {
+        super(question);
+        this.autocomplete = autocomplete;
+        this.onLineEnter = (line) => { };
+        const input = document.createElement('input');
+        this.input = input;
+        this.elem.appendChild(input);
+        input.onkeydown = e => {
+            if (e.key === 'Tab') {
+                //prevent losing focus
+                e.preventDefault();
+            }
+        };
+        input.onkeyup = e => {
+            // From BrowserHack
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.onLineEnter(input.value);
+            }
+            else if (this.autocomplete.length) {
+                if (e.key === 'Backspace') {
+                    input.value = input.value.substring(0, input.selectionStart || 0);
+                }
+                else {
+                    const possibleItems = [];
+                    const search = input.value;
+                    this.autocomplete.forEach(function (str) {
+                        if (str.indexOf(search) == 0)
+                            possibleItems.push(str);
+                    });
+                    // we may press a, then press b before releasing a
+                    // thus for the string "ab" we will receive two keyup events
+                    // do not clear the selection
+                    if ((possibleItems.length == 1) && (input.selectionStart == input.selectionEnd)) {
+                        input.value = possibleItems[0];
+                        input.setSelectionRange(search.length, possibleItems[0].length);
+                    }
+                }
+            }
+        };
+    }
+    onInput(e) {
+        if (CANCEL_KEY.includes(e.key)) {
+            this.onLineEnter('');
+        }
+    }
+    focus() {
+        this.input.focus();
+    }
+}
+
 class Game {
     constructor() {
         this.resize$ = new Subject();
@@ -1368,16 +1420,17 @@ class Game {
             console.log('Unhandled key: ', e.key);
         }
     }
-    createMenu(prompt, count, items) {
+    openMenu(prompt, count, items) {
         const menu = new Menu(prompt, items, count, this.tileset);
         menu.onSelect = ids => {
             window.nethackJS.selectMenu(ids);
             this.inputHandler = this;
+            Dialog.removeAll(); // sometimes not closed?
         };
         this.inputHandler = menu;
         document.body.append(menu.elem);
     }
-    createDialog(text) {
+    openDialog(text) {
         const dialog = new Dialog(text);
         dialog.onClose = () => {
             window.nethackJS.sendInput(0);
@@ -1386,15 +1439,27 @@ class Game {
         this.inputHandler = dialog;
         document.body.append(dialog.elem);
     }
+    openGetLine(question, autocomplete) {
+        const line = new Line(question, autocomplete);
+        line.onLineEnter = (line) => {
+            window.nethackJS.sendLine(line);
+            this.inputHandler = this;
+            Dialog.removeAll(); // Usually not opened as a dialog, so close it ourself
+        };
+        this.inputHandler = line;
+        document.body.append(line.elem);
+        line.focus();
+    }
 }
 
 const game = new Game();
 window.nethackUI = {
-    openMenu: (winid, prompt, count, ...items) => game.createMenu(prompt, count, items),
+    openMenu: (winid, prompt, count, ...items) => game.openMenu(prompt, count, items),
     openQuestion: (question, ...choices) => game.console.appendLine(`\n${question} ${choices}`),
-    printLine: (line) => game.console.appendLine(line),
-    openDialog: (winid, text) => game.createDialog(text),
+    openGetLine: (question, ...autocomplete) => game.openGetLine(question, autocomplete),
+    openDialog: (winid, text) => game.openDialog(text),
     closeDialog: (winid) => Dialog.removeAll(),
+    printLine: (line) => game.console.appendLine(line),
     moveCursor: (x, y) => game.tilemap.recenter({ x, y }),
     centerView: (x, y) => game.tilemap.recenter({ x, y }),
     updateMap: (...tiles) => game.tilemap.addTile(...tiles),
