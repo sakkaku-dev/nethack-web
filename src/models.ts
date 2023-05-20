@@ -18,6 +18,7 @@ export interface NetHackUI {
   centerView: (x: number, y: number) => void;
   printLine: (msg: string) => void;
 
+  clearMap: () => void;
   updateMap: (...tiles: Tile[]) => void;
   updateStatus: (status: Status) => void;
   updateInventory: (...items: Item[]) => void;

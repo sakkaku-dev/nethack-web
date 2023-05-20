@@ -42,7 +42,7 @@ export class TileMap {
   constructor(private canvas: HTMLCanvasElement, private cursor: HTMLElement, private tileSet: TileSet) {
     this.context = canvas.getContext("2d")!;
     this.updateCanvasSize();
-    this.clear();
+    this.clearCanvas();
   }
 
   onResize() {
@@ -60,13 +60,18 @@ export class TileMap {
     this.rerender();
   }
 
-  clear() {
+  clearMap() {
+    this.tiles = [];
+    this.clearCanvas();
+  }
+
+  private clearCanvas() {
     this.cursor.style.display = 'none';
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   private rerender() {
-    this.clear();
+    this.clearCanvas();
     for (let x = 0; x < this.tiles.length; x++) {
       const row = this.tiles[x];
       if (row) {

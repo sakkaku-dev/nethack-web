@@ -29,7 +29,7 @@ export class NetHackWrapper implements NetHackJS {
   private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
     [Command.DESTROY_WINDOW]: async (winid: number) => this.ui.closeDialog(winid),
-    [Command.CLEAR_WINDOW]: async (winid: number) => (this.putStr = ""),
+    [Command.CLEAR_WINDOW]: this.clearWindow.bind(this),
     [Command.EXIT_WINDOWS]: this.exitWindows.bind(this),
 
     // Text / Dialog
@@ -228,6 +228,13 @@ export class NetHackWrapper implements NetHackJS {
       await this.waitInput();
       this.putStr = "";
     }
+  }
+
+  private async clearWindow(winid: number) {
+    if (winid === this.global.globals.WIN_MAP) {
+      this.ui.clearMap();
+    }
+    this.putStr = "";
   }
 
   private async exitWindows(str: string) {

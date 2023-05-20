@@ -15,6 +15,7 @@ window.nethackUI = {
 
   moveCursor: (x: number, y: number) => game.tilemap.recenter({ x, y }),
   centerView: (x: number, y: number) => game.tilemap.recenter({ x, y }),
+  clearMap: () => game.tilemap.clearMap(),
   updateMap: (...tiles: Tile[]) => game.tilemap.addTile(...tiles),
   updateStatus: (s: Status) => game.status.update(s),
   updateInventory: (...items: Item[]) => game.inventory.updateItems(items),
