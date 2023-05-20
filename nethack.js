@@ -1827,7 +1827,7 @@ class NetHackWrapper {
                 file = '/nethack/save/' + file;
                 try {
                     const data = btoa(String.fromCharCode.apply(null, this.module.FS.readFile(file, { encoding: 'binary' })));
-                    localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, data);
+                    localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, JSON.stringify({ data }));
                 }
                 catch (e) {
                     console.warn('Failed to sync save file', file);
@@ -1852,6 +1852,7 @@ class NetHackWrapper {
     loadBackupSaveFile(file) {
         const strData = localStorage.getItem(`${SAVE_FILES_STORAGE_KEY}-${file}`);
         if (strData) {
+            JSON.parse(strData);
             try {
                 const data = atob(strData);
                 var buf = new ArrayBuffer(data.length);
