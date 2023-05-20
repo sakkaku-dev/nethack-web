@@ -1651,7 +1651,7 @@ class NetHackWrapper {
         this.commandMap = {
             [Command.CREATE_WINDOW]: this.createWindow.bind(this),
             [Command.DESTROY_WINDOW]: async (winid) => this.ui.closeDialog(winid),
-            [Command.CLEAR_WINDOW]: async (winid) => (this.putStr = ""),
+            [Command.CLEAR_WINDOW]: this.clearWindow.bind(this),
             [Command.EXIT_WINDOWS]: this.exitWindows.bind(this),
             // Text / Dialog
             [Command.PUTSTR]: this.handlePutStr.bind(this),
@@ -1796,6 +1796,12 @@ class NetHackWrapper {
             await this.waitInput();
             this.putStr = "";
         }
+    }
+    async clearWindow(winid) {
+        if (winid === this.global.globals.WIN_MAP) {
+            this.ui.clearMap();
+        }
+        this.putStr = "";
     }
     async exitWindows(str) {
         this.syncSaveFiles();

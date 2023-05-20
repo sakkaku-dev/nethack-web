@@ -1079,7 +1079,7 @@ class TileMap {
         this.tiles = [];
         this.context = canvas.getContext("2d");
         this.updateCanvasSize();
-        this.clear();
+        this.clearCanvas();
     }
     onResize() {
         this.updateCanvasSize();
@@ -1093,12 +1093,16 @@ class TileMap {
         this.center = c;
         this.rerender();
     }
-    clear() {
+    clearMap() {
+        this.tiles = [];
+        this.clearCanvas();
+    }
+    clearCanvas() {
         this.cursor.style.display = 'none';
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
     rerender() {
-        this.clear();
+        this.clearCanvas();
         for (let x = 0; x < this.tiles.length; x++) {
             const row = this.tiles[x];
             if (row) {
@@ -1462,6 +1466,7 @@ window.nethackUI = {
     printLine: (line) => game.console.appendLine(line),
     moveCursor: (x, y) => game.tilemap.recenter({ x, y }),
     centerView: (x, y) => game.tilemap.recenter({ x, y }),
+    clearMap: () => game.tilemap.clearMap(),
     updateMap: (...tiles) => game.tilemap.addTile(...tiles),
     updateStatus: (s) => game.status.update(s),
     updateInventory: (...items) => game.inventory.updateItems(items),
