@@ -35,6 +35,7 @@ export enum Command {
   RAW_PRINT = "shim_raw_print",
   RAW_PRINT_BOLD = "shim_raw_print_bold",
   DISPLAY_FILE = "shim_display_file",
+  GAME_END = "shim_game_end",
 }
 
 export enum ItemFlag {

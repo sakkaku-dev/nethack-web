@@ -1,19 +1,20 @@
 diff --git a/include/config.h b/include/config.h
-index b606b5db1..17f09b57a 100644
+index b606b5db1..579058bf6 100644
 --- a/include/config.h
 +++ b/include/config.h
-@@ -38,6 +38,10 @@
+@@ -38,6 +38,11 @@
  
  #include "config1.h" /* should auto-detect MSDOS, MAC, AMIGA, and WIN32 */
  
 +#ifdef WEB_GRAPHICS
 +#define DEFAULT_WINDOW_SYS "web"
++#define GRAPHIC_TOMBSTONE
 +#endif
 +
  /* Windowing systems...
   * Define all of those you want supported in your binary.
   * Some combinations make no sense.  See the installation document.
-@@ -261,7 +265,7 @@
+@@ -261,7 +266,7 @@
   *
   */
  
@@ -52,6 +53,19 @@ index c126d6839..f6ae00668 100644
  /* #define NO_FILE_LINKS */                       /* if no hard links */
  /* #define LOCKDIR "/usr/games/lib/nethackdir" */ /* where to put locks */
  
+diff --git a/src/end.c b/src/end.c
+index 4df88cecb..12a073bab 100644
+--- a/src/end.c
++++ b/src/end.c
+@@ -65,7 +65,7 @@ STATIC_DCL void NDECL(dump_plines);
+ STATIC_DCL void FDECL(dump_everything, (int, time_t));
+ STATIC_DCL int NDECL(num_extinct);
+ 
+-#if defined(__BEOS__) || defined(MICRO) || defined(OS2)
++#if defined(__BEOS__) || defined(MICRO) || defined(OS2) || defined(WEB_GRAPHICS)
+ extern void FDECL(nethack_exit, (int));
+ #else
+ #define nethack_exit exit
 diff --git a/src/files.c b/src/files.c
 index 60d9aa56a..0a18744b0 100644
 --- a/src/files.c
@@ -947,10 +961,10 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..e99af582c
+index 000000000..044e5a86c
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,1100 @@
+@@ -0,0 +1,1105 @@
 +#include "hack.h"
 +#include "dlb.h"
 +#include "func_tab.h"
@@ -1120,6 +1134,11 @@ index 000000000..e99af582c
 +    int ret = shim_get_ext_cmd_helper(command_list, num_commands);
 +    free(command_list);
 +    return ret;
++}
++
++VDECLCB(shim_game_end ,(int status), "vi", A2P status)
++void nethack_exit(int status) {
++    shim_game_end(status);
 +}
 +
 +// Not in 3.7

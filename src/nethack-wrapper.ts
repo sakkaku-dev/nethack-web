@@ -30,7 +30,8 @@ export class NetHackWrapper implements NetHackJS {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
     [Command.DESTROY_WINDOW]: async (winid: number) => this.ui.closeDialog(winid),
     [Command.CLEAR_WINDOW]: this.clearWindow.bind(this),
-    [Command.EXIT_WINDOWS]: this.exitWindows.bind(this),
+    // [Command.EXIT_WINDOWS]: this.exitWindows.bind(this),
+    [Command.GAME_END]: this.gameEnd.bind(this),
 
     // Text / Dialog
     [Command.PUTSTR]: this.handlePutStr.bind(this),
@@ -237,7 +238,8 @@ export class NetHackWrapper implements NetHackJS {
     this.putStr = "";
   }
 
-  private async exitWindows(str: string) {
+  private async gameEnd(status: number) {
+    console.log("Ended game with status", status)
     this.syncSaveFiles();
     this.playing$.next(false);
   }
@@ -377,7 +379,7 @@ export class NetHackWrapper implements NetHackJS {
         statusMap[STATUS_FIELD.BL_ALIGN](status, m[10]);
       } else {
         let m = str.match(
-          /Dlvl:(\d+).*\$:(\d+).*HP:(\d+)\((\d+)\).*Pw:(\d+)\((\d+)\).*AC:(\d+).*Exp:(\d+).*([a-zA-z\s]+)/
+          /Dlvl:(\d+).*\$:(\d+).*HP:(\d+)\((\d+)\).*Pw:(\d+)\((\d+)\).*AC:(\d+).*Exp:(\d+)[\s]+([\w\s]+)/
         );
         if (m) {
           statusMap[STATUS_FIELD.BL_LEVELDESC](status, m[1]);
@@ -388,7 +390,7 @@ export class NetHackWrapper implements NetHackJS {
           statusMap[STATUS_FIELD.BL_ENEMAX](status, m[6]);
           statusMap[STATUS_FIELD.BL_AC](status, m[7]);
           statusMap[STATUS_FIELD.BL_XP](status, m[8]);
-          statusMap[STATUS_FIELD.BL_CONDITION](status, m[9]);
+          statusMap[STATUS_FIELD.BL_HUNGER](status, m[9]);
         }
       }
 
