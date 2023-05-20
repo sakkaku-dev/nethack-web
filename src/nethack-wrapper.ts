@@ -200,7 +200,6 @@ export class NetHackWrapper implements NetHackJS {
     return -1;
   }
 
-  // Currently don't know what could call this
   private async getLine(question: string, searchPointer: number) {
     this.ui.openGetLine(question);
     const line = await this.waitLine();
