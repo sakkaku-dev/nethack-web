@@ -204,7 +204,8 @@ export class NetHackWrapper implements NetHackJS {
   private async getLine(question: string, searchPointer: number) {
     this.ui.openGetLine(question);
     const line = await this.waitLine();
-    this.global.helpers.setPointerValue("nethack.getLine", searchPointer, Type.STRING, line);
+    const ptr = this.global.helpers.getPointerValue('nethack.getLine', searchPointer, Type.POINTER);
+    this.global.helpers.setPointerValue('nethack.getLine', ptr, Type.STRING, line);
   }
 
   private async yesNoQuestion(question: string, choices: string[]) {

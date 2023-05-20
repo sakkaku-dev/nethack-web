@@ -64,6 +64,7 @@ export class Game implements InputHandler {
         menu.onSelect = ids => {
             window.nethackJS.selectMenu(ids);
             this.inputHandler = this;
+            Dialog.removeAll() // sometimes not closed?
         };
         this.inputHandler = menu;
         document.body.append(menu.elem);
