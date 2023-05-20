@@ -23,6 +23,7 @@ export interface Window {
 }
 
 const SAVE_FILES_STORAGE_KEY = 'sakkaku-dev-nethack-savefiles';
+const MAX_STRING_LENGTH = 256 // defined in global.h BUFSZ
 
 export class NetHackWrapper implements NetHackJS {
   private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
@@ -59,6 +60,8 @@ export class NetHackWrapper implements NetHackJS {
     [Command.GET_POSKEY]: this.waitInput.bind(this),
     [Command.YN_FUNCTION]: this.yesNoQuestion.bind(this),
     [Command.ASK_NAME]: this.waitInput.bind(this),
+    [Command.GET_LINE]: this.getLine.bind(this),
+    [Command.GET_EXT_CMD]: this.getExtCmd.bind(this),
 
     // TODO: message_menu
     // TODO: select_menu with yn_function
@@ -70,6 +73,7 @@ export class NetHackWrapper implements NetHackJS {
 
   private input$ = new Subject<number>();
   private selectedMenu$ = new Subject<number[]>();
+  private line$ = new Subject<string>();
 
   private status$ = new BehaviorSubject<Status>({});
   private inventory$ = new Subject<Item[]>();
@@ -143,12 +147,27 @@ export class NetHackWrapper implements NetHackJS {
     this.input$.next(key);
   }
 
+  public sendLine(line: string) {
+    if (line.length >= MAX_STRING_LENGTH) {
+      this.log(`Line is too long. It can only be ${MAX_STRING_LENGTH} characters long.`, line);
+    } else {
+      this.log("Receiced line", line);
+      this.line$.next(line);
+    }
+  }
+
   // Waiting for input from user
 
   private async waitInput() {
     this.log("Waiting user input...");
     this.awaitingInput$.next(true);
     return await firstValueFrom(this.input$);
+  }
+
+  private async waitLine() {
+    this.log("Waiting user input line...");
+    this.awaitingInput$.next(true);
+    return await firstValueFrom(this.line$);
   }
 
   // Commands
@@ -165,7 +184,27 @@ export class NetHackWrapper implements NetHackJS {
       return "";
     }
 
-    return 0;
+    return -1;
+  }
+
+  private async getExtCmd(commandPointer: number, numCommands: number) {
+    const commands = this.getArrayValue(commandPointer, numCommands);
+    this.ui.openGetLine('#', ...commands);
+    const line = await this.waitLine();
+    const idx = commands.findIndex(x => x === line);
+
+    if (idx >= 0 && idx < commands.length) {
+      return idx;
+    }
+
+    return -1;
+  }
+
+  // Currently don't know what could call this
+  private async getLine(question: string, searchPointer: number) {
+    this.ui.openGetLine(question);
+    const line = await this.waitLine();
+    this.global.helpers.setPointerValue("nethack.getLine", searchPointer, Type.STRING, line);
   }
 
   private async yesNoQuestion(question: string, choices: string[]) {
@@ -410,6 +449,18 @@ export class NetHackWrapper implements NetHackJS {
   private getPointerValue(ptr: number, type: string) {
     const x = this.global.helpers.getPointerValue("nethack.pointerValue", ptr, Type.POINTER);
     return this.global.helpers.getPointerValue("nethack.pointerValue", x, type);
+  }
+
+  // ptr should be a pointer to a pointer
+  private getArrayValue(ptr: number, length: number): any[] {
+    const arr: any[] = [];
+    const pointer = this.global.helpers.getPointerValue("nethack.arrayValue", ptr, Type.POINTER);
+    for (let i = 0; i < length; i++) {
+      const value = this.getPointerValue(pointer + i * 4, Type.STRING);
+      arr.push(value);
+    }
+
+    return arr;
   }
 
   private get global() {

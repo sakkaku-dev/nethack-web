@@ -5,11 +5,14 @@ import { Game } from "./game";
 const game = new Game();
 
 window.nethackUI = {
-  openMenu: (winid: number, prompt: string, count: number, ...items: Item[]) => game.createMenu(prompt, count, items),
+  openMenu: (winid: number, prompt: string, count: number, ...items: Item[]) => game.openMenu(prompt, count, items),
   openQuestion: (question: string, ...choices: string[]) => game.console.appendLine(`\n${question} ${choices}`),
-  printLine: (line: string) => game.console.appendLine(line),
-  openDialog: (winid: number, text: string) => game.createDialog(text),
+  openGetLine: (question: string, ...autocomplete: string[]) => game.openGetLine(question, autocomplete),
+  openDialog: (winid: number, text: string) => game.openDialog(text),
   closeDialog: (winid: number) => Dialog.removeAll(),
+
+  printLine: (line: string) => game.console.appendLine(line),
+
   moveCursor: (x: number, y: number) => game.tilemap.recenter({ x, y }),
   centerView: (x: number, y: number) => game.tilemap.recenter({ x, y }),
   updateMap: (...tiles: Tile[]) => game.tilemap.addTile(...tiles),

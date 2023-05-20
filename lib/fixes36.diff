@@ -434,7 +434,7 @@ index 78e9d725f..b94b1d7f9 100644
 -		tilemap tileedit tile2bmp
 +		tilemap.js tileedit tile2bmp
 diff --git a/sys/unix/hints/linux b/sys/unix/hints/linux
-index 862915053..1144f8a13 100644
+index 862915053..01f6506cb 100644
 --- a/sys/unix/hints/linux
 +++ b/sys/unix/hints/linux
 @@ -11,8 +11,8 @@
@@ -947,12 +947,13 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..f102263aa
+index 000000000..e99af582c
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,1078 @@
+@@ -0,0 +1,1100 @@
 +#include "hack.h"
 +#include "dlb.h"
++#include "func_tab.h"
 +#include <emscripten/emscripten.h>
 +
 +extern short glyph2tile[];
@@ -1067,7 +1068,6 @@ index 000000000..f102263aa
 +DECLCB(int, shim_doprev_message,(void),"iv")
 +DECLCB(char, shim_yn_function,(const char *query, const char *resp, CHAR_P def), "cssi", P2V query, P2V resp, A2P def)
 +VDECLCB(shim_getlin,(const char *query, char *bufp), "vso", P2V query, P2V bufp)
-+DECLCB(int,shim_get_ext_cmd,(void),"iv")
 +VDECLCB(shim_number_pad,(int state), "vi", A2P state)
 +VDECLCB(shim_delay_output,(void), "v")
 +VDECLCB(shim_change_color,(int color, long rgb, int reverse), "viii", A2P color, A2P rgb, A2P reverse)
@@ -1098,6 +1098,28 @@ index 000000000..f102263aa
 +    if(iflags.perm_invent) {
 +        display_inventory(NULL, FALSE);
 +    }
++}
++
++DECLCB(int, shim_get_ext_cmd_helper, (const char **command_list, int num_commands), "ioi", P2V command_list, A2P num_commands)
++int shim_get_ext_cmd() {
++    // return extcmd_via_menu();
++
++    // from BrowserHack
++    int num_commands;
++    const char **command_list;
++
++    /* count commands */
++    for (num_commands = 0; extcmdlist[num_commands].ef_txt; num_commands++)
++    { }	/* do nothing */
++
++    command_list = (const char **) alloc((unsigned)num_commands * sizeof(char *));
++
++    for (int i = 0; i < num_commands; i++)
++        command_list[i] = extcmdlist[i].ef_txt;
++
++    int ret = shim_get_ext_cmd_helper(command_list, num_commands);
++    free(command_list);
++    return ret;
 +}
 +
 +// Not in 3.7

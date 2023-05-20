@@ -1,6 +1,7 @@
 export interface NetHackJS {
   selectMenu: (items: any[]) => void; // TODO: param type
   sendInput: (key: number) => void;
+  sendLine: (line: string) => void;
   startGame: () => void;
 }
 
@@ -9,6 +10,7 @@ export interface NetHackUI {
   openMenu: (id: number, prompt: string, count: number, ...items: Item[]) => void;
   openDialog: (id: number, msg: string) => void;
   openQuestion: (question: string, ...choices: string[]) => void;
+  openGetLine: (question: string, ...autocomplete: string[]) => void;
 
   closeDialog: (id: number) => void;
 
