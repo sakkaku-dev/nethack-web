@@ -7,6 +7,7 @@ import { Menu } from "./menu";
 import { Item } from "../models";
 import { Dialog } from "./dialog";
 import { InputHandler } from "./input";
+import { Line } from "./line";
 
 export class Game implements InputHandler {
 
@@ -58,17 +59,18 @@ export class Game implements InputHandler {
         }
     }
 
-    public createMenu(prompt: string, count: number, items: Item[]) {
+    public openMenu(prompt: string, count: number, items: Item[]) {
         const menu = new Menu(prompt, items, count, this.tileset);
         menu.onSelect = ids => {
             window.nethackJS.selectMenu(ids);
             this.inputHandler = this;
+            Dialog.removeAll() // sometimes not closed?
         };
         this.inputHandler = menu;
         document.body.append(menu.elem);
     }
 
-    public createDialog(text: string) {
+    public openDialog(text: string) {
         const dialog = new Dialog(text);
         dialog.onClose = () => {
             window.nethackJS.sendInput(0);
@@ -76,5 +78,17 @@ export class Game implements InputHandler {
         };
         this.inputHandler = dialog;
         document.body.append(dialog.elem);
+    }
+
+    public openGetLine(question: string, autocomplete: string[]) {
+        const line = new Line(question, autocomplete);
+        line.onLineEnter = (line) => {
+            window.nethackJS.sendLine(line);
+            this.inputHandler = this;
+            Dialog.removeAll(); // Usually not opened as a dialog, so close it ourself
+        };
+        this.inputHandler = line;
+        document.body.append(line.elem);
+        line.focus();
     }
 }

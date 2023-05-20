@@ -7,6 +7,8 @@ export enum Command {
   GET_NH_EVENT = "shim_get_nh_event",
   GET_POSKEY = "shim_nh_poskey",
   ASK_NAME = "shim_askname",
+  GET_LINE = "shim_getlin",
+  GET_EXT_CMD = "shim_get_ext_cmd_helper",
 
   GET_HISTORY = "shim_getmsghistory",
   MESSAGE_MENU = "shim_message_menu",

@@ -39,3 +39,8 @@ Apache:
 Header set Cross-Origin-Opener-Policy "same-origin"
 Header set Cross-Origin-Embedder-Policy "require-corp"
 ```
+
+## References
+
+- https://github.com/coolwanglu/BrowserHack (3.4)
+- https://github.com/apowers313/NetHackJS (> 3.7)
