@@ -1385,6 +1385,10 @@ class Line extends Dialog {
     }
 }
 
+const SPECIAL_KEY_MAP = {
+    'Enter': 13,
+    'Escape': 27,
+};
 class Game {
     constructor() {
         this.resize$ = new Subject();
@@ -1406,16 +1410,23 @@ class Game {
     onInput(e) {
         if (e.key === "Control" || e.key === "Shift")
             return;
-        e.preventDefault();
-        if (e.key.length === 1) {
-            let code = e.key.charCodeAt(0);
-            if (e.ctrlKey) {
-                if (code >= 65 && code <= 90) {
-                    // A~Z
-                    code = code - 64;
-                }
-                else if (code >= 97 && code <= 122) {
-                    code = code - 96;
+        if (e.key.length === 1 || SPECIAL_KEY_MAP[e.key]) {
+            e.preventDefault();
+            let code = 0;
+            const specialKey = SPECIAL_KEY_MAP[e.key];
+            if (specialKey) {
+                code = specialKey;
+            }
+            else {
+                code = e.key.charCodeAt(0);
+                if (e.ctrlKey) {
+                    if (code >= 65 && code <= 90) {
+                        // A~Z
+                        code = code - 64;
+                    }
+                    else if (code >= 97 && code <= 122) {
+                        code = code - 96;
+                    }
                 }
             }
             window.nethackJS.sendInput(code);
