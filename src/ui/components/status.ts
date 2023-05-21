@@ -1,7 +1,13 @@
-import { Status } from "../models";
+import { Status } from "../../models";
 
 export class StatusLine {
-    constructor(private elem: HTMLElement) { }
+    private elem: HTMLElement
+
+    constructor(root: HTMLElement) {
+        this.elem = document.createElement('pre');
+        this.elem.id = 'status';
+        root.appendChild(this.elem);
+    }
 
     update(s: Status) {
         this.elem.innerHTML = `${s.title} ${s.align} \t ${s.hunger || ''}`; // TODO: set player name

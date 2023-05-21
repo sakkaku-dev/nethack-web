@@ -1,4 +1,4 @@
-import { Item } from "../models";
+import { Item } from "../../models";
 import { TileSet } from "./tilemap";
 
 // From BrowserHack
@@ -29,7 +29,14 @@ const parse_inventory_description = (item: Item) => {
 };
 
 export class Inventory {
-    constructor(private elem: HTMLElement, private tileset: TileSet) { }
+
+    private elem: HTMLElement;
+
+    constructor(root: HTMLElement, private tileset: TileSet) {
+        this.elem = document.createElement('pre');
+        this.elem.id = 'inventory';
+        root.appendChild(this.elem);
+    }
 
     private clear() {
         Array.from(this.elem.children).forEach((c) => this.elem.removeChild(c));

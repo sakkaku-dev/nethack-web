@@ -1,22 +1,21 @@
 import { Item, Status, Tile } from "../models";
-import { Dialog } from "./dialog";
+import { Dialog } from "./components/dialog";
 import { Game } from "./game";
 
 const game = new Game();
+const main = game.game;
 
 window.nethackUI = {
-  openMenu: (winid: number, prompt: string, count: number, ...items: Item[]) => game.openMenu(prompt, count, items),
-  openQuestion: (question: string, ...choices: string[]) => game.console.appendLine(`\n${question} ${choices}`),
-  openGetLine: (question: string, ...autocomplete: string[]) => game.openGetLine(question, autocomplete),
-  openDialog: (winid: number, text: string) => game.openDialog(text),
+  openMenu: (winid: number, prompt: string, count: number, ...items: Item[]) => main.openMenu(prompt, count, items),
+  openQuestion: (question: string, ...choices: string[]) => main.console.appendLine(`\n${question} ${choices}`),
+  openGetLine: (question: string, ...autocomplete: string[]) => main.openGetLine(question, autocomplete),
+  openDialog: (winid: number, text: string) => main.openDialog(text),
   closeDialog: (winid: number) => Dialog.removeAll(),
-
-  printLine: (line: string) => game.console.appendLine(line),
-
-  moveCursor: (x: number, y: number) => game.tilemap.recenter({ x, y }),
-  centerView: (x: number, y: number) => game.tilemap.recenter({ x, y }),
-  clearMap: () => game.tilemap.clearMap(),
-  updateMap: (...tiles: Tile[]) => game.tilemap.addTile(...tiles),
-  updateStatus: (s: Status) => game.status.update(s),
-  updateInventory: (...items: Item[]) => game.inventory.updateItems(items),
+  printLine: (line: string) => main.console.appendLine(line),
+  moveCursor: (x: number, y: number) => main.tilemap.recenter({ x, y }),
+  centerView: (x: number, y: number) => main.tilemap.recenter({ x, y }),
+  clearMap: () => main.tilemap.clearMap(),
+  updateMap: (...tiles: Tile[]) => main.tilemap.addTile(...tiles),
+  updateStatus: (s: Status) => main.status.update(s),
+  updateInventory: (...items: Item[]) => main.inventory.updateItems(items),
 };

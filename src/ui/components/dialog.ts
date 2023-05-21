@@ -1,4 +1,4 @@
-import { CANCEL_KEY, CONTINUE_KEY, InputHandler } from "./input";
+import { CANCEL_KEY, CONTINUE_KEY, InputHandler } from "../input";
 
 export class Dialog implements InputHandler {
 
