@@ -1684,6 +1684,7 @@ class NetHackWrapper {
         this.idCounter = 0;
         this.menu = { winid: 0, items: [], count: 0, prompt: "" };
         this.putStr = "";
+        this.backupFile = '';
         this.input$ = new Subject();
         this.selectedMenu$ = new Subject();
         this.line$ = new Subject();
@@ -1712,12 +1713,20 @@ class NetHackWrapper {
         if (!this.module.preRun) {
             this.module.preRun = [];
         }
-        this.module.preRun.push(() => this.loadSaveFiles());
+        this.module.preRun.push(() => {
+            this.loadSaveFiles();
+            if (this.backupFile) {
+                this.loadBackupSaveFile(this.backupFile);
+            }
+        });
     }
     log(...args) {
         if (this.debug) {
             console.log(...args);
         }
+    }
+    setBackupFile(file) {
+        this.backupFile = file;
     }
     startGame() {
         this.playing$.next(true);
@@ -1849,19 +1858,31 @@ class NetHackWrapper {
             }
         });
     }
+    getBackupFiles() {
+        const result = [];
+        for (let i = 0, len = localStorage.length; i < len; i++) {
+            const key = localStorage.key(i);
+            if (key === null || key === void 0 ? void 0 : key.startsWith(SAVE_FILES_STORAGE_KEY)) {
+                result.push(key.substring(SAVE_FILES_STORAGE_KEY.length + 1));
+            }
+        }
+        return result;
+    }
     loadBackupSaveFile(file) {
         const strData = localStorage.getItem(`${SAVE_FILES_STORAGE_KEY}-${file}`);
         if (strData) {
-            JSON.parse(strData);
+            const { data } = JSON.parse(strData);
             try {
-                const data = atob(strData);
-                var buf = new ArrayBuffer(data.length);
+                const bytes = atob(data);
+                var buf = new ArrayBuffer(bytes.length);
                 var array = new Uint8Array(buf);
-                for (var i = 0; i < data.length; ++i)
-                    array[i] = data.charCodeAt(i);
+                for (var i = 0; i < bytes.length; ++i)
+                    array[i] = bytes.charCodeAt(i);
                 this.module.FS.writeFile(file, array, { encoding: 'binary' });
             }
-            catch (e) { }
+            catch (e) {
+                console.warn('Failed to load backup file', e);
+            }
         }
     }
     async menuAdd(winid, glyph, identifier, accelerator, groupAcc, attr, str, flag) {

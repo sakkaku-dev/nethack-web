@@ -1,0 +1,105 @@
+<style>
+  :root {
+    --bg-color: black;
+    --text-color: white;
+  }
+
+  body {
+    background: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+  }
+
+  #inventory {
+    flex-grow: 1;
+    overflow-y: auto;
+    background: var(--bg-color);
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 8rem;
+    padding: 0.5rem;
+    margin: 0;
+  }
+  #inventory .row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  #inventory .active {
+    border: 1px solid red;
+  }
+  #inventory .title {
+    margin: 0.5rem 0;
+  }
+  #inventory .item {
+    position: relative;
+  }
+  #inventory .item .count {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    line-height: 1;
+  }
+  #inventory .item .accel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #00000099;
+    padding: 0 0.1rem;
+  }
+
+  #status {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 0.5rem;
+  }
+
+  #output {
+    overflow-y: auto;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 8rem;
+    padding: 0.5rem;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+  #cursor {
+    z-index: 1;
+    top: 50%;
+    left: 50%;
+    position: absolute;
+  }
+
+  .dialog {
+    position: absolute;
+    top: 2rem;
+    margin-top: -100%;
+    transform: translate(-50%, 0);
+    left: 50%;
+    overflow-y: auto;
+    background: var(--bg-color);
+    border: 1px solid var(--text-color);
+    transition: 0.3s all ease;
+    padding: 1rem;
+    z-index: 10;
+    max-height: 90%;
+  }
+  .dialog.open {
+    margin-top: 0;
+  }
+</style>
+
+<body>
+  <div></div>
+</body>
+
+<script src="./nethack-ui.js"></script>
+<script src="./nethack.js"></script>

@@ -24,6 +24,122 @@ class Dialog {
     }
 }
 
+class BackupFiles extends Dialog {
+    constructor(files) {
+        super('Backup Files');
+        this.onFileSelect = (file) => { };
+        const list = document.createElement('div');
+        list.style.display = 'flex';
+        list.style.flexDirection = 'column';
+        list.id = 'menu';
+        files.forEach(file => {
+            const item = document.createElement('div');
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.value = file;
+            input.name = '';
+            const label = document.createElement('label');
+            label.innerHTML = file;
+            item.appendChild(input);
+            item.appendChild(label);
+            list.appendChild(item);
+        });
+        this.elem.appendChild(list);
+        this.elem.append(this.createSelectButton());
+    }
+    createSelectButton() {
+        const btn = document.createElement("button");
+        btn.innerHTML = "Submit";
+        btn.onclick = () => {
+            const inputs = Array.from(document.querySelectorAll("#menu input"));
+            const ids = inputs.filter((i) => i.checked && !i.disabled).map(i => i.value);
+            if (ids.length > 0) {
+                this.onFileSelect(ids[0]);
+            }
+        };
+        return btn;
+    }
+}
+
+function fullScreen(elem) {
+    elem.style.position = 'absolute';
+    elem.style.top = '0';
+    elem.style.left = '0';
+    elem.style.right = '0';
+    elem.style.bottom = '0';
+}
+function topLeft(elem) {
+    elem.style.position = 'absolute';
+    elem.style.top = '0';
+    elem.style.left = '0';
+}
+function center(elem) {
+    elem.style.display = 'flex';
+    elem.style.justifyContent = 'center';
+    elem.style.alignItems = 'center';
+}
+
+class Screen {
+    constructor() {
+        this.elem = document.createElement('div');
+        fullScreen(this.elem);
+    }
+    changeInput(handler) {
+        if (handler === this) {
+            this.resetInput();
+        }
+        else {
+            this.inputHandler = handler;
+        }
+    }
+    resetInput() {
+        this.inputHandler = undefined;
+    }
+    onInput(e) {
+        if (this.inputHandler) {
+            this.inputHandler.onInput(e);
+        }
+        else {
+            this.input(e);
+        }
+    }
+    input(e) { }
+    hide() {
+        document.body.removeChild(this.elem);
+    }
+    show() {
+        document.body.appendChild(this.elem);
+    }
+}
+
+class StartScreen extends Screen {
+    constructor() {
+        super();
+        this.onStartGame = () => { };
+        const settings = document.createElement('div');
+        topLeft(settings);
+        const backupBtn = document.createElement('button');
+        backupBtn.innerHTML = 'B';
+        backupBtn.onclick = () => this.openBackupFiles();
+        settings.appendChild(backupBtn);
+        const btn = document.createElement('button');
+        btn.innerHTML = 'Start Game';
+        btn.onclick = () => this.onStartGame();
+        center(this.elem);
+        this.elem.appendChild(btn);
+        this.elem.appendChild(settings);
+    }
+    openBackupFiles() {
+        const files = window.nethackJS.getBackupFiles();
+        const backup = new BackupFiles(files);
+        backup.onFileSelect = (file) => {
+            window.nethackJS.setBackupFile(file);
+            Dialog.removeAll();
+        };
+        this.elem.appendChild(backup.elem);
+    }
+}
+
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -1031,120 +1147,15 @@ function debounceTime(dueTime, scheduler) {
     });
 }
 
-function add(v1, v2) {
-    return { x: v1.x + v2.x, y: v1.y + v2.y };
-}
-function sub(v1, v2) {
-    return { x: v1.x - v2.x, y: v1.y - v2.y };
-}
-function mult(v1, v2) {
-    return { x: v1.x * v2.x, y: v1.y * v2.y };
-}
-
-class TileSet {
-    constructor(file, tileSize, tileCol) {
-        this.file = file;
-        this.tileSize = tileSize;
-        this.tileCol = tileCol;
-        this.image = new Image();
-        this.image.src = file;
+class Console {
+    constructor(root) {
+        this.elem = document.createElement('pre');
+        this.elem.id = 'output';
+        root.appendChild(this.elem);
     }
-    getTilePosition(tile) {
-        const row = Math.floor(tile / this.tileCol);
-        const col = tile % this.tileCol;
-        return { x: col, y: row };
-    }
-    getCoordinateForTile(tile) {
-        const pos = this.getTilePosition(tile);
-        return { x: pos.x * this.tileSize, y: pos.y * this.tileSize };
-    }
-    createBackgroundImage(tile) {
-        const div = document.createElement('div');
-        div.style.width = `${this.tileSize}px`;
-        div.style.height = `${this.tileSize}px`;
-        div.style.backgroundImage = `url('${this.file}')`;
-        div.style.backgroundRepeat = 'no-repeat';
-        const pos = this.getTilePosition(tile);
-        const realPos = mult(pos, { x: this.tileSize, y: this.tileSize });
-        div.style.backgroundPosition = `-${realPos.x}px -${realPos.y}px`;
-        return div;
-    }
-}
-class TileMap {
-    constructor(canvas, cursor, tileSet) {
-        this.canvas = canvas;
-        this.cursor = cursor;
-        this.tileSet = tileSet;
-        this.center = { x: 0, y: 0 };
-        this.tiles = [];
-        this.context = canvas.getContext("2d");
-        this.updateCanvasSize();
-        this.clearCanvas();
-    }
-    onResize() {
-        this.updateCanvasSize();
-        this.rerender();
-    }
-    updateCanvasSize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-    }
-    recenter(c) {
-        this.center = c;
-        this.rerender();
-    }
-    clearMap() {
-        this.tiles = [];
-        this.clearCanvas();
-    }
-    clearCanvas() {
-        this.cursor.style.display = 'none';
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    }
-    rerender() {
-        this.clearCanvas();
-        for (let x = 0; x < this.tiles.length; x++) {
-            const row = this.tiles[x];
-            if (row) {
-                for (let y = 0; y < row.length; y++) {
-                    this.drawTile(x, y);
-                }
-            }
-        }
-        this.cursor.style.display = 'block';
-    }
-    addTile(...tiles) {
-        tiles.forEach(tile => {
-            if (!this.tiles[tile.x])
-                this.tiles[tile.x] = [];
-            this.tiles[tile.x][tile.y] = tile.tile;
-            this.drawTile(tile.x, tile.y);
-        });
-    }
-    drawTile(x, y) {
-        const tile = this.tiles[x][y];
-        if (tile == null)
-            return;
-        const source = this.tileSet.getCoordinateForTile(tile);
-        const size = this.tileSet.tileSize;
-        const globalPos = this.toGlobal({ x, y });
-        const globalCenter = this.toGlobal(this.center);
-        const relPosFromCenter = sub(globalPos, globalCenter);
-        const localPos = add(this.canvasCenter, relPosFromCenter);
-        this.context.drawImage(
-        // Source
-        this.tileSet.image, source.x, source.y, size, size, 
-        // Target
-        localPos.x, localPos.y, size, size);
-    }
-    toGlobal(vec) {
-        return mult(vec, this.tileSize);
-    }
-    get tileSize() {
-        return { x: this.tileSet.tileSize, y: this.tileSet.tileSize };
-    }
-    get canvasCenter() {
-        return { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+    appendLine(line) {
+        this.elem.innerHTML += line + '\n';
+        this.elem.scrollTo(0, this.elem.scrollHeight);
     }
 }
 
@@ -1172,9 +1183,11 @@ const parse_inventory_description = (item) => {
     };
 };
 class Inventory {
-    constructor(elem, tileset) {
-        this.elem = elem;
+    constructor(root, tileset) {
         this.tileset = tileset;
+        this.elem = document.createElement('pre');
+        this.elem.id = 'inventory';
+        root.appendChild(this.elem);
     }
     clear() {
         Array.from(this.elem.children).forEach((c) => this.elem.removeChild(c));
@@ -1235,24 +1248,55 @@ class Inventory {
     ;
 }
 
-class Console {
-    constructor(elem) {
-        this.elem = elem;
+class Line extends Dialog {
+    constructor(question, autocomplete) {
+        super(question);
+        this.autocomplete = autocomplete;
+        this.onLineEnter = (line) => { };
+        const input = document.createElement('input');
+        this.input = input;
+        this.elem.appendChild(input);
+        input.onkeydown = e => {
+            if (e.key === 'Tab') {
+                //prevent losing focus
+                e.preventDefault();
+            }
+        };
+        input.onkeyup = e => {
+            // From BrowserHack
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.onLineEnter(input.value);
+            }
+            else if (this.autocomplete.length) {
+                if (e.key === 'Backspace') {
+                    input.value = input.value.substring(0, input.selectionStart || 0);
+                }
+                else {
+                    const possibleItems = [];
+                    const search = input.value;
+                    this.autocomplete.forEach(function (str) {
+                        if (str.indexOf(search) == 0)
+                            possibleItems.push(str);
+                    });
+                    // we may press a, then press b before releasing a
+                    // thus for the string "ab" we will receive two keyup events
+                    // do not clear the selection
+                    if ((possibleItems.length == 1) && (input.selectionStart == input.selectionEnd)) {
+                        input.value = possibleItems[0];
+                        input.setSelectionRange(search.length, possibleItems[0].length);
+                    }
+                }
+            }
+        };
     }
-    appendLine(line) {
-        this.elem.innerHTML += line + '\n';
-        this.elem.scrollTo(0, this.elem.scrollHeight);
+    onInput(e) {
+        if (CANCEL_KEY.includes(e.key)) {
+            this.onLineEnter('');
+        }
     }
-}
-
-class StatusLine {
-    constructor(elem) {
-        this.elem = elem;
-    }
-    update(s) {
-        this.elem.innerHTML = `${s.title} ${s.align} \t ${s.hunger || ''}`; // TODO: set player name
-        this.elem.innerHTML += `\nStr: ${s.str} Dex: ${s.dex} Con: ${s.con} Int: ${s.int} Wis: ${s.wis} Cha: ${s.cha}`;
-        this.elem.innerHTML += `\nDlvl ${s.dungeonLvl} HP: ${s.hp}/${s.hpMax} Pw: ${s.power}/${s.powerMax} AC: ${s.armor} EXP: ${s.expLvl} $: ${s.gold}`;
+    focus() {
+        this.input.focus();
     }
 }
 
@@ -1333,55 +1377,138 @@ class Menu extends Dialog {
     ;
 }
 
-class Line extends Dialog {
-    constructor(question, autocomplete) {
-        super(question);
-        this.autocomplete = autocomplete;
-        this.onLineEnter = (line) => { };
-        const input = document.createElement('input');
-        this.input = input;
-        this.elem.appendChild(input);
-        input.onkeydown = e => {
-            if (e.key === 'Tab') {
-                //prevent losing focus
-                e.preventDefault();
-            }
-        };
-        input.onkeyup = e => {
-            // From BrowserHack
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.onLineEnter(input.value);
-            }
-            else if (this.autocomplete.length) {
-                if (e.key === 'Backspace') {
-                    input.value = input.value.substring(0, input.selectionStart || 0);
-                }
-                else {
-                    const possibleItems = [];
-                    const search = input.value;
-                    this.autocomplete.forEach(function (str) {
-                        if (str.indexOf(search) == 0)
-                            possibleItems.push(str);
-                    });
-                    // we may press a, then press b before releasing a
-                    // thus for the string "ab" we will receive two keyup events
-                    // do not clear the selection
-                    if ((possibleItems.length == 1) && (input.selectionStart == input.selectionEnd)) {
-                        input.value = possibleItems[0];
-                        input.setSelectionRange(search.length, possibleItems[0].length);
-                    }
-                }
-            }
-        };
+class StatusLine {
+    constructor(root) {
+        this.elem = document.createElement('pre');
+        this.elem.id = 'status';
+        root.appendChild(this.elem);
     }
-    onInput(e) {
-        if (CANCEL_KEY.includes(e.key)) {
-            this.onLineEnter('');
+    update(s) {
+        this.elem.innerHTML = `${s.title} ${s.align} \t ${s.hunger || ''}`; // TODO: set player name
+        this.elem.innerHTML += `\nStr: ${s.str} Dex: ${s.dex} Con: ${s.con} Int: ${s.int} Wis: ${s.wis} Cha: ${s.cha}`;
+        this.elem.innerHTML += `\nDlvl ${s.dungeonLvl} HP: ${s.hp}/${s.hpMax} Pw: ${s.power}/${s.powerMax} AC: ${s.armor} EXP: ${s.expLvl} $: ${s.gold}`;
+    }
+}
+
+function add(v1, v2) {
+    return { x: v1.x + v2.x, y: v1.y + v2.y };
+}
+function sub(v1, v2) {
+    return { x: v1.x - v2.x, y: v1.y - v2.y };
+}
+function mult(v1, v2) {
+    return { x: v1.x * v2.x, y: v1.y * v2.y };
+}
+
+class TileSet {
+    constructor(file, tileSize, tileCol) {
+        this.file = file;
+        this.tileSize = tileSize;
+        this.tileCol = tileCol;
+        this.image = new Image();
+        this.image.src = file;
+    }
+    getTilePosition(tile) {
+        const row = Math.floor(tile / this.tileCol);
+        const col = tile % this.tileCol;
+        return { x: col, y: row };
+    }
+    getCoordinateForTile(tile) {
+        const pos = this.getTilePosition(tile);
+        return { x: pos.x * this.tileSize, y: pos.y * this.tileSize };
+    }
+    createBackgroundImage(tile) {
+        const div = document.createElement('div');
+        div.style.width = `${this.tileSize}px`;
+        div.style.height = `${this.tileSize}px`;
+        div.style.backgroundImage = `url('${this.file}')`;
+        div.style.backgroundRepeat = 'no-repeat';
+        const pos = this.getTilePosition(tile);
+        const realPos = mult(pos, { x: this.tileSize, y: this.tileSize });
+        div.style.backgroundPosition = `-${realPos.x}px -${realPos.y}px`;
+        return div;
+    }
+}
+class TileMap {
+    constructor(root, tileSet) {
+        this.tileSet = tileSet;
+        this.center = { x: 0, y: 0 };
+        this.tiles = [];
+        this.canvas = document.createElement('canvas');
+        this.canvas.id = 'map';
+        this.cursor = document.createElement('img');
+        this.cursor.src = 'cursor.png';
+        this.cursor.id = 'cursor';
+        root.appendChild(this.canvas);
+        root.appendChild(this.cursor);
+        this.context = this.canvas.getContext("2d");
+        this.updateCanvasSize();
+        this.clearCanvas();
+    }
+    onResize() {
+        this.updateCanvasSize();
+        this.rerender();
+    }
+    updateCanvasSize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+    recenter(c) {
+        this.center = c;
+        this.rerender();
+    }
+    clearMap() {
+        this.tiles = [];
+        this.clearCanvas();
+    }
+    clearCanvas() {
+        this.cursor.style.display = 'none';
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+    rerender() {
+        this.clearCanvas();
+        for (let x = 0; x < this.tiles.length; x++) {
+            const row = this.tiles[x];
+            if (row) {
+                for (let y = 0; y < row.length; y++) {
+                    this.drawTile(x, y);
+                }
+            }
         }
+        this.cursor.style.display = 'block';
     }
-    focus() {
-        this.input.focus();
+    addTile(...tiles) {
+        tiles.forEach(tile => {
+            if (!this.tiles[tile.x])
+                this.tiles[tile.x] = [];
+            this.tiles[tile.x][tile.y] = tile.tile;
+            this.drawTile(tile.x, tile.y);
+        });
+    }
+    drawTile(x, y) {
+        const tile = this.tiles[x][y];
+        if (tile == null)
+            return;
+        const source = this.tileSet.getCoordinateForTile(tile);
+        const size = this.tileSet.tileSize;
+        const globalPos = this.toGlobal({ x, y });
+        const globalCenter = this.toGlobal(this.center);
+        const relPosFromCenter = sub(globalPos, globalCenter);
+        const localPos = add(this.canvasCenter, relPosFromCenter);
+        this.context.drawImage(
+        // Source
+        this.tileSet.image, source.x, source.y, size, size, 
+        // Target
+        localPos.x, localPos.y, size, size);
+    }
+    toGlobal(vec) {
+        return mult(vec, this.tileSize);
+    }
+    get tileSize() {
+        return { x: this.tileSet.tileSize, y: this.tileSet.tileSize };
+    }
+    get canvasCenter() {
+        return { x: this.canvas.width / 2, y: this.canvas.height / 2 };
     }
 }
 
@@ -1389,25 +1516,28 @@ const SPECIAL_KEY_MAP = {
     'Enter': 13,
     'Escape': 27,
 };
-class Game {
+class GameScreen extends Screen {
     constructor() {
+        super();
         this.resize$ = new Subject();
-        this.inputHandler = this;
-        document.onkeydown = (e) => {
-            console.log(e.key);
-            this.inputHandler.onInput(e);
-        };
-        document.body.onresize = (e) => this.resize$.next();
-        this.resize$.pipe(debounceTime(200)).subscribe(() => this.tilemap.onResize());
-        const canvas = document.querySelector("canvas");
-        const cursor = document.querySelector("#cursor");
+        this.resizeListener = (e) => this.resize$.next();
         this.tileset = new TileSet("Nevanda.png", 32, 40);
-        this.tilemap = new TileMap(canvas, cursor, this.tileset);
-        this.inventory = new Inventory(document.querySelector('#inventory'), this.tileset);
-        this.console = new Console(document.querySelector("#output"));
-        this.status = new StatusLine(document.querySelector("#status"));
+        this.tilemap = new TileMap(this.elem, this.tileset);
+        this.inventory = new Inventory(this.elem, this.tileset);
+        this.console = new Console(this.elem);
+        this.status = new StatusLine(this.elem);
+        this.resize$.pipe(debounceTime(200)).subscribe(() => { var _a; return (_a = this.tilemap) === null || _a === void 0 ? void 0 : _a.onResize(); });
+        this.changeInput(this);
     }
-    onInput(e) {
+    show() {
+        super.show();
+        document.body.onresize = this.resizeListener.bind(this);
+    }
+    hide() {
+        super.hide();
+        document.body.removeEventListener('onresize', this.resizeListener.bind(this));
+    }
+    input(e) {
         if (e.key === "Control" || e.key === "Shift")
             return;
         if (e.key.length === 1 || SPECIAL_KEY_MAP[e.key]) {
@@ -1439,46 +1569,72 @@ class Game {
         const menu = new Menu(prompt, items, count, this.tileset);
         menu.onSelect = ids => {
             window.nethackJS.selectMenu(ids);
-            this.inputHandler = this;
+            this.resetInput();
             Dialog.removeAll(); // sometimes not closed?
         };
-        this.inputHandler = menu;
-        document.body.append(menu.elem);
+        this.changeInput(menu);
+        this.elem.appendChild(menu.elem);
     }
     openDialog(text) {
         const dialog = new Dialog(text);
         dialog.onClose = () => {
             window.nethackJS.sendInput(0);
-            this.inputHandler = this;
+            this.resetInput();
         };
-        this.inputHandler = dialog;
-        document.body.append(dialog.elem);
+        this.changeInput(dialog);
+        this.elem.appendChild(dialog.elem);
     }
     openGetLine(question, autocomplete) {
         const line = new Line(question, autocomplete);
         line.onLineEnter = (line) => {
             window.nethackJS.sendLine(line);
-            this.inputHandler = this;
+            this.resetInput();
             Dialog.removeAll(); // Usually not opened as a dialog, so close it ourself
         };
-        this.inputHandler = line;
-        document.body.append(line.elem);
+        this.changeInput(line);
+        this.elem.appendChild(line.elem);
         line.focus();
     }
 }
 
+class Game {
+    constructor() {
+        document.onkeydown = (e) => {
+            var _a;
+            (_a = this.current) === null || _a === void 0 ? void 0 : _a.onInput(e);
+        };
+        window.onload = () => {
+            this.changeScreen(this.start);
+        };
+        this.game = new GameScreen();
+        this.start = new StartScreen();
+        this.start.onStartGame = () => {
+            this.changeScreen(this.game);
+            window.nethackJS.startGame();
+        };
+    }
+    changeScreen(screen) {
+        if (this.current) {
+            this.current.hide();
+        }
+        this.current = screen;
+        this.current.show();
+    }
+}
+
 const game = new Game();
+const main = game.game;
 window.nethackUI = {
-    openMenu: (winid, prompt, count, ...items) => game.openMenu(prompt, count, items),
-    openQuestion: (question, ...choices) => game.console.appendLine(`\n${question} ${choices}`),
-    openGetLine: (question, ...autocomplete) => game.openGetLine(question, autocomplete),
-    openDialog: (winid, text) => game.openDialog(text),
+    openMenu: (winid, prompt, count, ...items) => main.openMenu(prompt, count, items),
+    openQuestion: (question, ...choices) => main.console.appendLine(`\n${question} ${choices}`),
+    openGetLine: (question, ...autocomplete) => main.openGetLine(question, autocomplete),
+    openDialog: (winid, text) => main.openDialog(text),
     closeDialog: (winid) => Dialog.removeAll(),
-    printLine: (line) => game.console.appendLine(line),
-    moveCursor: (x, y) => game.tilemap.recenter({ x, y }),
-    centerView: (x, y) => game.tilemap.recenter({ x, y }),
-    clearMap: () => game.tilemap.clearMap(),
-    updateMap: (...tiles) => game.tilemap.addTile(...tiles),
-    updateStatus: (s) => game.status.update(s),
-    updateInventory: (...items) => game.inventory.updateItems(items),
+    printLine: (line) => main.console.appendLine(line),
+    moveCursor: (x, y) => main.tilemap.recenter({ x, y }),
+    centerView: (x, y) => main.tilemap.recenter({ x, y }),
+    clearMap: () => main.tilemap.clearMap(),
+    updateMap: (...tiles) => main.tilemap.addTile(...tiles),
+    updateStatus: (s) => main.status.update(s),
+    updateInventory: (...items) => main.inventory.updateItems(items),
 };
