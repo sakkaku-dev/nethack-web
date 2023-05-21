@@ -1,6 +1,6 @@
-import { Item } from "../models";
+import { Item } from "../../models";
 import { Dialog } from "./dialog";
-import { CANCEL_KEY, CONTINUE_KEY, InputHandler } from "./input";
+import { CANCEL_KEY, CONTINUE_KEY, InputHandler } from "../input";
 import { TileSet } from "./tilemap";
 
 export class Menu extends Dialog implements InputHandler {

@@ -1,4 +1,4 @@
-import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, race, skip, tap } from "rxjs";
+import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
 import { Item, NetHackJS, Status, NetHackUI, Tile } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
@@ -71,6 +71,7 @@ export class NetHackWrapper implements NetHackJS {
   private idCounter = 0;
   private menu: MenuSelect = { winid: 0, items: [], count: 0, prompt: "" };
   private putStr = "";
+  private backupFile = '';
 
   private input$ = new Subject<number>();
   private selectedMenu$ = new Subject<number[]>();
@@ -122,13 +123,23 @@ export class NetHackWrapper implements NetHackJS {
     if (!this.module.preRun) {
       this.module.preRun = [];
     }
-    this.module.preRun.push(() => this.loadSaveFiles());
+    this.module.preRun.push(() => {
+      this.loadSaveFiles();
+
+      if (this.backupFile) {
+        this.loadBackupSaveFile(this.backupFile);
+      }
+    });
   }
 
   private log(...args: any[]) {
     if (this.debug) {
       console.log(...args);
     }
+  }
+
+  public setBackupFile(file: string) {
+    this.backupFile = file;
   }
 
   public startGame() {
@@ -278,7 +289,18 @@ export class NetHackWrapper implements NetHackJS {
         console.warn('Failed to sync FS. Save might not work', err);
       }
     });
+  }
 
+  public getBackupFiles(): string[] {
+    const result: string[] = [];
+    for (let i = 0, len = localStorage.length; i < len; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(SAVE_FILES_STORAGE_KEY)) {
+        result.push(key.substring(SAVE_FILES_STORAGE_KEY.length + 1));
+      }
+    }
+
+    return result;
   }
 
   private loadBackupSaveFile(file: string) {
@@ -286,13 +308,15 @@ export class NetHackWrapper implements NetHackJS {
     if (strData) {
       const { data } = JSON.parse(strData);
       try {
-        const data = atob(strData);
-        var buf = new ArrayBuffer(data.length);
+        const bytes = atob(data);
+        var buf = new ArrayBuffer(bytes.length);
         var array = new Uint8Array(buf);
-        for (var i = 0; i < data.length; ++i)
-          array[i] = data.charCodeAt(i);
+        for (var i = 0; i < bytes.length; ++i)
+          array[i] = bytes.charCodeAt(i);
         this.module.FS.writeFile(file, array, { encoding: 'binary' });
-      } catch (e) { }
+      } catch (e) {
+        console.warn('Failed to load backup file', e)
+      }
     }
   }
 

@@ -1,5 +1,5 @@
 import { Dialog } from "./dialog";
-import { CANCEL_KEY, InputHandler } from "./input";
+import { CANCEL_KEY, InputHandler } from "../input";
 
 export class Line extends Dialog implements InputHandler {
 

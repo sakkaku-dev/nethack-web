@@ -1,4 +1,4 @@
-import { Vector, Tile, mult, add, sub } from "../models";
+import { Vector, Tile, mult, add, sub } from "../../models";
 
 export class TileSet {
   image: HTMLImageElement;
@@ -38,9 +38,20 @@ export class TileMap {
   private context: CanvasRenderingContext2D;
   private center: Vector = { x: 0, y: 0 };
   private tiles: number[][] = [];
+  private canvas: HTMLCanvasElement;
+  private cursor: HTMLImageElement;
 
-  constructor(private canvas: HTMLCanvasElement, private cursor: HTMLElement, private tileSet: TileSet) {
-    this.context = canvas.getContext("2d")!;
+  constructor(root: HTMLElement, private tileSet: TileSet) {
+    this.canvas = document.createElement('canvas');
+    this.canvas.id = 'map';
+    this.cursor = document.createElement('img');
+    this.cursor.src = 'cursor.png';
+    this.cursor.id = 'cursor';
+
+    root.appendChild(this.canvas);
+    root.appendChild(this.cursor);
+
+    this.context = this.canvas.getContext("2d")!;
     this.updateCanvasSize();
     this.clearCanvas();
   }
