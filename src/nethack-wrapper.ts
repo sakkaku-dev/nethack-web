@@ -269,6 +269,8 @@ export class NetHackWrapper implements NetHackJS {
       for (let i = 0; i < savefiles.length; ++i) {
         let file = savefiles[i];
         if (file == '.' || file == '..') continue;
+        if (file === 'record') continue; // This is just in save folder, so it gets persisted, nethack should not delete it like the save file
+
         file = '/nethack/save/' + file;
         try {
           const data = btoa(String.fromCharCode.apply(null, this.module.FS.readFile(file, { encoding: 'binary' })));
