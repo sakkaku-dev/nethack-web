@@ -71,14 +71,8 @@ export class Inventory {
                     rows.push(current);
                     current = newRow();
                 } else {
-                    const img = this.tileset.createBackgroundImage(item.tile);
-
                     // Inventory should always have accelerator
-                    const accel = document.createElement('div');
-                    accel.innerHTML = String.fromCharCode(item.accelerator);
-                    accel.classList.add('accel');
-                    img.appendChild(accel);
-
+                    const img = this.tileset.createBackgroundImage(item.tile, item.accelerator);
                     const desc = parse_inventory_description(item);
                     if (desc.count > 1) {
                         const count = document.createElement('div');

@@ -24,9 +24,18 @@ index b606b5db1..579058bf6 100644
  #define COMPRESS "/usr/bin/compress" /* Lempel-Ziv compression */
  #define COMPRESS_EXTENSION ".Z"      /* compress's extension */
 diff --git a/include/global.h b/include/global.h
-index a2b70d258..fc1cc050d 100644
+index a2b70d258..51a1c0632 100644
 --- a/include/global.h
 +++ b/include/global.h
+@@ -29,7 +29,7 @@
+  * Files expected to exist in the playground directory.
+  */
+ 
+-#define RECORD "record"         /* file containing list of topscorers */
++#define RECORD "save/record"         /* file containing list of topscorers */
+ #define HELP "help"             /* file containing command descriptions */
+ #define SHELP "hh"              /* abbreviated form of the same */
+ #define KEYHELP "keyhelp"       /* explanatory text for 'whatdoes' command */
 @@ -243,7 +243,7 @@ typedef uchar nhsym;
  #endif
  

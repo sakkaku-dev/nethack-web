@@ -1,4 +1,5 @@
 import { Vector, Tile, mult, add, sub } from "../../models";
+import { accelStyle, rel } from "../styles";
 
 export class TileSet {
   image: HTMLImageElement;
@@ -20,7 +21,7 @@ export class TileSet {
     return { x: pos.x * this.tileSize, y: pos.y * this.tileSize };
   }
 
-  createBackgroundImage(tile: number) {
+  createBackgroundImage(tile: number, accelerator: number = 0) {
     const div = document.createElement('div');
     div.style.width = `${this.tileSize}px`;
     div.style.height = `${this.tileSize}px`;
@@ -30,6 +31,17 @@ export class TileSet {
     const pos = this.getTilePosition(tile);
     const realPos = mult(pos, { x: this.tileSize, y: this.tileSize });
     div.style.backgroundPosition = `-${realPos.x}px -${realPos.y}px`;
+
+    if (accelerator !== 0) {
+      const accel = document.createElement('div');
+      accel.innerHTML = String.fromCharCode(accelerator);
+      accel.classList.add('accel');
+      div.appendChild(accel);
+
+      rel(div);
+      accelStyle(accel);
+    }
+
     return div;
   }
 }

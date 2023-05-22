@@ -2,6 +2,7 @@ import { Item } from "../../models";
 import { Dialog } from "./dialog";
 import { CANCEL_KEY, CONTINUE_KEY, InputHandler } from "../input";
 import { TileSet } from "./tilemap";
+import { horiz } from "../styles";
 
 export class Menu extends Dialog implements InputHandler {
 
@@ -56,27 +57,38 @@ export class Menu extends Dialog implements InputHandler {
 
         items.forEach((i) => {
             const div = document.createElement("div");
+            horiz(div);
             if (i.identifier !== 0) {
-                const elem = document.createElement("input");
-                const label = document.createElement("label");
                 const id = `menu-${i.identifier}`;
-                const hasAccel = i.accelerator !== 0;
-                // Hopefully when accel does not exist, then none of the items have one
-                const accel = String.fromCharCode(hasAccel ? i.accelerator : accelStart);
-                accelStart += 1;
 
-                this.accelMap[accel] = elem;
-
+                const elem = document.createElement("input");
                 elem.type = count === 1 ? "radio" : "checkbox";
                 elem.name = "menuSelect";
                 elem.id = id;
                 elem.disabled = i.identifier === 0;
                 elem.checked = i.active;
                 elem.value = `${i.identifier}`;
+
+                const hasAccel = i.accelerator !== 0;
+
+                // Hopefully when accel does not exist, then none of the items have one
+                const accel = hasAccel ? i.accelerator : accelStart;
+                accelStart += 1;
+                this.accelMap[String.fromCharCode(accel)] = elem;
+
+                const label = document.createElement("label");
                 label.htmlFor = id;
-                label.innerHTML = `${accel} - ${i.str}`;
+                label.innerHTML = i.str;
+
                 div.appendChild(elem);
+                if (i.tile !== 0) {
+                    const img = this.tileset.createBackgroundImage(i.tile, accel);
+                    div.appendChild(img);
+                } else {
+                    label.innerHTML = `${String.fromCharCode(accel)} - ${label.innerHTML}`;
+                }
                 div.appendChild(label);
+
             } else {
                 div.appendChild(document.createTextNode(i.str || ' '));
             }

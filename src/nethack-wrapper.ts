@@ -269,6 +269,8 @@ export class NetHackWrapper implements NetHackJS {
       for (let i = 0; i < savefiles.length; ++i) {
         let file = savefiles[i];
         if (file == '.' || file == '..') continue;
+        if (file === 'record') continue; // This is just in save folder, so it gets persisted, nethack should not delete it like the save file
+
         file = '/nethack/save/' + file;
         try {
           const data = btoa(String.fromCharCode.apply(null, this.module.FS.readFile(file, { encoding: 'binary' })));
@@ -452,7 +454,7 @@ export class NetHackWrapper implements NetHackJS {
   // Utils
   private selectItems(itemIds: number[], selectedPointer: number) {
     const int_size = 4;
-    const size = int_size * 3; // selected object has 3 fields
+    const size = int_size * 2; // selected object has 3 fields, in 3.6 only 2
     const total_size = size * itemIds.length;
     const start_ptr = this.module._malloc(total_size);
 
@@ -461,7 +463,7 @@ export class NetHackWrapper implements NetHackJS {
     itemIds.forEach((id) => {
       this.global.helpers.setPointerValue("nethack.menu.selected", ptr, Type.INT, id);
       this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size, Type.INT, -1);
-      this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size * 2, Type.INT, 0);
+      // this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size * 2, Type.INT, 0); // Only 2 properties in 3.6
 
       ptr += size;
     });
