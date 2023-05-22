@@ -21,6 +21,8 @@ export class Dialog implements InputHandler {
     }
 
     onInput(e: KeyboardEvent): void {
+        e.preventDefault();
+
         if ([...CANCEL_KEY, ...CONTINUE_KEY].includes(e.key)) {
             this.onClose();
         }

@@ -4,7 +4,7 @@ import { Console } from "../components/console";
 import { Dialog } from "../components/dialog";
 import { Inventory } from "../components/inventory";
 import { Line } from "../components/line";
-import { Menu } from "../components/menu";
+import { Menu, MenuItem } from "../components/menu";
 import { StatusLine } from "../components/status";
 import { TileSet, TileMap } from "../components/tilemap";
 import { Screen } from "./screen";
@@ -79,9 +79,10 @@ export class GameScreen extends Screen {
 
 
     public openMenu(prompt: string, count: number, items: Item[]) {
-        const menu = new Menu(prompt, items, count, this.tileset!);
+        const menuItems: MenuItem[] = items.map(i => ({ text: i.str, id: i.identifier, tile: i.tile, active: i.active, accelerator: i.accelerator }));
+        const menu = new Menu(prompt, menuItems, count, this.tileset!);
         menu.onSelect = ids => {
-            window.nethackJS.selectMenu(ids);
+            window.nethackJS.selectMenu(ids.map(i => parseInt(i)));
             this.resetInput();
             Dialog.removeAll() // sometimes not closed?
         };
