@@ -970,10 +970,10 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..044e5a86c
+index 000000000..9d2d81b89
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,1105 @@
+@@ -0,0 +1,1112 @@
 +#include "hack.h"
 +#include "dlb.h"
 +#include "func_tab.h"
@@ -1082,7 +1082,9 @@ index 000000000..044e5a86c
 +VDECLCB(shim_wait_synch,(void), "v")
 +VDECLCB(shim_cliparound,(int x, int y), "vii", A2P x, A2P y)
 +VDECLCB(shim_update_positionbar,(char *posbar), "vp", P2V posbar)
-+VDECLCB(shim_print_glyph,(winid w, int x, int y, int glyph, int bkglyph), "viiiii", A2P w, A2P x, A2P y, A2P glyph, A2P bkglyph)
++
++void shim_print_glyph(winid w, int x, int y, int glyph, int bkglyph);
++
 +VDECLCB(shim_raw_print,(const char *str), "vs", P2V str)
 +VDECLCB(shim_raw_print_bold,(const char *str), "vs", P2V str)
 +DECLCB(int, shim_nhgetch,(void), "i")
@@ -2003,6 +2005,11 @@ index 000000000..044e5a86c
 +	shim_can_suspend,
 +};
 +
++
++// Improves map rendering performance, Asyncifiy makes it too slow and we don't need async anyway
++EM_JS(void, shim_print_glyph, (winid w, int x, int y, int glyph, int bkglyph), {
++    globalThis.nethackJS.handle('shim_print_glyph', w, x, y, glyph, bkglyph);
++})
 +
 +/* convert the C callback to a JavaScript callback */
 +EM_JS(void, local_callback, (const char *cb_name, const char *shim_name, void *ret_ptr, const char *fmt_str, void *args), {
