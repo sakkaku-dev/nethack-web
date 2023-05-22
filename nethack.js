@@ -1552,6 +1552,7 @@ var Command;
     Command["GET_EXT_CMD"] = "shim_get_ext_cmd_helper";
     Command["GET_HISTORY"] = "shim_getmsghistory";
     Command["MESSAGE_MENU"] = "shim_message_menu";
+    Command["DELAY_OUTPUT"] = "shim_delay_output";
     Command["STATUS_INIT"] = "shim_status_init";
     Command["STATUS_UPDATE"] = "shim_status_update";
     Command["CREATE_WINDOW"] = "shim_create_nhwindow";
@@ -1645,6 +1646,10 @@ const conditionMap = {
 const SAVE_FILES_STORAGE_KEY = 'sakkaku-dev-nethack-savefiles';
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 class NetHackWrapper {
+    async messageMenu(dismissAccel, how, mesg) {
+        // Just information? currently known usage with (z)ap followed by (?)
+        this.ui.printLine(mesg);
+    }
     constructor(debug = false, module, win = window) {
         this.debug = debug;
         this.module = module;
@@ -1678,6 +1683,9 @@ class NetHackWrapper {
             [Command.ASK_NAME]: this.waitInput.bind(this),
             [Command.GET_LINE]: this.getLine.bind(this),
             [Command.GET_EXT_CMD]: this.getExtCmd.bind(this),
+            // according to window.doc, a 50ms delay, but add more since drawing the tile takes longer
+            [Command.DELAY_OUTPUT]: () => new Promise(resolve => setTimeout(resolve, 100)),
+            [Command.MESSAGE_MENU]: this.messageMenu.bind(this),
             // TODO: message_menu
             // TODO: select_menu with yn_function
         };
