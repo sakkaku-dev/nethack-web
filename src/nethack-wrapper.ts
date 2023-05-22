@@ -64,6 +64,10 @@ export class NetHackWrapper implements NetHackJS {
     [Command.GET_LINE]: this.getLine.bind(this),
     [Command.GET_EXT_CMD]: this.getExtCmd.bind(this),
 
+    // according to window.doc, a 50ms delay, but add more since drawing the tile takes longer
+    [Command.DELAY_OUTPUT]: () => new Promise(resolve => setTimeout(resolve, 100)),
+    [Command.MESSAGE_MENU]: this.messageMenu.bind(this),
+
     // TODO: message_menu
     // TODO: select_menu with yn_function
   };
@@ -82,6 +86,11 @@ export class NetHackWrapper implements NetHackJS {
   private tiles$ = new BehaviorSubject<Tile[]>([]);
   private awaitingInput$ = new BehaviorSubject(false);
   private playing$ = new BehaviorSubject(false);
+
+  private async messageMenu(dismissAccel: string, how: number, mesg: string) {
+    // Just information? currently known usage with (z)ap followed by (?)
+    this.ui.printLine(mesg);
+  }
 
   constructor(private debug = false, private module: any, private win: typeof window = window) {
     this.tiles$

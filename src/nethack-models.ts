@@ -12,6 +12,7 @@ export enum Command {
 
   GET_HISTORY = "shim_getmsghistory",
   MESSAGE_MENU = "shim_message_menu",
+  DELAY_OUTPUT = "shim_delay_output",
 
   STATUS_INIT = "shim_status_init",
   STATUS_UPDATE = "shim_status_update",
