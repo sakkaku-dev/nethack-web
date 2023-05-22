@@ -5,11 +5,15 @@ class Dialog {
     constructor(text) {
         this.onClose = () => { };
         this.elem = document.createElement('pre');
-        this.elem.innerHTML = text;
+        this.elem.innerHTML = this.escapeHtml(text);
         this.elem.classList.add("dialog");
         setTimeout(() => {
             this.elem.classList.add("open");
         }, 100);
+    }
+    /// https://stackoverflow.com/questions/6234773/can-i-escape-html-special-chars-in-javascript
+    escapeHtml(unsafe) {
+        return unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
     }
     onInput(e) {
         if ([...CANCEL_KEY, ...CONTINUE_KEY].includes(e.key)) {
@@ -73,10 +77,28 @@ function topLeft(elem) {
     elem.style.top = '0';
     elem.style.left = '0';
 }
+function topRight(elem) {
+    elem.style.position = 'absolute';
+    elem.style.top = '0';
+    elem.style.right = '0';
+}
 function center(elem) {
     elem.style.display = 'flex';
     elem.style.justifyContent = 'center';
     elem.style.alignItems = 'center';
+}
+function horiz(elem) {
+    elem.style.display = 'flex';
+    elem.style.gap = '0.5rem';
+    elem.style.alignItems = 'center';
+}
+function rel(elem) {
+    elem.style.position = 'relative';
+}
+function accelStyle(elem) {
+    topRight(elem);
+    elem.style.background = '#00000099';
+    elem.style.padding = '0 0.1rem';
 }
 
 class Screen {
@@ -1218,12 +1240,8 @@ class Inventory {
                 current = newRow();
             }
             else {
-                const img = this.tileset.createBackgroundImage(item.tile);
                 // Inventory should always have accelerator
-                const accel = document.createElement('div');
-                accel.innerHTML = String.fromCharCode(item.accelerator);
-                accel.classList.add('accel');
-                img.appendChild(accel);
+                const img = this.tileset.createBackgroundImage(item.tile, item.accelerator);
                 const desc = parse_inventory_description(item);
                 if (desc.count > 1) {
                     const count = document.createElement('div');
@@ -1347,24 +1365,32 @@ class Menu extends Dialog {
         list.id = "menu";
         items.forEach((i) => {
             const div = document.createElement("div");
+            horiz(div);
             if (i.identifier !== 0) {
-                const elem = document.createElement("input");
-                const label = document.createElement("label");
                 const id = `menu-${i.identifier}`;
-                const hasAccel = i.accelerator !== 0;
-                // Hopefully when accel does not exist, then none of the items have one
-                const accel = String.fromCharCode(hasAccel ? i.accelerator : accelStart);
-                accelStart += 1;
-                this.accelMap[accel] = elem;
+                const elem = document.createElement("input");
                 elem.type = count === 1 ? "radio" : "checkbox";
                 elem.name = "menuSelect";
                 elem.id = id;
                 elem.disabled = i.identifier === 0;
                 elem.checked = i.active;
                 elem.value = `${i.identifier}`;
+                const hasAccel = i.accelerator !== 0;
+                // Hopefully when accel does not exist, then none of the items have one
+                const accel = hasAccel ? i.accelerator : accelStart;
+                accelStart += 1;
+                this.accelMap[String.fromCharCode(accel)] = elem;
+                const label = document.createElement("label");
                 label.htmlFor = id;
-                label.innerHTML = `${accel} - ${i.str}`;
+                label.innerHTML = i.str;
                 div.appendChild(elem);
+                if (i.tile !== 0) {
+                    const img = this.tileset.createBackgroundImage(i.tile, accel);
+                    div.appendChild(img);
+                }
+                else {
+                    label.innerHTML = `${String.fromCharCode(accel)} - ${label.innerHTML}`;
+                }
                 div.appendChild(label);
             }
             else {
@@ -1417,7 +1443,7 @@ class TileSet {
         const pos = this.getTilePosition(tile);
         return { x: pos.x * this.tileSize, y: pos.y * this.tileSize };
     }
-    createBackgroundImage(tile) {
+    createBackgroundImage(tile, accelerator = 0) {
         const div = document.createElement('div');
         div.style.width = `${this.tileSize}px`;
         div.style.height = `${this.tileSize}px`;
@@ -1426,6 +1452,14 @@ class TileSet {
         const pos = this.getTilePosition(tile);
         const realPos = mult(pos, { x: this.tileSize, y: this.tileSize });
         div.style.backgroundPosition = `-${realPos.x}px -${realPos.y}px`;
+        if (accelerator !== 0) {
+            const accel = document.createElement('div');
+            accel.innerHTML = String.fromCharCode(accelerator);
+            accel.classList.add('accel');
+            div.appendChild(accel);
+            rel(div);
+            accelStyle(accel);
+        }
         return div;
     }
 }
@@ -1526,7 +1560,7 @@ class GameScreen extends Screen {
         this.inventory = new Inventory(this.elem, this.tileset);
         this.console = new Console(this.elem);
         this.status = new StatusLine(this.elem);
-        this.resize$.pipe(debounceTime(200)).subscribe(() => { var _a; return (_a = this.tilemap) === null || _a === void 0 ? void 0 : _a.onResize(); });
+        this.resize$.pipe(debounceTime(200)).subscribe(() => this.tilemap?.onResize());
         this.changeInput(this);
     }
     show() {
@@ -1600,8 +1634,7 @@ class GameScreen extends Screen {
 class Game {
     constructor() {
         document.onkeydown = (e) => {
-            var _a;
-            (_a = this.current) === null || _a === void 0 ? void 0 : _a.onInput(e);
+            this.current?.onInput(e);
         };
         window.onload = () => {
             this.changeScreen(this.start);
