@@ -16,6 +16,7 @@ class Dialog {
         return unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
     }
     onInput(e) {
+        e.preventDefault();
         if ([...CANCEL_KEY, ...CONTINUE_KEY].includes(e.key)) {
             this.onClose();
         }
@@ -25,43 +26,6 @@ class Dialog {
             elem.classList.remove("open");
             setTimeout(() => elem.remove(), 200);
         });
-    }
-}
-
-class BackupFiles extends Dialog {
-    constructor(files) {
-        super('Backup Files');
-        this.onFileSelect = (file) => { };
-        const list = document.createElement('div');
-        list.style.display = 'flex';
-        list.style.flexDirection = 'column';
-        list.id = 'menu';
-        files.forEach(file => {
-            const item = document.createElement('div');
-            const input = document.createElement('input');
-            input.type = 'radio';
-            input.value = file;
-            input.name = '';
-            const label = document.createElement('label');
-            label.innerHTML = file;
-            item.appendChild(input);
-            item.appendChild(label);
-            list.appendChild(item);
-        });
-        this.elem.appendChild(list);
-        this.elem.append(this.createSelectButton());
-    }
-    createSelectButton() {
-        const btn = document.createElement("button");
-        btn.innerHTML = "Submit";
-        btn.onclick = () => {
-            const inputs = Array.from(document.querySelectorAll("#menu input"));
-            const ids = inputs.filter((i) => i.checked && !i.disabled).map(i => i.value);
-            if (ids.length > 0) {
-                this.onFileSelect(ids[0]);
-            }
-        };
-        return btn;
     }
 }
 
@@ -99,6 +63,114 @@ function accelStyle(elem) {
     topRight(elem);
     elem.style.background = '#00000099';
     elem.style.padding = '0 0.1rem';
+}
+
+class Menu extends Dialog {
+    constructor(prompt, items, count, tileset) {
+        super(prompt);
+        this.tileset = tileset;
+        this.onSelect = (ids) => { };
+        this.accelMap = {};
+        this.elem.appendChild(this.createMenu(items, count));
+        this.submitButton = this.createSelectButton();
+        this.elem.appendChild(this.submitButton);
+    }
+    onInput(e) {
+        e.preventDefault();
+        if (CANCEL_KEY.includes(e.key)) {
+            this.onSelect([]);
+        }
+        else if (CONTINUE_KEY.includes(e.key)) {
+            this.submitButton.click();
+        }
+        else {
+            const option = this.accelMap[e.key];
+            if (option && !option.disabled) {
+                option.checked = !option.checked;
+                // if (this.count === 1) {
+                //     this.submitButton.click();
+                // }
+            }
+        }
+    }
+    createSelectButton() {
+        const btn = document.createElement("button");
+        btn.innerHTML = "Submit";
+        btn.onclick = () => {
+            const inputs = Array.from(document.querySelectorAll("#menu input"));
+            const ids = inputs.filter((i) => i.checked && !i.disabled).map((i) => i.value);
+            this.onSelect(ids);
+        };
+        return btn;
+    }
+    createMenu(items, count) {
+        let accelStart = 'a'.charCodeAt(0);
+        this.accelMap = {};
+        const list = document.createElement("div");
+        list.style.display = "flex";
+        list.style.flexDirection = "column";
+        list.id = "menu";
+        items.forEach((i) => {
+            const div = document.createElement("div");
+            horiz(div);
+            if (i.id !== 0) {
+                const id = `menu-${i.id}`;
+                const elem = document.createElement("input");
+                elem.type = count === 1 ? "radio" : "checkbox";
+                elem.name = "menuSelect";
+                elem.id = id;
+                elem.checked = i.active || false;
+                elem.value = `${i.id}`;
+                // Hopefully when accel does not exist, then none of the items have one
+                const accel = !!i.accelerator ? i.accelerator : accelStart;
+                accelStart += 1;
+                this.accelMap[String.fromCharCode(accel)] = elem;
+                const label = document.createElement("label");
+                label.htmlFor = id;
+                label.innerHTML = i.text;
+                div.appendChild(elem);
+                if (i.tile && this.tileset) {
+                    const img = this.tileset.createBackgroundImage(i.tile, accel);
+                    div.appendChild(img);
+                }
+                else {
+                    label.innerHTML = `${String.fromCharCode(accel)} - ${label.innerHTML}`;
+                }
+                div.appendChild(label);
+            }
+            else {
+                div.appendChild(document.createTextNode(i.text || ' '));
+            }
+            list.appendChild(div);
+        });
+        return list;
+    }
+    ;
+}
+
+class BackupFiles extends Menu {
+    constructor(files) {
+        super('Select Backup File', files.map(f => ({ text: f, id: f })), 1);
+        // const list = document.createElement('div')
+        // list.style.display = 'flex';
+        // list.style.flexDirection = 'column';
+        // list.id = 'menu';
+        // files.forEach(file => {
+        //     const item = document.createElement('div');
+        //     const input = document.createElement('input');
+        //     input.type = 'radio';
+        //     input.value = file;
+        //     input.name = ''
+        //     const label = document.createElement('label');
+        //     label.innerHTML = file;
+        //     item.appendChild(input);
+        //     item.appendChild(label);
+        //     list.appendChild(item);
+        // });
+        // this.elem.appendChild(list);
+        // this.submitButton = this.createSelectButton();
+        // this.elem.append(this.submitButton);
+    }
 }
 
 class Screen {
@@ -154,10 +226,14 @@ class StartScreen extends Screen {
     openBackupFiles() {
         const files = window.nethackJS.getBackupFiles();
         const backup = new BackupFiles(files);
-        backup.onFileSelect = (file) => {
-            window.nethackJS.setBackupFile(file);
+        backup.onSelect = (files) => {
+            if (files.length) {
+                window.nethackJS.setBackupFile(files[0]);
+            }
+            this.resetInput();
             Dialog.removeAll();
         };
+        this.changeInput(backup);
         this.elem.appendChild(backup.elem);
     }
 }
@@ -1318,91 +1394,6 @@ class Line extends Dialog {
     }
 }
 
-class Menu extends Dialog {
-    constructor(prompt, items, count, tileset) {
-        super(prompt);
-        this.count = count;
-        this.tileset = tileset;
-        this.onSelect = (ids) => { };
-        this.accelMap = {};
-        this.elem.appendChild(this.createMenu(items, count));
-        this.submitButton = this.createSelectButton();
-        this.elem.appendChild(this.submitButton);
-    }
-    onInput(e) {
-        if (CANCEL_KEY.includes(e.key)) {
-            this.onSelect([]);
-        }
-        else if (CONTINUE_KEY.includes(e.key)) {
-            this.submitButton.click();
-        }
-        else {
-            const option = this.accelMap[e.key];
-            if (option && !option.disabled) {
-                option.checked = !option.checked;
-                // if (this.count === 1) {
-                //     this.submitButton.click();
-                // }
-            }
-        }
-    }
-    createSelectButton() {
-        const btn = document.createElement("button");
-        btn.innerHTML = "Submit";
-        btn.onclick = () => {
-            const inputs = Array.from(document.querySelectorAll("#menu input"));
-            const ids = inputs.filter((i) => i.checked && !i.disabled).map((i) => parseInt(i.value));
-            this.onSelect(ids);
-        };
-        return btn;
-    }
-    createMenu(items, count) {
-        let accelStart = 'a'.charCodeAt(0);
-        this.accelMap = {};
-        const list = document.createElement("div");
-        list.style.display = "flex";
-        list.style.flexDirection = "column";
-        list.id = "menu";
-        items.forEach((i) => {
-            const div = document.createElement("div");
-            horiz(div);
-            if (i.identifier !== 0) {
-                const id = `menu-${i.identifier}`;
-                const elem = document.createElement("input");
-                elem.type = count === 1 ? "radio" : "checkbox";
-                elem.name = "menuSelect";
-                elem.id = id;
-                elem.disabled = i.identifier === 0;
-                elem.checked = i.active;
-                elem.value = `${i.identifier}`;
-                const hasAccel = i.accelerator !== 0;
-                // Hopefully when accel does not exist, then none of the items have one
-                const accel = hasAccel ? i.accelerator : accelStart;
-                accelStart += 1;
-                this.accelMap[String.fromCharCode(accel)] = elem;
-                const label = document.createElement("label");
-                label.htmlFor = id;
-                label.innerHTML = i.str;
-                div.appendChild(elem);
-                if (i.tile !== 0) {
-                    const img = this.tileset.createBackgroundImage(i.tile, accel);
-                    div.appendChild(img);
-                }
-                else {
-                    label.innerHTML = `${String.fromCharCode(accel)} - ${label.innerHTML}`;
-                }
-                div.appendChild(label);
-            }
-            else {
-                div.appendChild(document.createTextNode(i.str || ' '));
-            }
-            list.appendChild(div);
-        });
-        return list;
-    }
-    ;
-}
-
 class StatusLine {
     constructor(root) {
         this.elem = document.createElement('pre');
@@ -1600,9 +1591,10 @@ class GameScreen extends Screen {
         }
     }
     openMenu(prompt, count, items) {
-        const menu = new Menu(prompt, items, count, this.tileset);
+        const menuItems = items.map(i => ({ text: i.str, id: i.identifier, tile: i.tile, active: i.active, accelerator: i.accelerator }));
+        const menu = new Menu(prompt, menuItems, count, this.tileset);
         menu.onSelect = ids => {
-            window.nethackJS.selectMenu(ids);
+            window.nethackJS.selectMenu(ids.map(i => parseInt(i)));
             this.resetInput();
             Dialog.removeAll(); // sometimes not closed?
         };
