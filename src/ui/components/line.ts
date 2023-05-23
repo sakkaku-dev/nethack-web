@@ -1,5 +1,6 @@
 import { Dialog } from "./dialog";
 import { CANCEL_KEY, InputHandler } from "../input";
+import { horiz } from "../styles";
 
 export class Line extends Dialog implements InputHandler {
 
@@ -9,6 +10,9 @@ export class Line extends Dialog implements InputHandler {
 
     constructor(question: string, private autocomplete: string[]) {
         super(question);
+        console.log(autocomplete);
+        horiz(this.elem);
+        this.onClose = () => this.onLineEnter('');
 
         const input = document.createElement('input');
         this.input = input;

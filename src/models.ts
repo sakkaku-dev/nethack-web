@@ -25,8 +25,15 @@ export interface NetHackUI {
   updateStatus: (status: Status) => void;
   updateInventory: (...items: Item[]) => void;
 
-  onGameover: () => void;
+  onGameover: (status: GameStatus) => void;
 }
+
+export enum GameStatus {
+  RUNNING,
+  EXITED,
+  ERROR,
+}
+
 
 export interface Vector {
   x: number;

@@ -22,6 +22,8 @@ export class Menu extends Dialog implements InputHandler {
 
     constructor(prompt: string, items: MenuItem[], count: number, private tileset?: TileSet) {
         super(prompt);
+        this.onClose = () => this.onSelect([]);
+
         this.elem.appendChild(this.createMenu(items, count));
 
         this.submitButton = this.createSelectButton()

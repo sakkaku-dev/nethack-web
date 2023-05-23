@@ -10,7 +10,7 @@ export class Dialog implements InputHandler {
         const overlay = document.createElement('div');
         overlay.style.zIndex = '1';
         overlay.classList.add('dialog-overlay');
-        overlay.onclick = () => Dialog.removeAll();
+        overlay.onclick = () => this.onClose();
         fullScreen(overlay);
         document.body.appendChild(overlay);
 

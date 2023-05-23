@@ -1,7 +1,7 @@
 import { StartScreen } from "./screens/start-screen";
 import { GameScreen } from "./screens/game-screen";
 import { Screen } from "./screens/screen";
-import { Item, NetHackUI, Status, Tile } from "../models";
+import { GameStatus, Item, NetHackUI, Status, Tile } from "../models";
 import { Dialog } from "./components/dialog";
 
 export class Game implements NetHackUI {
@@ -42,7 +42,15 @@ export class Game implements NetHackUI {
     updateMap = (...tiles: Tile[]) => this.game.tilemap.addTile(...tiles);
     updateStatus = (s: Status) => this.game.status.update(s);
     updateInventory = (...items: Item[]) => this.game.inventory.updateItems(items);
-    onGameover = () => window.location.reload();
+    onGameover = (status: GameStatus) => {
+        if (status === GameStatus.EXITED) {
+            window.location.reload();
+        } else if (status === GameStatus.ERROR) {
+            this.game.openErrorDialog(() => {
+                window.location.reload();
+            });
+        }
+    }
 
     changeScreen(screen: Screen) {
         if (this.current) {

@@ -84,7 +84,7 @@ export class GameScreen extends Screen {
         menu.onSelect = ids => {
             window.nethackJS.selectMenu(ids.map(i => parseInt(i)));
             this.resetInput();
-            Dialog.removeAll() // sometimes not closed?
+            Dialog.removeAll();
         };
         this.changeInput(menu);
         this.elem.appendChild(menu.elem);
@@ -110,5 +110,18 @@ export class GameScreen extends Screen {
         this.changeInput(line);
         this.elem.appendChild(line.elem);
         line.focus();
+    }
+
+    public openErrorDialog(closed: () => void) {
+        const title = 'An unexpected error occurred.';
+        const unsaved = 'Unfortunately the game progress could not be saved.';
+        const backup = 'Use the "Load from backup" in the main menu to restart from your latest save.';
+        const dialog = new Dialog(`${title}\n${unsaved}\n\n${backup}`)
+        dialog.onClose = () => {
+            this.resetInput();
+            closed();
+        }
+        this.changeInput(dialog);
+        this.elem.appendChild(dialog.elem);
     }
 }

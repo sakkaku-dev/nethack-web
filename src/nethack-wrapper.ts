@@ -1,8 +1,9 @@
 import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
-import { Item, NetHackJS, Status, NetHackUI, Tile } from "./models";
+import { Item, NetHackJS, Status, NetHackUI, Tile, GameStatus } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
 import { Command, ItemFlag, statusMap } from "./nethack-models";
+import { Game } from "./ui/game";
 
 export interface MenuSelect {
   winid: number;
@@ -69,7 +70,6 @@ export class NetHackWrapper implements NetHackJS {
     // TODO: message_menu
     // TODO: select_menu with yn_function
   };
-
   private idCounter = 0;
   private menu: MenuSelect = { winid: 0, items: [], count: 0, prompt: "" };
   private putStr = "";
@@ -83,7 +83,7 @@ export class NetHackWrapper implements NetHackJS {
   private inventory$ = new Subject<Item[]>();
   private tiles$ = new BehaviorSubject<Tile[]>([]);
   private awaitingInput$ = new BehaviorSubject(false);
-  private playing$ = new BehaviorSubject(false);
+  private playing$ = new BehaviorSubject(GameStatus.EXITED);
 
   private async messageMenu(dismissAccel: string, how: number, mesg: string) {
     // Just information? currently known usage with (z)ap followed by (?)
@@ -94,8 +94,8 @@ export class NetHackWrapper implements NetHackJS {
     this.playing$
       .pipe(
         skip(1),
-        filter((x) => !x),
-        tap(() => this.ui.onGameover())
+        filter((x) => !this.isGameRunning()),
+        tap((s) => this.ui.onGameover(s))
       )
       .subscribe();
 
@@ -129,11 +129,17 @@ export class NetHackWrapper implements NetHackJS {
 
     this.win.nethackCallback = this.handle.bind(this);
     this.win.onbeforeunload = (e) => {
-      if (this.playing$.value) {
+      if (this.isGameRunning()) {
         // TODO: auto save?
         return (e.returnValue = "Game progress will be lost if not saved.");
       }
     };
+
+    this.win.onerror = (e) => {
+      if (this.isGameRunning()) {
+        this.playing$.next(GameStatus.ERROR);
+      }
+    }
 
     if (!this.module.preRun) {
       this.module.preRun = [];
@@ -147,6 +153,10 @@ export class NetHackWrapper implements NetHackJS {
     });
   }
 
+  private isGameRunning() {
+    return this.playing$.value === GameStatus.RUNNING;
+  }
+
   private log(...args: any[]) {
     if (this.debug) {
       console.log(...args);
@@ -158,7 +168,7 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   public startGame() {
-    this.playing$.next(true);
+    this.playing$.next(GameStatus.RUNNING);
 
     // cannot be reloaded again, will fail
     // @ts-ignore
@@ -168,7 +178,7 @@ export class NetHackWrapper implements NetHackJS {
       })
       .catch((e) => {
         console.log("Failed to load nethack module", e);
-        this.playing$.next(false);
+        this.playing$.next(GameStatus.ERROR);
       });
   }
 
@@ -277,7 +287,7 @@ export class NetHackWrapper implements NetHackJS {
   private async gameEnd(status: number) {
     console.log("Ended game with status", status);
     this.syncSaveFiles();
-    this.playing$.next(false);
+    this.playing$.next(GameStatus.EXITED);
   }
 
   private syncSaveFiles() {

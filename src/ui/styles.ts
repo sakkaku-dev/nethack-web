@@ -32,6 +32,7 @@ export function vert(elem: HTMLElement) {
 
 export function horiz(elem: HTMLElement) {
     elem.style.display = "flex";
+    elem.style.flexDirection = "row";
     elem.style.gap = "0.5rem";
     elem.style.alignItems = "center";
 }
