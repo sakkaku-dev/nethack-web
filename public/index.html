@@ -2,16 +2,31 @@
   :root {
     --bg-color: black;
     --text-color: white;
+    --shadow: 1px 1px 20px #fff9;
   }
 
   * {
     margin: 0;
     padding: 0;
+    font-family: monospace;
   }
 
   body {
     background: var(--bg-color);
     color: var(--text-color);
+  }
+
+  button {
+    padding: 0.5rem;
+    background: none;
+    color: white;
+    border: 0;
+    border-radius: 0.5rem;
+    cursor: pointer;
+  }
+
+  button:hover {
+    box-shadow: var(--shadow);
   }
 
   #inventory {
@@ -84,11 +99,12 @@
     left: 50%;
     overflow-y: auto;
     background: var(--bg-color);
-    border: 1px solid var(--text-color);
     transition: 0.3s all ease;
     padding: 1rem;
     z-index: 10;
     max-height: 90%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--text-color);
   }
   .dialog.open {
     margin-top: 0;

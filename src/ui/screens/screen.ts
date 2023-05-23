@@ -1,14 +1,21 @@
 import { InputHandler } from "../input";
-import { fullScreen } from "../styles";
+import { center, fullScreen } from "../styles";
 
 export class Screen implements InputHandler {
-
-    public elem: HTMLElement
+    public elem: HTMLElement;
     private inputHandler?: InputHandler;
 
     constructor() {
-        this.elem = document.createElement('div');
+        this.elem = document.createElement("div");
         fullScreen(this.elem);
+        center(this.elem);
+    }
+
+    protected createButton(text: string, onClick: (e: MouseEvent) => void) {
+        const btn = document.createElement("button");
+        btn.innerHTML = text;
+        btn.onclick = onClick;
+        return btn;
     }
 
     changeInput(handler: InputHandler) {

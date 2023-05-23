@@ -1,30 +1,27 @@
 import { BackupFiles } from "../components/backup-files";
 import { Dialog } from "../components/dialog";
-import { center, topLeft } from "../styles";
+import { title, vert } from "../styles";
 import { Screen } from "./screen";
 
 export class StartScreen extends Screen {
-
     onStartGame = () => { };
 
     constructor() {
         super();
 
-        const settings = document.createElement('div');
-        topLeft(settings);
+        const div = document.createElement("div");
+        vert(div);
 
-        const backupBtn = document.createElement('button');
-        backupBtn.innerHTML = 'B';
-        backupBtn.onclick = () => this.openBackupFiles();
-        settings.appendChild(backupBtn);
+        const header = document.createElement("div");
+        header.innerHTML = "Welcome to NetHack";
+        header.style.marginBottom = "2rem";
+        title(header);
+        div.appendChild(header);
 
-        const btn = document.createElement('button');
-        btn.innerHTML = 'Start Game';
-        btn.onclick = () => this.onStartGame();
+        div.appendChild(this.createButton("Start Game", () => this.onStartGame()));
+        div.appendChild(this.createButton("Load from Backup", () => this.openBackupFiles()));
 
-        center(this.elem);
-        this.elem.appendChild(btn);
-        this.elem.appendChild(settings);
+        this.elem.appendChild(div);
     }
 
     public openBackupFiles() {
@@ -40,5 +37,4 @@ export class StartScreen extends Screen {
         this.changeInput(backup);
         this.elem.appendChild(backup.elem);
     }
-
 }

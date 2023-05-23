@@ -2,8 +2,6 @@ import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, t
 import { Item, NetHackJS, Status, NetHackUI, Tile } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
-// @ts-ignore
-import nethackLib from "../lib/nethack";
 import { Command, ItemFlag, statusMap } from "./nethack-models";
 
 export interface MenuSelect {
@@ -93,6 +91,14 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   constructor(private debug = false, private module: any, private win: typeof window = window) {
+    this.playing$
+      .pipe(
+        skip(1),
+        filter((x) => !x),
+        tap(() => this.ui.onGameover())
+      )
+      .subscribe();
+
     this.tiles$
       .pipe(
         skip(1),
@@ -153,7 +159,17 @@ export class NetHackWrapper implements NetHackJS {
 
   public startGame() {
     this.playing$.next(true);
-    nethackLib(this.module);
+
+    // cannot be reloaded again, will fail
+    // @ts-ignore
+    import("../lib/nethack.js")
+      .then((x) => {
+        x.default(this.module);
+      })
+      .catch((e) => {
+        console.log("Failed to load nethack module", e);
+        this.playing$.next(false);
+      });
   }
 
   // Getting input from user
@@ -290,14 +306,14 @@ export class NetHackWrapper implements NetHackJS {
           console.warn("Failed to sync save file", file);
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   private loadSaveFiles() {
     const mod = this.module;
     try {
       mod.FS.mkdir("/nethack/save");
-    } catch (e) {}
+    } catch (e) { }
     mod.FS.mount(mod.IDBFS, {}, "/nethack/save");
     mod.FS.syncfs(true, (err: any) => {
       if (err) {

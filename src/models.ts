@@ -24,6 +24,8 @@ export interface NetHackUI {
   updateMap: (...tiles: Tile[]) => void;
   updateStatus: (status: Status) => void;
   updateInventory: (...items: Item[]) => void;
+
+  onGameover: () => void;
 }
 
 export interface Vector {
