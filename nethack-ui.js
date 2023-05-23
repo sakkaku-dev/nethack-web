@@ -1,11 +1,60 @@
 const CONTINUE_KEY = ['Enter', ' '];
 const CANCEL_KEY = ['Escape'];
 
+function fullScreen(elem) {
+    elem.style.position = "absolute";
+    elem.style.top = "0";
+    elem.style.left = "0";
+    elem.style.right = "0";
+    elem.style.bottom = "0";
+}
+function topRight(elem) {
+    elem.style.position = "absolute";
+    elem.style.top = "0";
+    elem.style.right = "0";
+}
+function center(elem) {
+    elem.style.display = "flex";
+    elem.style.justifyContent = "center";
+    elem.style.alignItems = "center";
+}
+function vert(elem) {
+    elem.style.display = "flex";
+    elem.style.gap = "1rem";
+    elem.style.flexDirection = "column";
+}
+function horiz(elem) {
+    elem.style.display = "flex";
+    elem.style.flexDirection = "row";
+    elem.style.gap = "0.5rem";
+    elem.style.alignItems = "center";
+}
+function rel(elem) {
+    elem.style.position = "relative";
+}
+function accelStyle(elem) {
+    topRight(elem);
+    elem.style.background = "#00000099";
+    elem.style.padding = "0 0.1rem";
+}
+function title(elem) {
+    elem.style.fontSize = "1.5rem";
+    elem.style.fontWeight = "bold";
+    elem.style.padding = "0.5rem 1rem";
+}
+
 class Dialog {
     constructor(text) {
         this.onClose = () => { };
-        this.elem = document.createElement('pre');
+        const overlay = document.createElement('div');
+        overlay.style.zIndex = '1';
+        overlay.classList.add('dialog-overlay');
+        // overlay.onclick = () => this.onClose();
+        fullScreen(overlay);
+        document.body.appendChild(overlay);
+        this.elem = document.createElement("pre");
         this.elem.innerHTML = this.escapeHtml(text);
+        vert(this.elem);
         this.elem.classList.add("dialog");
         setTimeout(() => {
             this.elem.classList.add("open");
@@ -13,7 +62,12 @@ class Dialog {
     }
     /// https://stackoverflow.com/questions/6234773/can-i-escape-html-special-chars-in-javascript
     escapeHtml(unsafe) {
-        return unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+        return unsafe
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
     }
     onInput(e) {
         e.preventDefault();
@@ -24,45 +78,12 @@ class Dialog {
     static removeAll() {
         document.querySelectorAll(`.dialog`).forEach((elem) => {
             elem.classList.remove("open");
-            setTimeout(() => elem.remove(), 200);
+            setTimeout(() => {
+                elem.remove();
+                document.querySelectorAll('.dialog-overlay').forEach(e => e.remove());
+            }, 200);
         });
     }
-}
-
-function fullScreen(elem) {
-    elem.style.position = 'absolute';
-    elem.style.top = '0';
-    elem.style.left = '0';
-    elem.style.right = '0';
-    elem.style.bottom = '0';
-}
-function topLeft(elem) {
-    elem.style.position = 'absolute';
-    elem.style.top = '0';
-    elem.style.left = '0';
-}
-function topRight(elem) {
-    elem.style.position = 'absolute';
-    elem.style.top = '0';
-    elem.style.right = '0';
-}
-function center(elem) {
-    elem.style.display = 'flex';
-    elem.style.justifyContent = 'center';
-    elem.style.alignItems = 'center';
-}
-function horiz(elem) {
-    elem.style.display = 'flex';
-    elem.style.gap = '0.5rem';
-    elem.style.alignItems = 'center';
-}
-function rel(elem) {
-    elem.style.position = 'relative';
-}
-function accelStyle(elem) {
-    topRight(elem);
-    elem.style.background = '#00000099';
-    elem.style.padding = '0 0.1rem';
 }
 
 class Menu extends Dialog {
@@ -71,6 +92,7 @@ class Menu extends Dialog {
         this.tileset = tileset;
         this.onSelect = (ids) => { };
         this.accelMap = {};
+        this.onClose = () => this.onSelect([]);
         this.elem.appendChild(this.createMenu(items, count));
         this.submitButton = this.createSelectButton();
         this.elem.appendChild(this.submitButton);
@@ -175,8 +197,15 @@ class BackupFiles extends Menu {
 
 class Screen {
     constructor() {
-        this.elem = document.createElement('div');
+        this.elem = document.createElement("div");
         fullScreen(this.elem);
+        center(this.elem);
+    }
+    createButton(text, onClick) {
+        const btn = document.createElement("button");
+        btn.innerHTML = text;
+        btn.onclick = onClick;
+        return btn;
     }
     changeInput(handler) {
         if (handler === this) {
@@ -210,18 +239,16 @@ class StartScreen extends Screen {
     constructor() {
         super();
         this.onStartGame = () => { };
-        const settings = document.createElement('div');
-        topLeft(settings);
-        const backupBtn = document.createElement('button');
-        backupBtn.innerHTML = 'B';
-        backupBtn.onclick = () => this.openBackupFiles();
-        settings.appendChild(backupBtn);
-        const btn = document.createElement('button');
-        btn.innerHTML = 'Start Game';
-        btn.onclick = () => this.onStartGame();
-        center(this.elem);
-        this.elem.appendChild(btn);
-        this.elem.appendChild(settings);
+        const div = document.createElement("div");
+        vert(div);
+        const header = document.createElement("div");
+        header.innerHTML = "Welcome to NetHack";
+        header.style.marginBottom = "2rem";
+        title(header);
+        div.appendChild(header);
+        div.appendChild(this.createButton("Start Game", () => this.onStartGame()));
+        div.appendChild(this.createButton("Load from Backup", () => this.openBackupFiles()));
+        this.elem.appendChild(div);
     }
     openBackupFiles() {
         const files = window.nethackJS.getBackupFiles();
@@ -1347,6 +1374,9 @@ class Line extends Dialog {
         super(question);
         this.autocomplete = autocomplete;
         this.onLineEnter = (line) => { };
+        console.log(autocomplete);
+        horiz(this.elem);
+        this.onClose = () => this.onLineEnter('');
         const input = document.createElement('input');
         this.input = input;
         this.elem.appendChild(input);
@@ -1396,17 +1426,24 @@ class Line extends Dialog {
 
 class StatusLine {
     constructor(root) {
-        this.elem = document.createElement('pre');
-        this.elem.id = 'status';
+        this.elem = document.createElement("pre");
+        this.elem.id = "status";
         root.appendChild(this.elem);
     }
+    // TODO: will be refactored
     update(s) {
-        this.elem.innerHTML = `${s.title} ${s.align} \t ${s.hunger || ''}`; // TODO: set player name
-        this.elem.innerHTML += `\nStr: ${s.str} Dex: ${s.dex} Con: ${s.con} Int: ${s.int} Wis: ${s.wis} Cha: ${s.cha}`;
-        this.elem.innerHTML += `\nDlvl ${s.dungeonLvl} HP: ${s.hp}/${s.hpMax} Pw: ${s.power}/${s.powerMax} AC: ${s.armor} EXP: ${s.expLvl} $: ${s.gold}`;
+        this.elem.innerHTML = `${s.title || "No Title"} ${s.align || "No Alignment"} ${s.time != null ? "T:" + s.time : ""} \t ${s.hunger || ""}`;
+        this.elem.innerHTML += `\nStr: ${s.str ?? "-"} Dex: ${s.dex ?? "-"} Con: ${s.con ?? "-"} Int: ${s.int ?? "-"} Wis: ${s.wis ?? "-"} Cha: ${s.cha ?? "-"}`;
+        this.elem.innerHTML += `\nDlvl ${s.dungeonLvl ?? "-"} HP: ${s.hp ?? "-"}/${s.hpMax ?? "-"} Pw: ${s.power ?? "-"}/${s.powerMax ?? "-"} AC: ${s.armor ?? "-"} EXP: ${s.expLvl}${s.exp != null ? "/" + s.exp : ""} $: ${s.gold ?? "-"}`;
     }
 }
 
+var GameStatus;
+(function (GameStatus) {
+    GameStatus[GameStatus["RUNNING"] = 0] = "RUNNING";
+    GameStatus[GameStatus["EXITED"] = 1] = "EXITED";
+    GameStatus[GameStatus["ERROR"] = 2] = "ERROR";
+})(GameStatus || (GameStatus = {}));
 function add(v1, v2) {
     return { x: v1.x + v2.x, y: v1.y + v2.y };
 }
@@ -1596,7 +1633,7 @@ class GameScreen extends Screen {
         menu.onSelect = ids => {
             window.nethackJS.selectMenu(ids.map(i => parseInt(i)));
             this.resetInput();
-            Dialog.removeAll(); // sometimes not closed?
+            Dialog.removeAll();
         };
         this.changeInput(menu);
         this.elem.appendChild(menu.elem);
@@ -1621,10 +1658,44 @@ class GameScreen extends Screen {
         this.elem.appendChild(line.elem);
         line.focus();
     }
+    openErrorDialog(closed) {
+        const title = 'An unexpected error occurred.';
+        const unsaved = 'Unfortunately the game progress could not be saved.';
+        const backup = 'Use the "Load from backup" in the main menu to restart from your latest save.';
+        const dialog = new Dialog(`${title}\n${unsaved}\n\n${backup}`);
+        dialog.onClose = () => {
+            this.resetInput();
+            closed();
+        };
+        this.changeInput(dialog);
+        this.elem.appendChild(dialog.elem);
+    }
 }
 
 class Game {
     constructor() {
+        this.openMenu = (winid, prompt, count, ...items) => this.game.openMenu(prompt, count, items);
+        this.openQuestion = (question, ...choices) => this.game.console.appendLine(`\n${question} ${choices}`);
+        this.openGetLine = (question, ...autocomplete) => this.game.openGetLine(question, autocomplete);
+        this.openDialog = (winid, text) => this.game.openDialog(text);
+        this.closeDialog = (winid) => Dialog.removeAll();
+        this.printLine = (line) => this.game.console.appendLine(line);
+        this.moveCursor = (x, y) => this.game.tilemap.recenter({ x, y });
+        this.centerView = (x, y) => this.game.tilemap.recenter({ x, y });
+        this.clearMap = () => this.game.tilemap.clearMap();
+        this.updateMap = (...tiles) => this.game.tilemap.addTile(...tiles);
+        this.updateStatus = (s) => this.game.status.update(s);
+        this.updateInventory = (...items) => this.game.inventory.updateItems(items);
+        this.onGameover = (status) => {
+            if (status === GameStatus.EXITED) {
+                window.location.reload();
+            }
+            else if (status === GameStatus.ERROR) {
+                this.game.openErrorDialog(() => {
+                    window.location.reload();
+                });
+            }
+        };
         document.onkeydown = (e) => {
             this.current?.onInput(e);
         };
@@ -1648,18 +1719,4 @@ class Game {
 }
 
 const game = new Game();
-const main = game.game;
-window.nethackUI = {
-    openMenu: (winid, prompt, count, ...items) => main.openMenu(prompt, count, items),
-    openQuestion: (question, ...choices) => main.console.appendLine(`\n${question} ${choices}`),
-    openGetLine: (question, ...autocomplete) => main.openGetLine(question, autocomplete),
-    openDialog: (winid, text) => main.openDialog(text),
-    closeDialog: (winid) => Dialog.removeAll(),
-    printLine: (line) => main.console.appendLine(line),
-    moveCursor: (x, y) => main.tilemap.recenter({ x, y }),
-    centerView: (x, y) => main.tilemap.recenter({ x, y }),
-    clearMap: () => main.tilemap.clearMap(),
-    updateMap: (...tiles) => main.tilemap.addTile(...tiles),
-    updateStatus: (s) => main.status.update(s),
-    updateInventory: (...items) => main.inventory.updateItems(items),
-};
+window.nethackUI = game;
