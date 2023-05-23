@@ -970,10 +970,10 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..9d2d81b89
+index 000000000..bc99ad0a8
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,1112 @@
+@@ -0,0 +1,1115 @@
 +#include "hack.h"
 +#include "dlb.h"
 +#include "func_tab.h"
@@ -1036,7 +1036,7 @@ index 000000000..9d2d81b89
 +VDECLCB(shim_display_nhwindow,(winid window, BOOLEAN_P blocking), "vii", A2P window, A2P blocking)
 +VDECLCB(shim_destroy_nhwindow,(winid window), "vi", A2P window)
 +VDECLCB(shim_curs,(winid a, int x, int y), "viii", A2P a, A2P x, A2P y)
-+VDECLCB(shim_putstr,(winid w, int attr, const char *str), "viis", A2P w, A2P attr, P2V str)
++void shim_putstr(winid w, int attr, const char *str);
 +
 +// VDECLCB(shim_display_file,(const char *name, BOOLEAN_P complain), "vsi", P2V name, A2P complain)
 +// Reference: wingem.c, Gem_display_file()
@@ -1070,10 +1070,7 @@ index 000000000..9d2d81b89
 +}
 +
 +VDECLCB(shim_start_menu,(winid window), "vi", A2P window)
-+VDECLCB(shim_add_menu,
-+    (winid window, int glyph, const ANY_P *identifier, CHAR_P ch, CHAR_P gch, int attr, const char *str, BOOLEAN_P preselected),
-+    "viipiiisi",
-+    A2P window, A2P glyph, P2V identifier, A2P ch, A2P gch, A2P attr, P2V str, A2P preselected)
++void shim_add_menu(winid window, int glyph, const ANY_P *identifier, CHAR_P ch, CHAR_P gch, int attr, const char *str, BOOLEAN_P preselected);
 +VDECLCB(shim_end_menu,(winid window, const char *prompt), "vis", A2P window, P2V prompt)
 +/* XXX: shim_select_menu menu_list is an output */
 +DECLCB(int, shim_select_menu,(winid window, int how, MENU_ITEM_P **menu_list), "iiio", A2P window, A2P how, P2V menu_list)
@@ -2006,10 +2003,16 @@ index 000000000..9d2d81b89
 +};
 +
 +
-+// Improves map rendering performance, Asyncifiy makes it too slow and we don't need async anyway
++// Implement separately to improve performance
 +EM_JS(void, shim_print_glyph, (winid w, int x, int y, int glyph, int bkglyph), {
 +    globalThis.nethackJS.handle('shim_print_glyph', w, x, y, glyph, bkglyph);
 +})
++EM_JS(void, shim_putstr, (winid w, int attr, const char *str), {
++    globalThis.nethackJS.handle('shim_putstr', w, attr, UTF8ToString(str));
++})
++EM_JS(void, shim_add_menu, (winid w, int glyph, const ANY_P *identifier, CHAR_P ch, CHAR_P gch, int attr, const char *str, BOOLEAN_P preselected), {
++    globalThis.nethackJS.handle('shim_add_menu', w, glyph, getValue(identifier, "*"), ch, gch, attr, UTF8ToString(str), preselected);
++});
 +
 +/* convert the C callback to a JavaScript callback */
 +EM_JS(void, local_callback, (const char *cb_name, const char *shim_name, void *ret_ptr, const char *fmt_str, void *args), {
