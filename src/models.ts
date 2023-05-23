@@ -86,9 +86,10 @@ interface StatusAll {
   dungeonLvl: string;
   condition?: string;
 
+  time?: number;
+
   // TODO: ??
   hd: any;
-  time: any;
 }
 
 export type Status = Partial<StatusAll>;

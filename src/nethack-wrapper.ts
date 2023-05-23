@@ -22,8 +22,8 @@ export interface Window {
   type: WIN_TYPE;
 }
 
-const SAVE_FILES_STORAGE_KEY = 'sakkaku-dev-nethack-savefiles';
-const MAX_STRING_LENGTH = 256 // defined in global.h BUFSZ
+const SAVE_FILES_STORAGE_KEY = "sakkaku-dev-nethack-savefiles";
+const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 
 export class NetHackWrapper implements NetHackJS {
   private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
@@ -65,7 +65,7 @@ export class NetHackWrapper implements NetHackJS {
     [Command.GET_EXT_CMD]: this.getExtCmd.bind(this),
 
     // according to window.doc, a 50ms delay, but add more since drawing the tile takes longer
-    [Command.DELAY_OUTPUT]: () => new Promise(resolve => setTimeout(resolve, 100)),
+    [Command.DELAY_OUTPUT]: () => new Promise((resolve) => setTimeout(resolve, 100)),
     [Command.MESSAGE_MENU]: this.messageMenu.bind(this),
 
     // TODO: message_menu
@@ -75,7 +75,7 @@ export class NetHackWrapper implements NetHackJS {
   private idCounter = 0;
   private menu: MenuSelect = { winid: 0, items: [], count: 0, prompt: "" };
   private putStr = "";
-  private backupFile = '';
+  private backupFile = "";
 
   private input$ = new Subject<number>();
   private selectedMenu$ = new Subject<number[]>();
@@ -125,9 +125,9 @@ export class NetHackWrapper implements NetHackJS {
     this.win.onbeforeunload = (e) => {
       if (this.playing$.value) {
         // TODO: auto save?
-        return e.returnValue = 'Game progress will be lost if not saved.';
+        return (e.returnValue = "Game progress will be lost if not saved.");
       }
-    }
+    };
 
     if (!this.module.preRun) {
       this.module.preRun = [];
@@ -210,9 +210,9 @@ export class NetHackWrapper implements NetHackJS {
 
   private async getExtCmd(commandPointer: number, numCommands: number) {
     const commands = this.getArrayValue(commandPointer, numCommands);
-    this.ui.openGetLine('#', ...commands);
+    this.ui.openGetLine("#", ...commands);
     const line = await this.waitLine();
-    const idx = commands.findIndex(x => x === line);
+    const idx = commands.findIndex((x) => x === line);
 
     if (idx >= 0 && idx < commands.length) {
       return idx;
@@ -224,8 +224,8 @@ export class NetHackWrapper implements NetHackJS {
   private async getLine(question: string, searchPointer: number) {
     this.ui.openGetLine(question);
     const line = await this.waitLine();
-    const ptr = this.global.helpers.getPointerValue('nethack.getLine', searchPointer, Type.POINTER);
-    this.global.helpers.setPointerValue('nethack.getLine', ptr, Type.STRING, line);
+    const ptr = this.global.helpers.getPointerValue("nethack.getLine", searchPointer, Type.POINTER);
+    this.global.helpers.setPointerValue("nethack.getLine", ptr, Type.STRING, line);
   }
 
   private async yesNoQuestion(question: string, choices: string[]) {
@@ -259,7 +259,7 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async gameEnd(status: number) {
-    console.log("Ended game with status", status)
+    console.log("Ended game with status", status);
     this.syncSaveFiles();
     this.playing$.next(false);
   }
@@ -268,36 +268,40 @@ export class NetHackWrapper implements NetHackJS {
     console.log("Syncing save files");
     this.module.FS.syncfs((err: any) => {
       if (err) {
-        console.warn('Failed to sync FS. Save might not work', err);
+        console.warn("Failed to sync FS. Save might not work", err);
       }
-    })
+    });
 
     // backup save files in case user forgets to save
     try {
-      const savefiles = this.module.FS.readdir('/nethack/save');
+      const savefiles = this.module.FS.readdir("/nethack/save");
       for (let i = 0; i < savefiles.length; ++i) {
         let file = savefiles[i];
-        if (file == '.' || file == '..') continue;
-        if (file === 'record') continue; // This is just in save folder, so it gets persisted, nethack should not delete it like the save file
+        if (file == "." || file == "..") continue;
+        if (file === "record") continue; // This is just in save folder, so it gets persisted, nethack should not delete it like the save file
 
-        file = '/nethack/save/' + file;
+        file = "/nethack/save/" + file;
         try {
-          const data = btoa(String.fromCharCode.apply(null, this.module.FS.readFile(file, { encoding: 'binary' })));
+          const data = btoa(
+            String.fromCharCode.apply(null, this.module.FS.readFile(file, { encoding: "binary" }))
+          );
           localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, JSON.stringify({ data }));
         } catch (e) {
-          console.warn('Failed to sync save file', file);
+          console.warn("Failed to sync save file", file);
         }
       }
-    } catch (e) { }
+    } catch (e) {}
   }
 
   private loadSaveFiles() {
     const mod = this.module;
-    try { mod.FS.mkdir('/nethack/save'); } catch (e) { }
-    mod.FS.mount(mod.IDBFS, {}, '/nethack/save');
+    try {
+      mod.FS.mkdir("/nethack/save");
+    } catch (e) {}
+    mod.FS.mount(mod.IDBFS, {}, "/nethack/save");
     mod.FS.syncfs(true, (err: any) => {
       if (err) {
-        console.warn('Failed to sync FS. Save might not work', err);
+        console.warn("Failed to sync FS. Save might not work", err);
       }
     });
   }
@@ -322,11 +326,10 @@ export class NetHackWrapper implements NetHackJS {
         const bytes = atob(data);
         var buf = new ArrayBuffer(bytes.length);
         var array = new Uint8Array(buf);
-        for (var i = 0; i < bytes.length; ++i)
-          array[i] = bytes.charCodeAt(i);
-        this.module.FS.writeFile(file, array, { encoding: 'binary' });
+        for (var i = 0; i < bytes.length; ++i) array[i] = bytes.charCodeAt(i);
+        this.module.FS.writeFile(file, array, { encoding: "binary" });
       } catch (e) {
-        console.warn('Failed to load backup file', e)
+        console.warn("Failed to load backup file", e);
       }
     }
   }
@@ -392,42 +395,62 @@ export class NetHackWrapper implements NetHackJS {
   private async handlePutStr(winid: number, attr: any, str: string) {
     if (winid === this.global.globals.WIN_STATUS) {
       // 3.6 updates the status with putStr:
-      // Web_user the Aspirant        St:9 Dx:12 Co:15 In:9 Wi:18 Ch:12  Lawful
-      // Dlvl:1  $:0  HP:14(14) Pw:8(8) AC:7  Exp:1
+      // Web_user the Aspirant        St:18/20 Dx:12 Co:15 In:9 Wi:18 Ch:12  Lawful
+      // Dlvl:1  $:0  HP:14(14) Pw:8(8) AC:7  Exp:1 T:200
 
       const status = this.status$.value;
-      let m = str.match(
-        /([a-zA-z]+) ([a-zA-z\s]+) .* St:(\d+)(\/[\d*]+)? Dx:(\d+) Co:(\d+) In:(\d+) Wi:(\d+) Ch:(\d+) .* ([a-zA-z]+)/
-      );
-      if (m) {
-        const player = m[1]; // TODO: ?
-        statusMap[STATUS_FIELD.BL_TITLE](status, m[2]);
+      const statLineRegex = /St:\d+.*Dx:\d+.*/;
 
-        const str = m[3];
-        const strPercent = m[4];
-        statusMap[STATUS_FIELD.BL_STR](status, str + (strPercent || ""));
-
-        statusMap[STATUS_FIELD.BL_DX](status, m[5]);
-        statusMap[STATUS_FIELD.BL_CO](status, m[6]);
-        statusMap[STATUS_FIELD.BL_IN](status, m[7]);
-        statusMap[STATUS_FIELD.BL_WI](status, m[8]);
-        statusMap[STATUS_FIELD.BL_CH](status, m[9]);
-        statusMap[STATUS_FIELD.BL_ALIGN](status, m[10]);
-      } else {
-        let m = str.match(
-          /Dlvl:(\d+).*\$:(\d+).*HP:(\d+)\((\d+)\).*Pw:(\d+)\((\d+)\).*AC:(\d+).*Exp:(\d+)[\s]+([\w\s]+)/
-        );
+      // Split regex more in case some things can be hidden/shown
+      if (statLineRegex.test(str)) {
+        let m = str.match(/\w ([a-zA-z\s]+) .* St:.*Ch:\d+ [\s]* (\w+)/);
         if (m) {
-          statusMap[STATUS_FIELD.BL_LEVELDESC](status, m[1]);
-          statusMap[STATUS_FIELD.BL_GOLD](status, m[2]);
-          statusMap[STATUS_FIELD.BL_HP](status, m[3]);
-          statusMap[STATUS_FIELD.BL_HPMAX](status, m[4]);
-          statusMap[STATUS_FIELD.BL_ENE](status, m[5]);
-          statusMap[STATUS_FIELD.BL_ENEMAX](status, m[6]);
-          statusMap[STATUS_FIELD.BL_AC](status, m[7]);
-          statusMap[STATUS_FIELD.BL_XP](status, m[8]);
-          statusMap[STATUS_FIELD.BL_HUNGER](status, m[9]);
+          statusMap[STATUS_FIELD.BL_TITLE](status, m[1]);
+          statusMap[STATUS_FIELD.BL_ALIGN](status, m[2]);
         }
+
+        m = str.match(/St:([\d\/]+) Dx:(\d+) Co:(\d+) In:(\d+) Wi:(\d+) Ch:(\d+)/);
+        if (m) {
+          statusMap[STATUS_FIELD.BL_STR](status, m[1]);
+          statusMap[STATUS_FIELD.BL_DX](status, m[2]);
+          statusMap[STATUS_FIELD.BL_CO](status, m[3]);
+          statusMap[STATUS_FIELD.BL_IN](status, m[4]);
+          statusMap[STATUS_FIELD.BL_WI](status, m[5]);
+          statusMap[STATUS_FIELD.BL_CH](status, m[6]);
+        }
+      } else {
+        let m = str.match(/HP:(\d+)\((\d+)\).*Pw:(\d+)\((\d+)\)/);
+        if (m) {
+          statusMap[STATUS_FIELD.BL_HP](status, m[1]);
+          statusMap[STATUS_FIELD.BL_HPMAX](status, m[2]);
+          statusMap[STATUS_FIELD.BL_ENE](status, m[3]);
+          statusMap[STATUS_FIELD.BL_ENEMAX](status, m[4]);
+        }
+
+        m = str.match(/Dlvl:(\d+)/);
+        if (m) statusMap[STATUS_FIELD.BL_LEVELDESC](status, m[1]);
+
+        m = str.match(/\$:(\d+)/);
+        if (m) statusMap[STATUS_FIELD.BL_GOLD](status, m[1]);
+
+        m = str.match(/AC:([-]?\d+)/);
+        if (m) statusMap[STATUS_FIELD.BL_AC](status, m[1]);
+
+        m = str.match(/Xp:(\d+\/\d+)/); // Contains lvl + exp
+        if (m) {
+          const v = m[1].split("/");
+          statusMap[STATUS_FIELD.BL_EXP](status, v[0]);
+          statusMap[STATUS_FIELD.BL_XP](status, v[1]);
+        } else {
+          m = str.match(/Exp:(\d+)/);
+          if (m) statusMap[STATUS_FIELD.BL_EXP](status, m[1]);
+        }
+
+        m = str.match(/T:(\d+)/);
+        if (m) statusMap[STATUS_FIELD.BL_TIME](status, m[1]);
+
+        m = str.match(/([a-zA-Z\s]+)$/); // Contains everything status related, eg hunger, conditions
+        if (m) statusMap[STATUS_FIELD.BL_HUNGER](status, m[1]);
       }
 
       this.status$.next(status);

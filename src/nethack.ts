@@ -1,6 +1,7 @@
 import { NetHackWrapper } from "./nethack-wrapper";
 
 const options = [
+  "showexp",
   "perm_invent",
   "autopickup",
   "pickup_types:$",
