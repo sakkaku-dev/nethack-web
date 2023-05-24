@@ -6,10 +6,10 @@ import { horiz } from "../styles";
 
 export interface MenuItem {
     tile?: number;
-    accelerator?: number;
     active?: boolean;
 
     text: string;
+    accelerator: number;
     id: number | string;
 }
 
@@ -60,7 +60,6 @@ export class Menu extends Dialog implements InputHandler {
     }
 
     private createMenu(items: MenuItem[], count: number) {
-        let accelStart = 'a'.charCodeAt(0);
         this.accelMap = {};
 
         const list = document.createElement("div");
@@ -81,9 +80,7 @@ export class Menu extends Dialog implements InputHandler {
                 elem.checked = i.active || false;
                 elem.value = `${i.id}`;
 
-                // Hopefully when accel does not exist, then none of the items have one
-                const accel = !!i.accelerator ? i.accelerator : accelStart;
-                accelStart += 1;
+                const accel = i.accelerator;
                 this.accelMap[String.fromCharCode(accel)] = elem;
 
                 const label = document.createElement("label");

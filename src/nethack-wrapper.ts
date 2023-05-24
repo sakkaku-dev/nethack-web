@@ -2,8 +2,11 @@ import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, t
 import { Item, NetHackJS, Status, NetHackUI, Tile, GameStatus } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
+// @ts-ignore
+import nethackLib from "../lib/nethack.js";
+
 import { Command, ItemFlag, statusMap } from "./nethack-models";
-import { Game } from "./ui/game";
+import { AccelIterator } from "./helper/accel-iterator";
 
 export interface MenuSelect {
   winid: number;
@@ -49,7 +52,10 @@ export class NetHackWrapper implements NetHackJS {
     [Command.STATUS_UPDATE]: this.statusUpdate.bind(this),
 
     // Menu
-    [Command.MENU_START]: async () => (this.menu = { winid: 0, items: [], count: 0, prompt: "" }),
+    [Command.MENU_START]: async () => {
+      this.menu = { winid: 0, items: [], count: 0, prompt: "" };
+      this.accel.reset();
+    },
     [Command.MENU_END]: async (winid, prompt) => (this.menu.prompt = prompt),
     [Command.MENU_ADD]: this.menuAdd.bind(this),
     [Command.MENU_SELECT]: this.menuSelect.bind(this),
@@ -74,6 +80,7 @@ export class NetHackWrapper implements NetHackJS {
   private menu: MenuSelect = { winid: 0, items: [], count: 0, prompt: "" };
   private putStr = "";
   private backupFile = "";
+  private accel = new AccelIterator();
 
   private input$ = new Subject<number>();
   private selectedMenu$ = new Subject<number[]>();
@@ -169,21 +176,12 @@ export class NetHackWrapper implements NetHackJS {
 
   public startGame() {
     this.playing$.next(GameStatus.RUNNING);
-
-    // cannot be reloaded again, will fail
-    // @ts-ignore
-    import("../lib/nethack.js")
-      .then((x) => {
-        x.default(this.module);
-      })
-      .catch((e) => {
-        console.log("Failed to load nethack module", e);
-        this.playing$.next(GameStatus.ERROR);
-      });
+    nethackLib(this.module);
   }
 
   // Getting input from user
 
+  // TODO: remove
   public selectMenu(items: number[]) {
     this.log("Selected menu", items);
     this.selectedMenu$.next(items);
@@ -364,7 +362,7 @@ export class NetHackWrapper implements NetHackJS {
     winid: number,
     glyph: number,
     identifier: number,
-    accelerator: string,
+    accelerator: number,
     groupAcc: string,
     attr: number,
     str: string,
@@ -373,7 +371,7 @@ export class NetHackWrapper implements NetHackJS {
     this.menu.items.push({
       tile: this.toTile(glyph),
       identifier,
-      accelerator: parseInt(accelerator),
+      accelerator: accelerator || this.accel.next(),
       groupAcc,
       attr,
       str,

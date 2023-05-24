@@ -1,5 +1,5 @@
 export interface NetHackJS {
-  selectMenu: (items: any[]) => void; // TODO: param type
+  selectMenu: (items: number[]) => void;
   sendInput: (key: number) => void;
   sendLine: (line: string) => void;
   startGame: () => void;
