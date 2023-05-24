@@ -3,8 +3,8 @@ export interface NetHackJS {
   sendInput: (key: number) => void;
   sendLine: (line: string) => void;
   startGame: () => void;
-  getBackupFiles: () => string[];
-  setBackupFile: (file: string) => void;
+  // getBackupFiles: () => string[];
+  // setBackupFile: (file: string) => void;
 }
 
 // In Godot all parameters will be in one array, so don't nest them
@@ -61,7 +61,7 @@ export interface Tile {
 export interface Item {
   tile: number;
   accelerator: number;
-  groupAcc: string;
+  groupAcc: number;
   attr: number;
   str: string;
   identifier: number;

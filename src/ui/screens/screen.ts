@@ -1,3 +1,4 @@
+import { Item } from "../../models";
 import { InputHandler } from "../input";
 import { center, fullScreen } from "../styles";
 
@@ -18,7 +19,7 @@ export class Screen implements InputHandler {
         return btn;
     }
 
-    changeInput(handler: InputHandler) {
+    protected changeInput(handler: InputHandler) {
         if (handler === this) {
             this.resetInput();
         } else {
@@ -26,7 +27,7 @@ export class Screen implements InputHandler {
         }
     }
 
-    resetInput() {
+    protected resetInput() {
         this.inputHandler = undefined;
     }
 
@@ -38,13 +39,9 @@ export class Screen implements InputHandler {
         }
     }
 
+    onResize() { }
+
+    onMenu(prompt: string, count: number, items: Item[]) { }
+
     input(e: KeyboardEvent) { }
-
-    hide() {
-        document.body.removeChild(this.elem);
-    }
-
-    show() {
-        document.body.appendChild(this.elem);
-    }
 }

@@ -11,6 +11,7 @@ export class Game implements NetHackUI {
     private current?: Screen;
 
     constructor() {
+        document.body.onresize = (e) => this.current?.onResize();
         document.onkeydown = (e) => {
             this.current?.onInput(e);
         };
@@ -28,7 +29,7 @@ export class Game implements NetHackUI {
     }
 
     openMenu = (winid: number, prompt: string, count: number, ...items: Item[]) =>
-        this.game.openMenu(prompt, count, items);
+        this.current?.onMenu(prompt, count, items);
     openQuestion = (question: string, ...choices: string[]) =>
         this.game.console.appendLine(`\n${question} ${choices}`);
     openGetLine = (question: string, ...autocomplete: string[]) =>
@@ -54,10 +55,10 @@ export class Game implements NetHackUI {
 
     changeScreen(screen: Screen) {
         if (this.current) {
-            this.current.hide();
+            document.body.removeChild(this.current.elem);
         }
 
         this.current = screen;
-        this.current.show();
+        document.body.appendChild(this.current.elem);
     }
 }

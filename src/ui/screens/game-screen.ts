@@ -23,7 +23,6 @@ export class GameScreen extends Screen {
     public status: StatusLine;
 
     private resize$ = new Subject<void>();
-    private resizeListener = (e: Event) => this.resize$.next();
 
     constructor() {
         super();
@@ -39,14 +38,12 @@ export class GameScreen extends Screen {
         this.changeInput(this);
     }
 
-    show() {
-        super.show();
-        document.body.onresize = this.resizeListener.bind(this);
+    onResize(): void {
+        this.resize$.next();
     }
 
-    hide() {
-        super.hide();
-        document.body.removeEventListener('onresize', this.resizeListener.bind(this));
+    onMenu(prompt: string, count: number, items: Item[]): void {
+        this.openMenu(prompt, count, items);
     }
 
     input(e: KeyboardEvent): void {

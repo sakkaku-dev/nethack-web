@@ -160,6 +160,13 @@ export class NetHackWrapper implements NetHackJS {
     });
   }
 
+  private openStartScreen() {
+    this.accel.reset();
+    const start: Item = {tile: 0, groupAcc: 0, attr: 0, accelerator: this.accel.next(), str: 'Start game', identifier: 1, active: false };
+    const backup: Item = {tile: 0, groupAcc: 0, attr: 0, accelerator: this.accel.next(), str: 'Load from backup', identifier: 2, active: false };
+    this.ui.openMenu(-1, 'Welcome to NetHack', 1, start, backup);
+  }
+
   private isGameRunning() {
     return this.playing$.value === GameStatus.RUNNING;
   }
@@ -363,7 +370,7 @@ export class NetHackWrapper implements NetHackJS {
     glyph: number,
     identifier: number,
     accelerator: number,
-    groupAcc: string,
+    groupAcc: number,
     attr: number,
     str: string,
     flag: number
