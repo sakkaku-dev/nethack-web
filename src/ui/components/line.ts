@@ -12,7 +12,7 @@ export class Line extends Dialog implements InputHandler {
         super(question);
         console.log(autocomplete);
         horiz(this.elem);
-        this.onClose = () => this.onLineEnter('');
+        // this.onClose = () => this.onLineEnter('');
 
         const input = document.createElement('input');
         this.input = input;

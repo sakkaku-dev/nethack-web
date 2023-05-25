@@ -7,6 +7,8 @@ import nethackLib from "../lib/nethack.js";
 
 import { Command, ItemFlag, statusMap } from "./nethack-models";
 import { AccelIterator } from "./helper/accel-iterator";
+import { NethackUtil, Type } from "./helper/nethack-util";
+import { clearMenuItems, getCountForSelect, toggleMenuItems } from "./helper/menu-select";
 
 export interface MenuSelect {
   winid: number;
@@ -27,6 +29,13 @@ export interface Window {
 const SAVE_FILES_STORAGE_KEY = "sakkaku-dev-nethack-savefiles";
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 
+const ENTER = 13;
+const ESC = 27;
+const SPACE = " ".charCodeAt(0);
+
+const CONTINUE_KEYS = [SPACE, ENTER, ESC];
+const CANCEL_KEYS = [ESC];
+
 export class NetHackWrapper implements NetHackJS {
   private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
     [Command.CREATE_WINDOW]: this.createWindow.bind(this),
@@ -42,7 +51,7 @@ export class NetHackWrapper implements NetHackJS {
 
     // Map
     [Command.PRINT_GLYPH]: async (winid, x, y, glyph) =>
-      this.tiles$.next([...this.tiles$.value, { x, y, tile: this.toTile(glyph) }]),
+      this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph) }]),
 
     [Command.CURSOR]: async (winid, x, y) =>
       winid == this.global.globals.WIN_MAP && this.ui.moveCursor(x, y),
@@ -62,10 +71,10 @@ export class NetHackWrapper implements NetHackJS {
 
     // Waiting input
     [Command.DISPLAY_WINDOW]: this.displayWindow.bind(this),
-    [Command.GET_CHAR]: this.waitInput.bind(this),
-    [Command.GET_POSKEY]: this.waitInput.bind(this),
+    [Command.GET_CHAR]: () => this.waitInput(),
+    [Command.GET_POSKEY]: () => this.waitInput(),
+    [Command.ASK_NAME]: () => this.waitInput(),
     [Command.YN_FUNCTION]: this.yesNoQuestion.bind(this),
-    [Command.ASK_NAME]: this.waitInput.bind(this),
     [Command.GET_LINE]: this.getLine.bind(this),
     [Command.GET_EXT_CMD]: this.getExtCmd.bind(this),
 
@@ -73,7 +82,6 @@ export class NetHackWrapper implements NetHackJS {
     [Command.DELAY_OUTPUT]: () => new Promise((resolve) => setTimeout(resolve, 100)),
     [Command.MESSAGE_MENU]: this.messageMenu.bind(this),
 
-    // TODO: message_menu
     // TODO: select_menu with yn_function
   };
   private idCounter = 0;
@@ -83,7 +91,6 @@ export class NetHackWrapper implements NetHackJS {
   private accel = new AccelIterator();
 
   private input$ = new Subject<number>();
-  private selectedMenu$ = new Subject<number[]>();
   private line$ = new Subject<string>();
 
   private status$ = new BehaviorSubject<Status>({});
@@ -97,7 +104,12 @@ export class NetHackWrapper implements NetHackJS {
     this.ui.printLine(mesg);
   }
 
-  constructor(private debug = false, private module: any, private win: typeof window = window) {
+  constructor(
+    private debug = false,
+    private module: any,
+    private util: NethackUtil,
+    private win: typeof window = window
+  ) {
     this.playing$
       .pipe(
         skip(1),
@@ -146,7 +158,7 @@ export class NetHackWrapper implements NetHackJS {
       if (this.isGameRunning()) {
         this.playing$.next(GameStatus.ERROR);
       }
-    }
+    };
 
     if (!this.module.preRun) {
       this.module.preRun = [];
@@ -162,9 +174,25 @@ export class NetHackWrapper implements NetHackJS {
 
   private openStartScreen() {
     this.accel.reset();
-    const start: Item = {tile: 0, groupAcc: 0, attr: 0, accelerator: this.accel.next(), str: 'Start game', identifier: 1, active: false };
-    const backup: Item = {tile: 0, groupAcc: 0, attr: 0, accelerator: this.accel.next(), str: 'Load from backup', identifier: 2, active: false };
-    this.ui.openMenu(-1, 'Welcome to NetHack', 1, start, backup);
+    const start: Item = {
+      tile: 0,
+      groupAcc: 0,
+      attr: 0,
+      accelerator: this.accel.next(),
+      str: "Start game",
+      identifier: 1,
+      active: false,
+    };
+    const backup: Item = {
+      tile: 0,
+      groupAcc: 0,
+      attr: 0,
+      accelerator: this.accel.next(),
+      str: "Load from backup",
+      identifier: 2,
+      active: false,
+    };
+    this.ui.openMenu(-1, "Welcome to NetHack", 1, start, backup);
   }
 
   private isGameRunning() {
@@ -188,12 +216,6 @@ export class NetHackWrapper implements NetHackJS {
 
   // Getting input from user
 
-  // TODO: remove
-  public selectMenu(items: number[]) {
-    this.log("Selected menu", items);
-    this.selectedMenu$.next(items);
-  }
-
   public sendInput(key: number) {
     this.log("Receiced input", key);
     this.input$.next(key);
@@ -210,14 +232,12 @@ export class NetHackWrapper implements NetHackJS {
 
   // Waiting for input from user
 
-  private async waitInput() {
-    this.log("Waiting user input...");
+  private async waitInput(filterContinue = false) {
     this.awaitingInput$.next(true);
-    return await firstValueFrom(this.input$);
+    return await firstValueFrom(this.input$.pipe(filter(c => !filterContinue || CONTINUE_KEYS.includes(c))));
   }
 
   private async waitLine() {
-    this.log("Waiting user input line...");
     this.awaitingInput$.next(true);
     return await firstValueFrom(this.line$);
   }
@@ -277,7 +297,7 @@ export class NetHackWrapper implements NetHackJS {
   private async displayWindow(winid: number, blocking: number) {
     if (this.putStr !== "") {
       this.ui.openDialog(winid, this.putStr);
-      await this.waitInput();
+      await this.waitInput(true);
       this.putStr = "";
     }
   }
@@ -321,14 +341,14 @@ export class NetHackWrapper implements NetHackJS {
           console.warn("Failed to sync save file", file);
         }
       }
-    } catch (e) { }
+    } catch (e) {}
   }
 
   private loadSaveFiles() {
     const mod = this.module;
     try {
       mod.FS.mkdir("/nethack/save");
-    } catch (e) { }
+    } catch (e) {}
     mod.FS.mount(mod.IDBFS, {}, "/nethack/save");
     mod.FS.syncfs(true, (err: any) => {
       if (err) {
@@ -376,7 +396,7 @@ export class NetHackWrapper implements NetHackJS {
     flag: number
   ) {
     this.menu.items.push({
-      tile: this.toTile(glyph),
+      tile: this.util.toTile(glyph),
       identifier,
       accelerator: accelerator || this.accel.next(),
       groupAcc,
@@ -399,28 +419,29 @@ export class NetHackWrapper implements NetHackJS {
       return 0;
     }
 
-    if (select == MENU_SELECT.PICK_NONE) {
-      this.ui.openDialog(winid, this.menu.items.map((i) => i.str).join("\n"));
-      await this.waitInput();
-      return 0;
+    const count = getCountForSelect(select);
+    let char = 0;
+
+    const items = this.menu.items;
+    while (!CONTINUE_KEYS.includes(char)) {
+      this.ui.openMenu(winid, this.menu.prompt, count, ...items);
+      char = await this.waitInput();
+      if (count !== 0) {
+        toggleMenuItems(char, count, items);
+      }
     }
 
-    if (select == MENU_SELECT.PICK_ANY) {
-      this.ui.openMenu(winid, this.menu.prompt, -1, ...this.menu.items);
-    } else {
-      this.ui.openMenu(winid, this.menu.prompt, 1, ...this.menu.items);
+    if (char === ESC) {
+      clearMenuItems(items);
     }
 
-    this.log("Waiting for menu select...");
-    const selectedIds = await firstValueFrom(this.selectedMenu$);
-    const itemIds = selectedIds.filter((id) => this.menu.items.find((x) => x.identifier === id));
-
+    const itemIds = items.filter((i) => i.active).map((i) => i.identifier);
     if (itemIds.length === 0) {
       return -1;
     }
 
-    this.selectItems(itemIds, selected);
-    return itemIds?.length ?? -1;
+    this.util.selectItems(itemIds, selected);
+    return itemIds.length;
   }
 
   private async handlePutStr(winid: number, attr: any, str: string) {
@@ -515,36 +536,6 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   // Utils
-  private selectItems(itemIds: number[], selectedPointer: number) {
-    const int_size = 4;
-    const size = int_size * 2; // selected object has 3 fields, in 3.6 only 2
-    const total_size = size * itemIds.length;
-    const start_ptr = this.module._malloc(total_size);
-
-    // write selected items to memory
-    let ptr = start_ptr;
-    itemIds.forEach((id) => {
-      this.global.helpers.setPointerValue("nethack.menu.selected", ptr, Type.INT, id);
-      this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size, Type.INT, -1);
-      // this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size * 2, Type.INT, 0); // Only 2 properties in 3.6
-
-      ptr += size;
-    });
-
-    // point selected to the first item
-    const selected_pp = this.global.helpers.getPointerValue("", selectedPointer, Type.POINTER);
-    this.global.helpers.setPointerValue(
-      "nethack.menu.setSelected",
-      selected_pp,
-      Type.INT,
-      start_ptr
-    );
-  }
-
-  private toTile(glyph: number): number {
-    return this.module._glyph_to_tile(glyph);
-  }
-
   private getPointerValue(ptr: number, type: string) {
     const x = this.global.helpers.getPointerValue("nethack.pointerValue", ptr, Type.POINTER);
     return this.global.helpers.getPointerValue("nethack.pointerValue", x, type);
@@ -569,10 +560,4 @@ export class NetHackWrapper implements NetHackJS {
   private get ui(): NetHackUI {
     return this.win.nethackUI;
   }
-}
-
-enum Type {
-  INT = "i",
-  STRING = "s",
-  POINTER = "p",
 }

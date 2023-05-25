@@ -1,5 +1,5 @@
 export interface NetHackJS {
-  selectMenu: (items: number[]) => void;
+  // selectMenu: (items: number[]) => void;
   sendInput: (key: number) => void;
   sendLine: (line: string) => void;
   startGame: () => void;

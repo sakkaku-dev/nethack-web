@@ -3,7 +3,7 @@ import { Menu } from "./menu";
 export class BackupFiles extends Menu {
 
     constructor(files: string[]) {
-        super('Select Backup File', [], 1);//files.map(f => ({ text: f, id: f })), 1);
+        super('Select Backup File');//files.map(f => ({ text: f, id: f })), 1);
 
         // const list = document.createElement('div')
         // list.style.display = 'flex';

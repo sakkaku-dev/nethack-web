@@ -1,4 +1,5 @@
 import { Item } from "../../models";
+import { Dialog } from "../components/dialog";
 import { InputHandler } from "../input";
 import { center, fullScreen } from "../styles";
 
@@ -42,6 +43,10 @@ export class Screen implements InputHandler {
     onResize() { }
 
     onMenu(prompt: string, count: number, items: Item[]) { }
+
+    onCloseDialog() {
+        Dialog.removeAll();
+    }
 
     input(e: KeyboardEvent) { }
 }

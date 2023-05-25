@@ -27,14 +27,14 @@ export class StartScreen extends Screen {
     public openBackupFiles() {
         const files = window.nethackJS.getBackupFiles();
         const backup = new BackupFiles(files);
-        backup.onSelect = (files: string[]) => {
-            if (files.length) {
-                window.nethackJS.setBackupFile(files[0]);
-            }
-            this.resetInput();
-            Dialog.removeAll();
-        };
-        this.changeInput(backup);
+        // backup.onSelect = (files: string[]) => {
+        //     if (files.length) {
+        //         window.nethackJS.setBackupFile(files[0]);
+        //     }
+        //     this.resetInput();
+        //     Dialog.removeAll();
+        // };
+        // this.changeInput(backup);
         this.elem.appendChild(backup.elem);
     }
 }

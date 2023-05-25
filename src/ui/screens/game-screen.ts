@@ -4,7 +4,7 @@ import { Console } from "../components/console";
 import { Dialog } from "../components/dialog";
 import { Inventory } from "../components/inventory";
 import { Line } from "../components/line";
-import { Menu, MenuItem } from "../components/menu";
+import { Menu } from "../components/menu";
 import { StatusLine } from "../components/status";
 import { TileSet, TileMap } from "../components/tilemap";
 import { Screen } from "./screen";
@@ -23,6 +23,7 @@ export class GameScreen extends Screen {
     public status: StatusLine;
 
     private resize$ = new Subject<void>();
+    private activeMenu?: Menu;
 
     constructor() {
         super();
@@ -74,26 +75,28 @@ export class GameScreen extends Screen {
         }
     }
 
+    onCloseDialog(): void {
+        super.onCloseDialog();
+        this.activeMenu = undefined;
+    }
+
 
     public openMenu(prompt: string, count: number, items: Item[]) {
-        const menuItems: MenuItem[] = items.map(i => ({ text: i.str, id: i.identifier, tile: i.tile, active: i.active, accelerator: i.accelerator }));
-        const menu = new Menu(prompt, menuItems, count, this.tileset!);
-        menu.onSelect = ids => {
-            window.nethackJS.selectMenu(ids.map(i => parseInt(i)));
-            this.resetInput();
-            Dialog.removeAll();
-        };
-        this.changeInput(menu);
-        this.elem.appendChild(menu.elem);
+        if (!this.activeMenu) {
+            this.activeMenu = new Menu(prompt, this.tileset!);
+            this.elem.appendChild(this.activeMenu.elem);
+        }
+
+        this.activeMenu.updateMenu(items, count);
     }
 
     public openDialog(text: string) {
         const dialog = new Dialog(text);
-        dialog.onClose = () => {
-            window.nethackJS.sendInput(0);
-            this.resetInput();
-        };
-        this.changeInput(dialog);
+        // dialog.onClose = () => {
+        //     window.nethackJS.sendInput(0);
+            // this.resetInput();
+        // };
+        // this.changeInput(dialog);
         this.elem.appendChild(dialog.elem);
     }
 
@@ -114,11 +117,11 @@ export class GameScreen extends Screen {
         const unsaved = 'Unfortunately the game progress could not be saved.';
         const backup = 'Use the "Load from backup" in the main menu to restart from your latest save.';
         const dialog = new Dialog(`${title}\n${unsaved}\n\n${backup}`)
-        dialog.onClose = () => {
-            this.resetInput();
-            closed();
-        }
-        this.changeInput(dialog);
+        // dialog.onClose = () => {
+        //     this.resetInput();
+        //     closed();
+        // }
+        // this.changeInput(dialog);
         this.elem.appendChild(dialog.elem);
     }
 }
