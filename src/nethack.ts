@@ -1,3 +1,4 @@
+import { selectItems, toTile } from "./helper/nethack-util";
 import { NetHackWrapper } from "./nethack-wrapper";
 
 const options = [
@@ -25,4 +26,5 @@ Module.preRun = [
   },
 ];
 
-window.nethackJS = new NetHackWrapper(true, Module);
+window.module = Module;
+window.nethackJS = new NetHackWrapper(true, Module, { selectItems, toTile });

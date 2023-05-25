@@ -1,16 +1,12 @@
-import { CANCEL_KEY, CONTINUE_KEY, InputHandler } from "../input";
 import { fullScreen, vert } from "../styles";
 
-export class Dialog implements InputHandler {
+export class Dialog {
     public elem: HTMLElement;
-
-    public onClose = () => { };
 
     constructor(text: string) {
         const overlay = document.createElement('div');
         overlay.style.zIndex = '1';
         overlay.classList.add('dialog-overlay');
-        // overlay.onclick = () => this.onClose();
         fullScreen(overlay);
         document.body.appendChild(overlay);
 
@@ -31,14 +27,6 @@ export class Dialog implements InputHandler {
             .replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#039;");
-    }
-
-    onInput(e: KeyboardEvent): void {
-        e.preventDefault();
-
-        if ([...CANCEL_KEY, ...CONTINUE_KEY].includes(e.key)) {
-            this.onClose();
-        }
     }
 
     static removeAll() {

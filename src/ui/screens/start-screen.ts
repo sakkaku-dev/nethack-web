@@ -1,40 +1,45 @@
-import { BackupFiles } from "../components/backup-files";
-import { Dialog } from "../components/dialog";
+import { Item } from "../../models";
 import { title, vert } from "../styles";
 import { Screen } from "./screen";
 
 export class StartScreen extends Screen {
-    onStartGame = () => { };
+
+    private container: HTMLElement;
+    private header: HTMLElement;
+    private menuContainer?: HTMLElement;
 
     constructor() {
         super();
 
-        const div = document.createElement("div");
-        vert(div);
+        this.container = document.createElement("div");
+        vert(this.container);
 
-        const header = document.createElement("div");
-        header.innerHTML = "Welcome to NetHack";
-        header.style.marginBottom = "2rem";
-        title(header);
-        div.appendChild(header);
+        this.header = document.createElement("div");
+        this.header.style.marginBottom = "2rem";
+        title(this.header);
 
-        div.appendChild(this.createButton("Start Game", () => this.onStartGame()));
-        div.appendChild(this.createButton("Load from Backup", () => this.openBackupFiles()));
-
-        this.elem.appendChild(div);
+        this.container.appendChild(this.header);
+        this.elem.appendChild(this.container);
     }
 
-    public openBackupFiles() {
-        const files = window.nethackJS.getBackupFiles();
-        const backup = new BackupFiles(files);
-        backup.onSelect = (files: string[]) => {
-            if (files.length) {
-                window.nethackJS.setBackupFile(files[0]);
+    onMenu(prompt: string, count: number, items: Item[]): void {
+        this.header.innerHTML = prompt;
+
+        if (this.menuContainer) {
+            this.container.removeChild(this.menuContainer);
+        }
+
+        this.menuContainer = document.createElement('div');
+        vert(this.menuContainer);
+        this.container.appendChild(this.menuContainer);
+
+        items.forEach(i => {
+            const btn = this.createButton(`${String.fromCharCode(i.accelerator)} - ${i.str}`);
+            if (i.active) {
+                btn.classList.add('active');
             }
-            this.resetInput();
-            Dialog.removeAll();
-        };
-        this.changeInput(backup);
-        this.elem.appendChild(backup.elem);
+            this.menuContainer?.appendChild(btn);
+        });
     }
+
 }

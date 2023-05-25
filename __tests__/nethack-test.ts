@@ -2,13 +2,18 @@ import { firstValueFrom } from "rxjs";
 import { NetHackWrapper } from "../src/nethack-wrapper";
 import { Command } from "../src/nethack-models";
 import { mock } from "jest-mock-extended";
-import { NetHackUI } from "../src/models";
+import { Item, NetHackUI } from "../src/models";
 import { Status } from "../src/models";
+import { NethackUtil } from "../src/helper/nethack-util";
+import { MENU_SELECT } from "../src/generated";
 
 describe("Nethack", () => {
   const WIN_STATUS = 1;
   const WIN_MAP = 2;
   const WIN_INVEN = 3;
+  const WIN_ANY = 10;
+
+  const ANY_POINTER = 9999;
 
   const setupWrapper = () => {
     const Module: any = {};
@@ -18,29 +23,32 @@ describe("Nethack", () => {
       });
     };
     const ui = mock<NetHackUI>();
-    const wrapper = new NetHackWrapper(false, Module, {
+    const util = { selectItems: jest.fn(), toTile: (x) => x } as NethackUtil;
+    const wrapper = new NetHackWrapper(false, Module, util, {
       ...globalThis,
       nethackUI: ui,
       nethackGlobal: {
         globals: { WIN_STATUS, WIN_INVEN, WIN_MAP },
       },
-    } as any);
-    return [wrapper, ui] as [NetHackWrapper, NetHackUI];
+    } as any, false);
+    return [wrapper, ui, util] as [NetHackWrapper, NetHackUI, NethackUtil];
   };
 
   const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
   const parseStatus = async (line: string) => {
     await wrapper.handle(Command.PUTSTR, WIN_STATUS, 0, line);
-    await wait(100);
+    await wait(200);
   };
 
   let wrapper: NetHackWrapper;
   let ui: NetHackUI;
+  let util: NethackUtil;
 
   beforeEach(() => {
-    const [w, u] = setupWrapper();
+    const [w, u, ut] = setupWrapper();
     wrapper = w;
     ui = u;
+    util = ut;
   });
 
   describe("Status", () => {
@@ -107,27 +115,118 @@ describe("Nethack", () => {
     });
   });
 
-  // it(
-  //   "should work",
-  //   async () => {
-  //     const wrapper = setupWrapper();
-  //     wrapper.startGame();
-  //     await firstValueFrom(wrapper.awaitingInput$);
+  const sendMenu = async (items: Item[], prompt: string) => {
+    await wrapper.handle(Command.MENU_START);
+    items.map((i) => {
+      return wrapper.handle(
+        Command.MENU_ADD,
+        WIN_ANY,
+        i.tile,
+        i.identifier,
+        i.accelerator,
+        i.groupAcc,
+        i.attr,
+        i.str,
+        i.active ? 1 : 0
+      );
+    });
+    await wrapper.handle(Command.MENU_END, WIN_ANY, prompt);
+  };
 
-  //     // auto select character
-  //     wrapper.sendInput("a".charCodeAt(0));
-  //     await firstValueFrom(wrapper.awaitingInput$);
+  const item: Item = {
+    identifier: 0,
+    str: "",
+    tile: 0,
+    accelerator: 0,
+    groupAcc: 0,
+    attr: 0,
+    active: false,
+  };
 
-  //     // Close intro dialog
-  //     wrapper.sendInput(" ".charCodeAt(0));
-  //     await firstValueFrom(wrapper.awaitingInput$);
+  const send = async (...chars: (string | number)[]) => {
+    chars.forEach((c) => {
+      if (typeof c === "string") {
+        wrapper.sendInput(c.charCodeAt(0));
+      } else {
+        wrapper.sendInput(c);
+      }
+    });
+    await wait(10);
+  };
 
-  //     wrapper.sendInput("?".charCodeAt(0));
-  //     const menu = await firstValueFrom(wrapper.onMenu$);
+  describe("Menu", () => {
+    it("should open menu", async () => {
+      const item1: Item = {
+        ...item,
+        identifier: 1,
+        str: "Item 1",
+        accelerator: "a".charCodeAt(0),
+      };
+      const item2: Item = {
+        ...item1,
+        str: "Item 2",
+        identifier: 2,
+        accelerator: "b".charCodeAt(0),
+      };
+      const item3: Item = {
+        ...item1,
+        str: "Item 3",
+        identifier: 3,
+        accelerator: "c".charCodeAt(0),
+      };
 
-  //     expect(menu.count).toEqual(1);
-  //     expect(menu.items.length).toBeGreaterThan(0);
-  //   },
-  //   10 * 1000
-  // );
+      await sendMenu([item1, item2, item3], "Select one");
+      wrapper
+        .handle(Command.MENU_SELECT, WIN_ANY, MENU_SELECT.PICK_ONE, ANY_POINTER)
+        .then((len) => {
+          expect(len).toEqual(1);
+        });
+      expect(ui.openMenu).toBeCalledWith(WIN_ANY, "Select one", 1, item1, item2, item3);
+
+      await send("a");
+      expect(ui.openMenu).toBeCalledWith(
+        WIN_ANY,
+        "Select one",
+        1,
+        { ...item1, active: true },
+        item2,
+        item3
+      );
+
+      await send("b");
+      expect(ui.openMenu).toBeCalledWith(
+        WIN_ANY,
+        "Select one",
+        1,
+        item1,
+        { ...item2, active: true },
+        item3
+      );
+
+      await send(" ");
+      expect(util.selectItems).toBeCalledWith([2], ANY_POINTER);
+    });
+
+    it("should cancel menu", async () => {
+      const item1: Item = {
+        ...item,
+        identifier: 1,
+        str: "Item 1",
+        accelerator: "a".charCodeAt(0),
+      };
+
+      await sendMenu([item1], "Select one");
+      wrapper
+        .handle(Command.MENU_SELECT, WIN_ANY, MENU_SELECT.PICK_ONE, ANY_POINTER)
+        .then((len) => {
+          expect(len).toEqual(-1);
+        });
+
+      await send("a");
+      expect(ui.openMenu).toBeCalledWith(WIN_ANY, "Select one", 1, { ...item1, active: true });
+
+      await send(27, " ");
+      expect(util.selectItems).not.toBeCalled();
+    });
+  });
 });

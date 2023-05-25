@@ -1,10 +1,6 @@
 export interface NetHackJS {
-  selectMenu: (items: any[]) => void; // TODO: param type
   sendInput: (key: number) => void;
   sendLine: (line: string) => void;
-  startGame: () => void;
-  getBackupFiles: () => string[];
-  setBackupFile: (file: string) => void;
 }
 
 // In Godot all parameters will be in one array, so don't nest them
@@ -14,26 +10,23 @@ export interface NetHackUI {
   openQuestion: (question: string, ...choices: string[]) => void;
   openGetLine: (question: string, ...autocomplete: string[]) => void;
 
+  printLine: (msg: string) => void;
   closeDialog: (id: number) => void;
 
   moveCursor: (x: number, y: number) => void;
   centerView: (x: number, y: number) => void;
-  printLine: (msg: string) => void;
-
   clearMap: () => void;
   updateMap: (...tiles: Tile[]) => void;
   updateStatus: (status: Status) => void;
   updateInventory: (...items: Item[]) => void;
-
-  onGameover: (status: GameStatus) => void;
+  updateState: (state: GameState) => void;
 }
 
-export enum GameStatus {
+export enum GameState {
+  START,
   RUNNING,
-  EXITED,
-  ERROR,
+  GAMEOVER,
 }
-
 
 export interface Vector {
   x: number;
@@ -61,7 +54,7 @@ export interface Tile {
 export interface Item {
   tile: number;
   accelerator: number;
-  groupAcc: string;
+  groupAcc: number;
   attr: number;
   str: string;
   identifier: number;

@@ -1,27 +1,23 @@
 import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
-import { Item, NetHackJS, Status, NetHackUI, Tile, GameStatus } from "./models";
+import { Item, NetHackJS, Status, NetHackUI, Tile, GameState } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
+// @ts-ignore
+import nethackLib from "../lib/nethack.js";
+
 import { Command, ItemFlag, statusMap } from "./nethack-models";
-import { Game } from "./ui/game";
+import { AccelIterator } from "./helper/accel-iterator";
+import { NethackUtil, Type } from "./helper/nethack-util";
+import {
+  EMPTY_ITEM,
+  clearMenuItems,
+  getCountForSelect,
+  toggleMenuItems,
+} from "./helper/menu-select";
+import { listBackupFiles, loadSaveFiles, syncSaveFiles } from "./helper/save-files";
+import { CONTINUE_KEYS, ESC } from "./helper/keys";
+import { parseAndMapStatus } from "./helper/parse-status";
 
-export interface MenuSelect {
-  winid: number;
-  prompt: string;
-  count: number;
-  items: Item[];
-}
-
-export interface Question {
-  question: string;
-  choices: string[];
-}
-
-export interface Window {
-  type: WIN_TYPE;
-}
-
-const SAVE_FILES_STORAGE_KEY = "sakkaku-dev-nethack-savefiles";
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 
 export class NetHackWrapper implements NetHackJS {
@@ -39,7 +35,7 @@ export class NetHackWrapper implements NetHackJS {
 
     // Map
     [Command.PRINT_GLYPH]: async (winid, x, y, glyph) =>
-      this.tiles$.next([...this.tiles$.value, { x, y, tile: this.toTile(glyph) }]),
+      this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph) }]),
 
     [Command.CURSOR]: async (winid, x, y) =>
       winid == this.global.globals.WIN_MAP && this.ui.moveCursor(x, y),
@@ -49,17 +45,17 @@ export class NetHackWrapper implements NetHackJS {
     [Command.STATUS_UPDATE]: this.statusUpdate.bind(this),
 
     // Menu
-    [Command.MENU_START]: async () => (this.menu = { winid: 0, items: [], count: 0, prompt: "" }),
-    [Command.MENU_END]: async (winid, prompt) => (this.menu.prompt = prompt),
+    [Command.MENU_START]: async () => (this.menuItems = []),
+    [Command.MENU_END]: async (winid, prompt) => (this.menuPrompt = prompt),
     [Command.MENU_ADD]: this.menuAdd.bind(this),
     [Command.MENU_SELECT]: this.menuSelect.bind(this),
 
     // Waiting input
     [Command.DISPLAY_WINDOW]: this.displayWindow.bind(this),
-    [Command.GET_CHAR]: this.waitInput.bind(this),
-    [Command.GET_POSKEY]: this.waitInput.bind(this),
+    [Command.GET_CHAR]: () => this.waitInput(),
+    [Command.GET_POSKEY]: () => this.waitInput(),
+    [Command.ASK_NAME]: () => this.waitInput(),
     [Command.YN_FUNCTION]: this.yesNoQuestion.bind(this),
-    [Command.ASK_NAME]: this.waitInput.bind(this),
     [Command.GET_LINE]: this.getLine.bind(this),
     [Command.GET_EXT_CMD]: this.getExtCmd.bind(this),
 
@@ -67,37 +63,32 @@ export class NetHackWrapper implements NetHackJS {
     [Command.DELAY_OUTPUT]: () => new Promise((resolve) => setTimeout(resolve, 100)),
     [Command.MESSAGE_MENU]: this.messageMenu.bind(this),
 
-    // TODO: message_menu
     // TODO: select_menu with yn_function
   };
   private idCounter = 0;
-  private menu: MenuSelect = { winid: 0, items: [], count: 0, prompt: "" };
+  private menuItems: Item[] = [];
+  private menuPrompt = "";
   private putStr = "";
   private backupFile = "";
+  private accel = new AccelIterator();
 
   private input$ = new Subject<number>();
-  private selectedMenu$ = new Subject<number[]>();
   private line$ = new Subject<string>();
 
   private status$ = new BehaviorSubject<Status>({});
   private inventory$ = new Subject<Item[]>();
   private tiles$ = new BehaviorSubject<Tile[]>([]);
   private awaitingInput$ = new BehaviorSubject(false);
-  private playing$ = new BehaviorSubject(GameStatus.EXITED);
+  private gameState$ = new BehaviorSubject(GameState.START);
 
-  private async messageMenu(dismissAccel: string, how: number, mesg: string) {
-    // Just information? currently known usage with (z)ap followed by (?)
-    this.ui.printLine(mesg);
-  }
-
-  constructor(private debug = false, private module: any, private win: typeof window = window) {
-    this.playing$
-      .pipe(
-        skip(1),
-        filter((x) => !this.isGameRunning()),
-        tap((s) => this.ui.onGameover(s))
-      )
-      .subscribe();
+  constructor(
+    private debug = false,
+    private module: any,
+    private util: NethackUtil,
+    private win: typeof window = window,
+    private autostart = true
+  ) {
+    this.gameState$.pipe(tap((s) => this.ui.updateState(s))).subscribe();
 
     this.tiles$
       .pipe(
@@ -112,7 +103,7 @@ export class NetHackWrapper implements NetHackJS {
     this.inventory$
       .pipe(
         filter((x) => x.length > 0),
-        debounceTime(500),
+        debounceTime(100),
         tap((items) => this.ui.updateInventory(...items))
       )
       .subscribe();
@@ -137,24 +128,69 @@ export class NetHackWrapper implements NetHackJS {
 
     this.win.onerror = (e) => {
       if (this.isGameRunning()) {
-        this.playing$.next(GameStatus.ERROR);
+        const title = "An unexpected error occurred.";
+        const unsaved = "Unfortunately the game progress could not be saved.";
+        const backup =
+          'Use the "Load from backup" in the main menu to restart from your latest save.';
+        this.ui.openDialog(-1, `${title}\n${unsaved}\n\n${backup}`);
+        this.waitInput(true).then(() => {
+          this.ui.closeDialog(-1);
+          this.gameState$.next(GameState.GAMEOVER);
+        });
       }
-    }
+    };
 
     if (!this.module.preRun) {
       this.module.preRun = [];
     }
-    this.module.preRun.push(() => {
-      this.loadSaveFiles();
+    this.module.preRun.push(() => loadSaveFiles(this.module, this.backupFile));
 
-      if (this.backupFile) {
-        this.loadBackupSaveFile(this.backupFile);
+    if (autostart) {
+      this.openStartScreen();
+    }
+  }
+
+  private async openStartScreen() {
+    while (!this.isGameRunning()) {
+      const id = await this.openCustomMenu("Welcome to NetHack", [
+        "Start Game",
+        "Load from backup",
+      ]);
+
+      switch (id) {
+        case 0:
+          this.gameState$.next(GameState.RUNNING);
+          nethackLib(this.module);
+          break;
+        case 1:
+          const files = listBackupFiles();
+          const backupId = await this.openCustomMenu("Select backup file", files);
+          if (backupId !== -1) {
+            this.backupFile = files[backupId];
+          }
+          break;
       }
-    });
+    }
+
+    this.ui.closeDialog(-1);
+  }
+
+  private async openCustomMenu(prompt: string, buttons: string[]) {
+    const items = buttons.map((file, i) => ({
+      ...EMPTY_ITEM,
+      str: file,
+      identifier: i + 1,
+    }));
+    const ids = await this.startUserMenuSelect(-1, prompt, MENU_SELECT.PICK_ONE, items);
+    if (ids.length) {
+      return ids[0] - 1;
+    }
+
+    return -1;
   }
 
   private isGameRunning() {
-    return this.playing$.value === GameStatus.RUNNING;
+    return this.gameState$.value === GameState.RUNNING;
   }
 
   private log(...args: any[]) {
@@ -163,34 +199,9 @@ export class NetHackWrapper implements NetHackJS {
     }
   }
 
-  public setBackupFile(file: string) {
-    this.backupFile = file;
-  }
-
-  public startGame() {
-    this.playing$.next(GameStatus.RUNNING);
-
-    // cannot be reloaded again, will fail
-    // @ts-ignore
-    import("../lib/nethack.js")
-      .then((x) => {
-        x.default(this.module);
-      })
-      .catch((e) => {
-        console.log("Failed to load nethack module", e);
-        this.playing$.next(GameStatus.ERROR);
-      });
-  }
-
   // Getting input from user
 
-  public selectMenu(items: number[]) {
-    this.log("Selected menu", items);
-    this.selectedMenu$.next(items);
-  }
-
   public sendInput(key: number) {
-    this.log("Receiced input", key);
     this.input$.next(key);
   }
 
@@ -198,21 +209,20 @@ export class NetHackWrapper implements NetHackJS {
     if (line.length >= MAX_STRING_LENGTH) {
       this.log(`Line is too long. It can only be ${MAX_STRING_LENGTH} characters long.`, line);
     } else {
-      this.log("Receiced line", line);
       this.line$.next(line);
     }
   }
 
   // Waiting for input from user
 
-  private async waitInput() {
-    this.log("Waiting user input...");
+  private async waitInput(filterContinue = false) {
     this.awaitingInput$.next(true);
-    return await firstValueFrom(this.input$);
+    return await firstValueFrom(
+      this.input$.pipe(filter((c) => !filterContinue || CONTINUE_KEYS.includes(c)))
+    );
   }
 
   private async waitLine() {
-    this.log("Waiting user input line...");
     this.awaitingInput$.next(true);
     return await firstValueFrom(this.line$);
   }
@@ -232,6 +242,11 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     return -1;
+  }
+
+  private async messageMenu(dismissAccel: string, how: number, mesg: string) {
+    // Just information? currently known usage with (z)ap followed by (?)
+    this.ui.printLine(mesg);
   }
 
   private async getExtCmd(commandPointer: number, numCommands: number) {
@@ -272,7 +287,7 @@ export class NetHackWrapper implements NetHackJS {
   private async displayWindow(winid: number, blocking: number) {
     if (this.putStr !== "") {
       this.ui.openDialog(winid, this.putStr);
-      await this.waitInput();
+      await this.waitInput(true);
       this.putStr = "";
     }
   }
@@ -285,95 +300,25 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async gameEnd(status: number) {
-    console.log("Ended game with status", status);
-    this.syncSaveFiles();
-    this.playing$.next(GameStatus.EXITED);
-  }
-
-  private syncSaveFiles() {
-    console.log("Syncing save files");
-    this.module.FS.syncfs((err: any) => {
-      if (err) {
-        console.warn("Failed to sync FS. Save might not work", err);
-      }
-    });
-
-    // backup save files in case user forgets to save
-    try {
-      const savefiles = this.module.FS.readdir("/nethack/save");
-      for (let i = 0; i < savefiles.length; ++i) {
-        let file = savefiles[i];
-        if (file == "." || file == "..") continue;
-        if (file === "record") continue; // This is just in save folder, so it gets persisted, nethack should not delete it like the save file
-
-        file = "/nethack/save/" + file;
-        try {
-          const data = btoa(
-            String.fromCharCode.apply(null, this.module.FS.readFile(file, { encoding: "binary" }))
-          );
-          localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, JSON.stringify({ data }));
-        } catch (e) {
-          console.warn("Failed to sync save file", file);
-        }
-      }
-    } catch (e) { }
-  }
-
-  private loadSaveFiles() {
-    const mod = this.module;
-    try {
-      mod.FS.mkdir("/nethack/save");
-    } catch (e) { }
-    mod.FS.mount(mod.IDBFS, {}, "/nethack/save");
-    mod.FS.syncfs(true, (err: any) => {
-      if (err) {
-        console.warn("Failed to sync FS. Save might not work", err);
-      }
-    });
-  }
-
-  public getBackupFiles(): string[] {
-    const result: string[] = [];
-    for (let i = 0, len = localStorage.length; i < len; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith(SAVE_FILES_STORAGE_KEY)) {
-        result.push(key.substring(SAVE_FILES_STORAGE_KEY.length + 1));
-      }
-    }
-
-    return result;
-  }
-
-  private loadBackupSaveFile(file: string) {
-    const strData = localStorage.getItem(`${SAVE_FILES_STORAGE_KEY}-${file}`);
-    if (strData) {
-      const { data } = JSON.parse(strData);
-      try {
-        const bytes = atob(data);
-        var buf = new ArrayBuffer(bytes.length);
-        var array = new Uint8Array(buf);
-        for (var i = 0; i < bytes.length; ++i) array[i] = bytes.charCodeAt(i);
-        this.module.FS.writeFile(file, array, { encoding: "binary" });
-      } catch (e) {
-        console.warn("Failed to load backup file", e);
-      }
-    }
+    this.log("Ended game with status", status);
+    syncSaveFiles(this.module);
+    this.gameState$.next(GameState.GAMEOVER);
   }
 
   private async menuAdd(
     winid: number,
     glyph: number,
     identifier: number,
-    accelerator: string,
-    groupAcc: string,
+    accelerator: number,
+    groupAcc: number,
     attr: number,
     str: string,
     flag: number
   ) {
-    this.menu.items.push({
-      tile: this.toTile(glyph),
+    this.menuItems.push({
+      tile: this.util.toTile(glyph),
       identifier,
-      accelerator: parseInt(accelerator),
+      accelerator,
       groupAcc,
       attr,
       str,
@@ -385,100 +330,28 @@ export class NetHackWrapper implements NetHackJS {
     if (winid === this.global.globals.WIN_INVEN) {
       const activeRegex =
         /\((wielded( in other hand)?|in quiver|weapon in hands?|being worn|on (left|right) (hand|foreclaw|paw|pectoral fin))\)/;
-      this.menu.items.forEach((i) => (i.active = activeRegex.test(i.str)));
-      this.inventory$.next(this.menu.items);
+      this.menuItems.forEach((i) => (i.active = activeRegex.test(i.str)));
+      this.inventory$.next(this.menuItems);
       return 0;
     }
 
-    if (this.menu.items.length === 0) {
+    if (this.menuItems.length === 0) {
       return 0;
     }
 
-    if (select == MENU_SELECT.PICK_NONE) {
-      this.ui.openDialog(winid, this.menu.items.map((i) => i.str).join("\n"));
-      await this.waitInput();
-      return 0;
-    }
-
-    if (select == MENU_SELECT.PICK_ANY) {
-      this.ui.openMenu(winid, this.menu.prompt, -1, ...this.menu.items);
-    } else {
-      this.ui.openMenu(winid, this.menu.prompt, 1, ...this.menu.items);
-    }
-
-    this.log("Waiting for menu select...");
-    const selectedIds = await firstValueFrom(this.selectedMenu$);
-    const itemIds = selectedIds.filter((id) => this.menu.items.find((x) => x.identifier === id));
-
+    const itemIds = await this.startUserMenuSelect(winid, this.menuPrompt, select, this.menuItems);
     if (itemIds.length === 0) {
       return -1;
     }
 
-    this.selectItems(itemIds, selected);
-    return itemIds?.length ?? -1;
+    this.util.selectItems(itemIds, selected);
+    return itemIds.length;
   }
 
   private async handlePutStr(winid: number, attr: any, str: string) {
     if (winid === this.global.globals.WIN_STATUS) {
-      // 3.6 updates the status with putStr:
-      // Web_user the Aspirant        St:18/20 Dx:12 Co:15 In:9 Wi:18 Ch:12  Lawful
-      // Dlvl:1  $:0  HP:14(14) Pw:8(8) AC:7  Exp:1 T:200
-
       const status = this.status$.value;
-      const statLineRegex = /St:\d+.*Dx:\d+.*/;
-
-      // Split regex more in case some things can be hidden/shown
-      if (statLineRegex.test(str)) {
-        let m = str.match(/\w ([a-zA-z\s]+) .* St:.*Ch:\d+ [\s]* (\w+)/);
-        if (m) {
-          statusMap[STATUS_FIELD.BL_TITLE](status, m[1]);
-          statusMap[STATUS_FIELD.BL_ALIGN](status, m[2]);
-        }
-
-        m = str.match(/St:([\d\/]+) Dx:(\d+) Co:(\d+) In:(\d+) Wi:(\d+) Ch:(\d+)/);
-        if (m) {
-          statusMap[STATUS_FIELD.BL_STR](status, m[1]);
-          statusMap[STATUS_FIELD.BL_DX](status, m[2]);
-          statusMap[STATUS_FIELD.BL_CO](status, m[3]);
-          statusMap[STATUS_FIELD.BL_IN](status, m[4]);
-          statusMap[STATUS_FIELD.BL_WI](status, m[5]);
-          statusMap[STATUS_FIELD.BL_CH](status, m[6]);
-        }
-      } else {
-        let m = str.match(/HP:(\d+)\((\d+)\).*Pw:(\d+)\((\d+)\)/);
-        if (m) {
-          statusMap[STATUS_FIELD.BL_HP](status, m[1]);
-          statusMap[STATUS_FIELD.BL_HPMAX](status, m[2]);
-          statusMap[STATUS_FIELD.BL_ENE](status, m[3]);
-          statusMap[STATUS_FIELD.BL_ENEMAX](status, m[4]);
-        }
-
-        m = str.match(/Dlvl:(\d+)/);
-        if (m) statusMap[STATUS_FIELD.BL_LEVELDESC](status, m[1]);
-
-        m = str.match(/\$:(\d+)/);
-        if (m) statusMap[STATUS_FIELD.BL_GOLD](status, m[1]);
-
-        m = str.match(/AC:([-]?\d+)/);
-        if (m) statusMap[STATUS_FIELD.BL_AC](status, m[1]);
-
-        m = str.match(/Xp:(\d+\/\d+)/); // Contains lvl + exp
-        if (m) {
-          const v = m[1].split("/");
-          statusMap[STATUS_FIELD.BL_EXP](status, v[0]);
-          statusMap[STATUS_FIELD.BL_XP](status, v[1]);
-        } else {
-          m = str.match(/Exp:(\d+)/);
-          if (m) statusMap[STATUS_FIELD.BL_EXP](status, m[1]);
-        }
-
-        m = str.match(/T:(\d+)/);
-        if (m) statusMap[STATUS_FIELD.BL_TIME](status, m[1]);
-
-        m = str.match(/([a-zA-Z\s]+)$/); // Contains everything status related, eg hunger, conditions
-        if (m) statusMap[STATUS_FIELD.BL_HUNGER](status, m[1]);
-      }
-
+      parseAndMapStatus(str, status);
       this.status$.next(status);
     } else {
       this.putStr += str + "\n";
@@ -510,34 +383,33 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   // Utils
-  private selectItems(itemIds: number[], selectedPointer: number) {
-    const int_size = 4;
-    const size = int_size * 2; // selected object has 3 fields, in 3.6 only 2
-    const total_size = size * itemIds.length;
-    const start_ptr = this.module._malloc(total_size);
+  private async startUserMenuSelect(
+    id: number,
+    prompt: string,
+    select: MENU_SELECT,
+    items: Item[]
+  ) {
+    this.accel.reset();
+    items
+      .filter((i) => i.identifier !== 0 && i.accelerator === 0)
+      .forEach((i) => (i.accelerator = this.accel.next()));
 
-    // write selected items to memory
-    let ptr = start_ptr;
-    itemIds.forEach((id) => {
-      this.global.helpers.setPointerValue("nethack.menu.selected", ptr, Type.INT, id);
-      this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size, Type.INT, -1);
-      // this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size * 2, Type.INT, 0); // Only 2 properties in 3.6
+    const count = getCountForSelect(select);
+    let char = 0;
 
-      ptr += size;
-    });
+    while (!CONTINUE_KEYS.includes(char)) {
+      this.ui.openMenu(id, prompt, count, ...items);
+      char = await this.waitInput();
+      if (count !== 0) {
+        toggleMenuItems(char, count, items);
+      }
+    }
 
-    // point selected to the first item
-    const selected_pp = this.global.helpers.getPointerValue("", selectedPointer, Type.POINTER);
-    this.global.helpers.setPointerValue(
-      "nethack.menu.setSelected",
-      selected_pp,
-      Type.INT,
-      start_ptr
-    );
-  }
+    if (char === ESC) {
+      clearMenuItems(items);
+    }
 
-  private toTile(glyph: number): number {
-    return this.module._glyph_to_tile(glyph);
+    return items.filter((i) => i.active).map((i) => i.identifier);
   }
 
   private getPointerValue(ptr: number, type: string) {
@@ -564,10 +436,4 @@ export class NetHackWrapper implements NetHackJS {
   private get ui(): NetHackUI {
     return this.win.nethackUI;
   }
-}
-
-enum Type {
-  INT = "i",
-  STRING = "s",
-  POINTER = "p",
 }

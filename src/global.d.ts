@@ -4,6 +4,7 @@ declare interface Window {
   nethackJS: NetHackJS;
   nethackUI: NetHackGodot;
 
+  module: any;
   nethackGlobal: {
     helpers: {
       mapglyphHelper: Function;
