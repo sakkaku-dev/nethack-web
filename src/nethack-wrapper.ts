@@ -8,22 +8,17 @@ import nethackLib from "../lib/nethack.js";
 import { Command, ItemFlag, statusMap } from "./nethack-models";
 import { AccelIterator } from "./helper/accel-iterator";
 import { NethackUtil, Type } from "./helper/nethack-util";
-import { clearMenuItems, getCountForSelect, toggleMenuItems } from "./helper/menu-select";
+import {
+  EMPTY_ITEM,
+  clearMenuItems,
+  getCountForSelect,
+  toggleMenuItems,
+} from "./helper/menu-select";
 import { listBackupFiles, loadSaveFiles, syncSaveFiles } from "./helper/save-files";
 import { CONTINUE_KEYS, ESC } from "./helper/keys";
 import { parseAndMapStatus } from "./helper/parse-status";
 
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
-
-const EMPTY_ITEM: Item = {
-  tile: 0,
-  groupAcc: 0,
-  attr: 0,
-  accelerator: 0,
-  str: "",
-  identifier: 0,
-  active: false,
-};
 
 export class NetHackWrapper implements NetHackJS {
   private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
@@ -90,7 +85,8 @@ export class NetHackWrapper implements NetHackJS {
     private debug = false,
     private module: any,
     private util: NethackUtil,
-    private win: typeof window = window
+    private win: typeof window = window,
+    private autostart = true
   ) {
     this.gameState$.pipe(tap((s) => this.ui.updateState(s))).subscribe();
 
@@ -149,7 +145,9 @@ export class NetHackWrapper implements NetHackJS {
     }
     this.module.preRun.push(() => loadSaveFiles(this.module, this.backupFile));
 
-    this.openStartScreen();
+    if (autostart) {
+      this.openStartScreen();
+    }
   }
 
   private async openStartScreen() {
@@ -181,11 +179,11 @@ export class NetHackWrapper implements NetHackJS {
     const items = buttons.map((file, i) => ({
       ...EMPTY_ITEM,
       str: file,
-      identifier: i,
+      identifier: i + 1,
     }));
     const ids = await this.startUserMenuSelect(-1, prompt, MENU_SELECT.PICK_ONE, items);
     if (ids.length) {
-      return ids[0];
+      return ids[0] - 1;
     }
 
     return -1;
@@ -320,7 +318,7 @@ export class NetHackWrapper implements NetHackJS {
     this.menuItems.push({
       tile: this.util.toTile(glyph),
       identifier,
-      accelerator: accelerator || this.accel.next(),
+      accelerator,
       groupAcc,
       attr,
       str,
@@ -341,12 +339,7 @@ export class NetHackWrapper implements NetHackJS {
       return 0;
     }
 
-    const itemIds = await this.startUserMenuSelect(
-      winid,
-      this.menuPrompt,
-      select,
-      this.menuItems
-    );
+    const itemIds = await this.startUserMenuSelect(winid, this.menuPrompt, select, this.menuItems);
     if (itemIds.length === 0) {
       return -1;
     }

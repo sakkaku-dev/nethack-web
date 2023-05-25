@@ -30,7 +30,7 @@ describe("Nethack", () => {
       nethackGlobal: {
         globals: { WIN_STATUS, WIN_INVEN, WIN_MAP },
       },
-    } as any);
+    } as any, false);
     return [wrapper, ui, util] as [NetHackWrapper, NetHackUI, NethackUtil];
   };
 
