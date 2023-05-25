@@ -1,6 +1,3 @@
-const CONTINUE_KEY = ['Enter', ' '];
-const CANCEL_KEY = ['Escape'];
-
 function fullScreen(elem) {
     elem.style.position = "absolute";
     elem.style.top = "0";
@@ -45,11 +42,9 @@ function title(elem) {
 
 class Dialog {
     constructor(text) {
-        this.onClose = () => { };
         const overlay = document.createElement('div');
         overlay.style.zIndex = '1';
         overlay.classList.add('dialog-overlay');
-        // overlay.onclick = () => this.onClose();
         fullScreen(overlay);
         document.body.appendChild(overlay);
         this.elem = document.createElement("pre");
@@ -69,12 +64,6 @@ class Dialog {
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#039;");
     }
-    onInput(e) {
-        e.preventDefault();
-        if ([...CANCEL_KEY, ...CONTINUE_KEY].includes(e.key)) {
-            this.onClose();
-        }
-    }
     static removeAll() {
         document.querySelectorAll(`.dialog`).forEach((elem) => {
             elem.classList.remove("open");
@@ -86,182 +75,55 @@ class Dialog {
     }
 }
 
-class Menu extends Dialog {
-    constructor(prompt, items, count, tileset) {
-        super(prompt);
-        this.tileset = tileset;
-        this.onSelect = (ids) => { };
-        this.accelMap = {};
-        this.onClose = () => this.onSelect([]);
-        this.elem.appendChild(this.createMenu(items, count));
-        this.submitButton = this.createSelectButton();
-        this.elem.appendChild(this.submitButton);
-    }
-    onInput(e) {
-        e.preventDefault();
-        if (CANCEL_KEY.includes(e.key)) {
-            this.onSelect([]);
-        }
-        else if (CONTINUE_KEY.includes(e.key)) {
-            this.submitButton.click();
-        }
-        else {
-            const option = this.accelMap[e.key];
-            if (option && !option.disabled) {
-                option.checked = !option.checked;
-                // if (this.count === 1) {
-                //     this.submitButton.click();
-                // }
-            }
-        }
-    }
-    createSelectButton() {
-        const btn = document.createElement("button");
-        btn.innerHTML = "Submit";
-        btn.onclick = () => {
-            const inputs = Array.from(document.querySelectorAll("#menu input"));
-            const ids = inputs.filter((i) => i.checked && !i.disabled).map((i) => i.value);
-            this.onSelect(ids);
-        };
-        return btn;
-    }
-    createMenu(items, count) {
-        let accelStart = 'a'.charCodeAt(0);
-        this.accelMap = {};
-        const list = document.createElement("div");
-        list.style.display = "flex";
-        list.style.flexDirection = "column";
-        list.id = "menu";
-        items.forEach((i) => {
-            const div = document.createElement("div");
-            horiz(div);
-            if (i.id !== 0) {
-                const id = `menu-${i.id}`;
-                const elem = document.createElement("input");
-                elem.type = count === 1 ? "radio" : "checkbox";
-                elem.name = "menuSelect";
-                elem.id = id;
-                elem.checked = i.active || false;
-                elem.value = `${i.id}`;
-                // Hopefully when accel does not exist, then none of the items have one
-                const accel = !!i.accelerator ? i.accelerator : accelStart;
-                accelStart += 1;
-                this.accelMap[String.fromCharCode(accel)] = elem;
-                const label = document.createElement("label");
-                label.htmlFor = id;
-                label.innerHTML = i.text;
-                div.appendChild(elem);
-                if (i.tile && this.tileset) {
-                    const img = this.tileset.createBackgroundImage(i.tile, accel);
-                    div.appendChild(img);
-                }
-                else {
-                    label.innerHTML = `${String.fromCharCode(accel)} - ${label.innerHTML}`;
-                }
-                div.appendChild(label);
-            }
-            else {
-                div.appendChild(document.createTextNode(i.text || ' '));
-            }
-            list.appendChild(div);
-        });
-        return list;
-    }
-    ;
-}
-
-class BackupFiles extends Menu {
-    constructor(files) {
-        super('Select Backup File', files.map(f => ({ text: f, id: f })), 1);
-        // const list = document.createElement('div')
-        // list.style.display = 'flex';
-        // list.style.flexDirection = 'column';
-        // list.id = 'menu';
-        // files.forEach(file => {
-        //     const item = document.createElement('div');
-        //     const input = document.createElement('input');
-        //     input.type = 'radio';
-        //     input.value = file;
-        //     input.name = ''
-        //     const label = document.createElement('label');
-        //     label.innerHTML = file;
-        //     item.appendChild(input);
-        //     item.appendChild(label);
-        //     list.appendChild(item);
-        // });
-        // this.elem.appendChild(list);
-        // this.submitButton = this.createSelectButton();
-        // this.elem.append(this.submitButton);
-    }
-}
-
 class Screen {
     constructor() {
         this.elem = document.createElement("div");
         fullScreen(this.elem);
         center(this.elem);
     }
-    createButton(text, onClick) {
+    createButton(text, onClick = () => { }) {
         const btn = document.createElement("button");
         btn.innerHTML = text;
         btn.onclick = onClick;
         return btn;
     }
-    changeInput(handler) {
-        if (handler === this) {
-            this.resetInput();
-        }
-        else {
-            this.inputHandler = handler;
-        }
+    onResize() { }
+    onMenu(prompt, count, items) { }
+    onDialog(text) {
+        const dialog = new Dialog(text);
+        this.elem.appendChild(dialog.elem);
     }
-    resetInput() {
-        this.inputHandler = undefined;
-    }
-    onInput(e) {
-        if (this.inputHandler) {
-            this.inputHandler.onInput(e);
-        }
-        else {
-            this.input(e);
-        }
-    }
-    input(e) { }
-    hide() {
-        document.body.removeChild(this.elem);
-    }
-    show() {
-        document.body.appendChild(this.elem);
+    onCloseDialog() {
+        Dialog.removeAll();
     }
 }
 
 class StartScreen extends Screen {
     constructor() {
         super();
-        this.onStartGame = () => { };
-        const div = document.createElement("div");
-        vert(div);
-        const header = document.createElement("div");
-        header.innerHTML = "Welcome to NetHack";
-        header.style.marginBottom = "2rem";
-        title(header);
-        div.appendChild(header);
-        div.appendChild(this.createButton("Start Game", () => this.onStartGame()));
-        div.appendChild(this.createButton("Load from Backup", () => this.openBackupFiles()));
-        this.elem.appendChild(div);
+        this.container = document.createElement("div");
+        vert(this.container);
+        this.header = document.createElement("div");
+        this.header.style.marginBottom = "2rem";
+        title(this.header);
+        this.container.appendChild(this.header);
+        this.elem.appendChild(this.container);
     }
-    openBackupFiles() {
-        const files = window.nethackJS.getBackupFiles();
-        const backup = new BackupFiles(files);
-        backup.onSelect = (files) => {
-            if (files.length) {
-                window.nethackJS.setBackupFile(files[0]);
+    onMenu(prompt, count, items) {
+        this.header.innerHTML = prompt;
+        if (this.menuContainer) {
+            this.container.removeChild(this.menuContainer);
+        }
+        this.menuContainer = document.createElement('div');
+        vert(this.menuContainer);
+        this.container.appendChild(this.menuContainer);
+        items.forEach(i => {
+            const btn = this.createButton(`${String.fromCharCode(i.accelerator)} - ${i.str}`);
+            if (i.active) {
+                btn.classList.add('active');
             }
-            this.resetInput();
-            Dialog.removeAll();
-        };
-        this.changeInput(backup);
-        this.elem.appendChild(backup.elem);
+            this.menuContainer?.appendChild(btn);
+        });
     }
 }
 
@@ -1369,6 +1231,8 @@ class Inventory {
     ;
 }
 
+const CANCEL_KEY = ['Escape'];
+
 class Line extends Dialog {
     constructor(question, autocomplete) {
         super(question);
@@ -1376,7 +1240,7 @@ class Line extends Dialog {
         this.onLineEnter = (line) => { };
         console.log(autocomplete);
         horiz(this.elem);
-        this.onClose = () => this.onLineEnter('');
+        // this.onClose = () => this.onLineEnter('');
         const input = document.createElement('input');
         this.input = input;
         this.elem.appendChild(input);
@@ -1424,6 +1288,76 @@ class Line extends Dialog {
     }
 }
 
+class Menu extends Dialog {
+    constructor(prompt, tileset) {
+        super(prompt);
+        this.tileset = tileset;
+    }
+    updateMenu(items, count) {
+        this.elem.childNodes.forEach((x) => x.remove());
+        this.elem.appendChild(this.createMenu(items, count));
+    }
+    createMenu(items, count) {
+        const list = document.createElement("div");
+        list.style.display = "flex";
+        list.style.flexDirection = "column";
+        list.id = "menu";
+        let currentGroupTitle = null;
+        let currentGroupAccels = [];
+        const prependGroupAccel = () => {
+            if (currentGroupTitle != null && currentGroupAccels.length > 0) {
+                const title = currentGroupTitle;
+                if (title.textContent !== "") {
+                    // e.g 'D' - it will have an empty title
+                    // In case there are more than one group accel, but hopefully not
+                    const groupAccel = currentGroupAccels
+                        .map((c) => String.fromCharCode(c))
+                        .join(", ");
+                    title.textContent = groupAccel + " - " + title.textContent;
+                }
+            }
+        };
+        items.forEach((i) => {
+            const div = document.createElement("div");
+            horiz(div);
+            if (i.identifier !== 0) {
+                const id = `menu-${i.identifier}`;
+                const elem = document.createElement("input");
+                elem.type = count === 1 ? "radio" : "checkbox";
+                elem.name = "menuSelect";
+                elem.id = id;
+                elem.checked = i.active || false;
+                elem.value = `${i.identifier}`;
+                const accel = i.accelerator;
+                if (i.groupAcc !== 0 && !currentGroupAccels.includes(i.groupAcc)) {
+                    currentGroupAccels.push(i.groupAcc);
+                }
+                const label = document.createElement("label");
+                label.htmlFor = id;
+                label.innerHTML = i.str;
+                div.appendChild(elem);
+                if (i.tile && this.tileset) {
+                    const img = this.tileset.createBackgroundImage(i.tile, accel);
+                    div.appendChild(img);
+                }
+                else {
+                    label.innerHTML = `${String.fromCharCode(accel)} - ${label.innerHTML}`;
+                }
+                div.appendChild(label);
+            }
+            else {
+                prependGroupAccel();
+                currentGroupAccels = [];
+                currentGroupTitle = document.createTextNode(i.str || " ");
+                div.appendChild(currentGroupTitle);
+            }
+            list.appendChild(div);
+        });
+        prependGroupAccel();
+        return list;
+    }
+}
+
 class StatusLine {
     constructor(root) {
         this.elem = document.createElement("pre");
@@ -1438,12 +1372,12 @@ class StatusLine {
     }
 }
 
-var GameStatus;
-(function (GameStatus) {
-    GameStatus[GameStatus["RUNNING"] = 0] = "RUNNING";
-    GameStatus[GameStatus["EXITED"] = 1] = "EXITED";
-    GameStatus[GameStatus["ERROR"] = 2] = "ERROR";
-})(GameStatus || (GameStatus = {}));
+var GameState;
+(function (GameState) {
+    GameState[GameState["START"] = 0] = "START";
+    GameState[GameState["RUNNING"] = 1] = "RUNNING";
+    GameState[GameState["GAMEOVER"] = 2] = "GAMEOVER";
+})(GameState || (GameState = {}));
 function add(v1, v2) {
     return { x: v1.x + v2.x, y: v1.y + v2.y };
 }
@@ -1574,111 +1508,58 @@ class TileMap {
     }
 }
 
-const SPECIAL_KEY_MAP = {
-    'Enter': 13,
-    'Escape': 27,
-};
 class GameScreen extends Screen {
     constructor() {
         super();
         this.resize$ = new Subject();
-        this.resizeListener = (e) => this.resize$.next();
         this.tileset = new TileSet("Nevanda.png", 32, 40);
         this.tilemap = new TileMap(this.elem, this.tileset);
         this.inventory = new Inventory(this.elem, this.tileset);
         this.console = new Console(this.elem);
         this.status = new StatusLine(this.elem);
         this.resize$.pipe(debounceTime(200)).subscribe(() => this.tilemap?.onResize());
-        this.changeInput(this);
     }
-    show() {
-        super.show();
-        document.body.onresize = this.resizeListener.bind(this);
+    onResize() {
+        this.resize$.next();
     }
-    hide() {
-        super.hide();
-        document.body.removeEventListener('onresize', this.resizeListener.bind(this));
+    onMenu(prompt, count, items) {
+        this.openMenu(prompt, count, items);
     }
-    input(e) {
-        if (e.key === "Control" || e.key === "Shift")
-            return;
-        if (e.key.length === 1 || SPECIAL_KEY_MAP[e.key]) {
-            e.preventDefault();
-            let code = 0;
-            const specialKey = SPECIAL_KEY_MAP[e.key];
-            if (specialKey) {
-                code = specialKey;
-            }
-            else {
-                code = e.key.charCodeAt(0);
-                if (e.ctrlKey) {
-                    if (code >= 65 && code <= 90) {
-                        // A~Z
-                        code = code - 64;
-                    }
-                    else if (code >= 97 && code <= 122) {
-                        code = code - 96;
-                    }
-                }
-            }
-            window.nethackJS.sendInput(code);
-        }
-        else {
-            console.log('Unhandled key: ', e.key);
-        }
+    onCloseDialog() {
+        super.onCloseDialog();
+        this.activeMenu = undefined;
     }
     openMenu(prompt, count, items) {
-        const menuItems = items.map(i => ({ text: i.str, id: i.identifier, tile: i.tile, active: i.active, accelerator: i.accelerator }));
-        const menu = new Menu(prompt, menuItems, count, this.tileset);
-        menu.onSelect = ids => {
-            window.nethackJS.selectMenu(ids.map(i => parseInt(i)));
-            this.resetInput();
-            Dialog.removeAll();
-        };
-        this.changeInput(menu);
-        this.elem.appendChild(menu.elem);
-    }
-    openDialog(text) {
-        const dialog = new Dialog(text);
-        dialog.onClose = () => {
-            window.nethackJS.sendInput(0);
-            this.resetInput();
-        };
-        this.changeInput(dialog);
-        this.elem.appendChild(dialog.elem);
+        if (!this.activeMenu) {
+            this.activeMenu = new Menu(prompt, this.tileset);
+            this.elem.appendChild(this.activeMenu.elem);
+        }
+        this.activeMenu.updateMenu(items, count);
     }
     openGetLine(question, autocomplete) {
         const line = new Line(question, autocomplete);
         line.onLineEnter = (line) => {
             window.nethackJS.sendLine(line);
-            this.resetInput();
+            this.inputHandler = undefined;
             Dialog.removeAll(); // Usually not opened as a dialog, so close it ourself
         };
-        this.changeInput(line);
+        this.inputHandler = line;
         this.elem.appendChild(line.elem);
         line.focus();
     }
-    openErrorDialog(closed) {
-        const title = 'An unexpected error occurred.';
-        const unsaved = 'Unfortunately the game progress could not be saved.';
-        const backup = 'Use the "Load from backup" in the main menu to restart from your latest save.';
-        const dialog = new Dialog(`${title}\n${unsaved}\n\n${backup}`);
-        dialog.onClose = () => {
-            this.resetInput();
-            closed();
-        };
-        this.changeInput(dialog);
-        this.elem.appendChild(dialog.elem);
-    }
 }
 
+const SPECIAL_KEY_MAP = {
+    Enter: 13,
+    Escape: 27,
+};
 class Game {
     constructor() {
-        this.openMenu = (winid, prompt, count, ...items) => this.game.openMenu(prompt, count, items);
+        this.openMenu = (winid, prompt, count, ...items) => this.current?.onMenu(prompt, count, items);
         this.openQuestion = (question, ...choices) => this.game.console.appendLine(`\n${question} ${choices}`);
         this.openGetLine = (question, ...autocomplete) => this.game.openGetLine(question, autocomplete);
-        this.openDialog = (winid, text) => this.game.openDialog(text);
-        this.closeDialog = (winid) => Dialog.removeAll();
+        this.openDialog = (winid, text) => this.current?.onDialog(text);
+        this.closeDialog = (winid) => this.current?.onCloseDialog();
         this.printLine = (line) => this.game.console.appendLine(line);
         this.moveCursor = (x, y) => this.game.tilemap.recenter({ x, y });
         this.centerView = (x, y) => this.game.tilemap.recenter({ x, y });
@@ -1686,35 +1567,62 @@ class Game {
         this.updateMap = (...tiles) => this.game.tilemap.addTile(...tiles);
         this.updateStatus = (s) => this.game.status.update(s);
         this.updateInventory = (...items) => this.game.inventory.updateItems(items);
-        this.onGameover = (status) => {
-            if (status === GameStatus.EXITED) {
-                window.location.reload();
-            }
-            else if (status === GameStatus.ERROR) {
-                this.game.openErrorDialog(() => {
+        this.updateState = (state) => {
+            switch (state) {
+                case GameState.START:
+                    this.changeScreen(this.start);
+                    break;
+                case GameState.RUNNING:
+                    this.changeScreen(this.game);
+                    break;
+                case GameState.GAMEOVER:
                     window.location.reload();
-                });
+                    break;
             }
         };
+        document.body.onresize = (e) => this.current?.onResize();
         document.onkeydown = (e) => {
-            this.current?.onInput(e);
-        };
-        window.onload = () => {
-            this.changeScreen(this.start);
+            if (this.current?.inputHandler) {
+                this.current.inputHandler.onInput(e);
+            }
+            else {
+                if (e.key === "Control" || e.key === "Shift")
+                    return;
+                if (e.key.length === 1 || SPECIAL_KEY_MAP[e.key]) {
+                    e.preventDefault();
+                    let code = 0;
+                    const specialKey = SPECIAL_KEY_MAP[e.key];
+                    if (specialKey) {
+                        code = specialKey;
+                    }
+                    else {
+                        code = e.key.charCodeAt(0);
+                        if (e.ctrlKey) {
+                            if (code >= 65 && code <= 90) {
+                                // A~Z
+                                code = code - 64;
+                            }
+                            else if (code >= 97 && code <= 122) {
+                                code = code - 96;
+                            }
+                        }
+                    }
+                    window.nethackJS.sendInput(code);
+                }
+                else {
+                    console.log("Unhandled key: ", e.key);
+                }
+            }
         };
         this.game = new GameScreen();
         this.start = new StartScreen();
-        this.start.onStartGame = () => {
-            this.changeScreen(this.game);
-            window.nethackJS.startGame();
-        };
     }
     changeScreen(screen) {
         if (this.current) {
-            this.current.hide();
+            document.body.removeChild(this.current.elem);
         }
         this.current = screen;
-        this.current.show();
+        document.body.appendChild(this.current.elem);
     }
 }
 
