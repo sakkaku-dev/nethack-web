@@ -1,8 +1,12 @@
 import { StartScreen } from "./screens/start-screen";
 import { GameScreen } from "./screens/game-screen";
 import { Screen } from "./screens/screen";
-import { GameStatus, Item, NetHackUI, Status, Tile } from "../models";
-import { Dialog } from "./components/dialog";
+import { GameState, Item, NetHackUI, Status, Tile } from "../models";
+
+const SPECIAL_KEY_MAP: Record<string, number> = {
+    Enter: 13,
+    Escape: 27,
+};
 
 export class Game implements NetHackUI {
     private start: StartScreen;
@@ -13,19 +17,39 @@ export class Game implements NetHackUI {
     constructor() {
         document.body.onresize = (e) => this.current?.onResize();
         document.onkeydown = (e) => {
-            this.current?.onInput(e);
-        };
+            if (this.current?.inputHandler) {
+                this.current.inputHandler.onInput(e);
+            } else {
+                if (e.key === "Control" || e.key === "Shift") return;
 
-        window.onload = () => {
-            this.changeScreen(this.start);
+                if (e.key.length === 1 || SPECIAL_KEY_MAP[e.key]) {
+                    e.preventDefault();
+
+                    let code = 0;
+
+                    const specialKey = SPECIAL_KEY_MAP[e.key];
+                    if (specialKey) {
+                        code = specialKey;
+                    } else {
+                        code = e.key.charCodeAt(0);
+                        if (e.ctrlKey) {
+                            if (code >= 65 && code <= 90) {
+                                // A~Z
+                                code = code - 64;
+                            } else if (code >= 97 && code <= 122) {
+                                code = code - 96;
+                            }
+                        }
+                    }
+                    window.nethackJS.sendInput(code);
+                } else {
+                    console.log("Unhandled key: ", e.key);
+                }
+            }
         };
 
         this.game = new GameScreen();
         this.start = new StartScreen();
-        this.start.onStartGame = () => {
-            this.changeScreen(this.game);
-            window.nethackJS.startGame();
-        };
     }
 
     openMenu = (winid: number, prompt: string, count: number, ...items: Item[]) =>
@@ -34,7 +58,7 @@ export class Game implements NetHackUI {
         this.game.console.appendLine(`\n${question} ${choices}`);
     openGetLine = (question: string, ...autocomplete: string[]) =>
         this.game.openGetLine(question, autocomplete);
-    openDialog = (winid: number, text: string) => this.game.openDialog(text);
+    openDialog = (winid: number, text: string) => this.current?.onDialog(text);
     closeDialog = (winid: number) => this.current?.onCloseDialog();
     printLine = (line: string) => this.game.console.appendLine(line);
     moveCursor = (x: number, y: number) => this.game.tilemap.recenter({ x, y });
@@ -43,15 +67,20 @@ export class Game implements NetHackUI {
     updateMap = (...tiles: Tile[]) => this.game.tilemap.addTile(...tiles);
     updateStatus = (s: Status) => this.game.status.update(s);
     updateInventory = (...items: Item[]) => this.game.inventory.updateItems(items);
-    onGameover = (status: GameStatus) => {
-        if (status === GameStatus.EXITED) {
-            window.location.reload();
-        } else if (status === GameStatus.ERROR) {
-            this.game.openErrorDialog(() => {
+
+    updateState = (state: GameState) => {
+        switch (state) {
+            case GameState.START:
+                this.changeScreen(this.start);
+                break;
+            case GameState.RUNNING:
+                this.changeScreen(this.game);
+                break;
+            case GameState.GAMEOVER:
                 window.location.reload();
-            });
+                break;
         }
-    }
+    };
 
     changeScreen(screen: Screen) {
         if (this.current) {
