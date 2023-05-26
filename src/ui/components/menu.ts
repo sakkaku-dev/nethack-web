@@ -1,7 +1,7 @@
 import { Item } from "../../models";
 import { TileSet } from "./tilemap";
 import { vert } from "../styles";
-import { AccelButton } from "./accel-btn";
+import { MenuButton } from "./accel-btn";
 
 export class Menu {
     public elem: HTMLElement;
@@ -37,9 +37,9 @@ export class Menu {
     private createMenu(items: Item[], container: HTMLElement) {
         items.forEach((i) => {
             if (i.identifier !== 0) {
-                container.appendChild(AccelButton(i, true, this.tileset));
+                container.appendChild(MenuButton(i, true, this.tileset));
             } else if (i.str !== "") {
-                container.appendChild(AccelButton(i, false, this.tileset));
+                container.appendChild(MenuButton(i, false, this.tileset));
             }
         });
 

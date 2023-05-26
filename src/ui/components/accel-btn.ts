@@ -9,8 +9,9 @@ const createAccel = (accel: number) => {
 	return accelElem;
 };
 
-export function AccelButton(item: Item, prepend = true, tileset?: TileSet) {
+export function MenuButton(item: Item, prepend = true, tileset?: TileSet) {
 	const btn = document.createElement("button");
+	btn.disabled = item.accelerator === 0;
 	horiz(btn);
 
 	btn.onclick = () => window.nethackJS.sendInput(item.accelerator);

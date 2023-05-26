@@ -28,8 +28,8 @@
     font-weight: normal;
   }
 
-  button:hover,
-  button.active {
+  button:hover:not(:disabled),
+  button.active:not(:disabled) {
     box-shadow: var(--shadow);
   }
 
