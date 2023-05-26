@@ -3,16 +3,19 @@ import { fullScreen, vert } from "../styles";
 export class Dialog {
     public elem: HTMLElement;
 
-    constructor(text: string) {
-        const overlay = document.createElement('div');
-        overlay.style.zIndex = '1';
-        overlay.classList.add('dialog-overlay');
+    constructor(text = '') {
+        const overlay = document.createElement("div");
+        overlay.style.zIndex = "1";
+        overlay.classList.add("dialog-overlay");
         fullScreen(overlay);
         document.body.appendChild(overlay);
 
         this.elem = document.createElement("pre");
-        this.elem.innerHTML = this.escapeHtml(text);
+        if (text !== "") {
+            this.elem.innerHTML = this.escapeHtml(text);
+        }
         vert(this.elem);
+
         this.elem.classList.add("dialog");
         setTimeout(() => {
             this.elem.classList.add("open");
@@ -34,7 +37,7 @@ export class Dialog {
             elem.classList.remove("open");
             setTimeout(() => {
                 elem.remove();
-                document.querySelectorAll('.dialog-overlay').forEach(e => e.remove());
+                document.querySelectorAll(".dialog-overlay").forEach((e) => e.remove());
             }, 200);
         });
     }

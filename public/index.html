@@ -2,7 +2,9 @@
   :root {
     --bg-color: black;
     --text-color: white;
-    --shadow: 1px 1px 20px #fff9;
+    --shadow: 0px 0px 5px #fff9;
+
+    --accel-bg-color: #6669;
   }
 
   * {
@@ -26,7 +28,14 @@
   }
 
   button:hover, button.active {
+    /* border: 1p solid white; */
     box-shadow: var(--shadow);
+  }
+
+  .accel {
+    background: var(--accel-bg-color);
+    border-radius: 100%;
+    padding: 0 0.5rem; /* No vertical padding, since there is already a line height */
   }
 
   #inventory {

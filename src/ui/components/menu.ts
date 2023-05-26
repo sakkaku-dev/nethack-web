@@ -1,84 +1,48 @@
 import { Item } from "../../models";
-import { Dialog } from "./dialog";
 import { TileSet } from "./tilemap";
-import { horiz } from "../styles";
+import { vert } from "../styles";
+import { AccelButton } from "./accel-btn";
 
-export class Menu extends Dialog {
-  constructor(prompt: string, private tileset?: TileSet) {
-    super(prompt);
-  }
+export class Menu {
+    public elem: HTMLElement;
+    public label: HTMLElement;
 
-  updateMenu(items: Item[], count: number) {
-    this.elem.childNodes.forEach((x) => x.remove());
-    this.elem.appendChild(this.createMenu(items, count));
-  }
+    private menuContainer?: HTMLElement;
 
-  private createMenu(items: Item[], count: number) {
-    const list = document.createElement("div");
-    list.style.display = "flex";
-    list.style.flexDirection = "column";
-    list.id = "menu";
+    constructor(private prompt: string, private tileset?: TileSet) {
+        this.elem = document.createElement("div");
+        vert(this.elem);
 
-    let currentGroupTitle: Text | null = null;
-    let currentGroupAccels: number[] = [];
+        this.label = this.createLabel();
+        this.elem.appendChild(this.label);
+    }
 
-    const prependGroupAccel = () => {
-      if (currentGroupTitle != null && currentGroupAccels.length > 0) {
-        const title = currentGroupTitle as Text;
-        if (title.textContent !== "") {
-          // e.g 'D' - it will have an empty title
-          // In case there are more than one group accel, but hopefully not
-          const groupAccel = currentGroupAccels
-            .map((c) => String.fromCharCode(c))
-            .join(", ");
-          title.textContent = groupAccel + " - " + title.textContent;
+    updateMenu(items: Item[], count: number) {
+        if (this.menuContainer) {
+            this.elem.removeChild(this.menuContainer);
         }
-      }
-    };
+        this.menuContainer = document.createElement('div');
+        vert(this.menuContainer);
+        this.createMenu(items, this.menuContainer)
 
-    items.forEach((i) => {
-      const div = document.createElement("div");
-      horiz(div);
+        this.elem.appendChild(this.menuContainer);
+    }
 
-      if (i.identifier !== 0) {
-        const id = `menu-${i.identifier}`;
+    private createLabel() {
+        const label = document.createElement("div");
+        label.innerHTML = this.prompt;
+        return label;
+    }
 
-        const elem = document.createElement("input");
-        elem.type = count === 1 ? "radio" : "checkbox";
-        elem.name = "menuSelect";
-        elem.id = id;
-        elem.checked = i.active || false;
-        elem.value = `${i.identifier}`;
+    private createMenu(items: Item[], container: HTMLElement) {
+        items.forEach((i) => {
+            if (i.identifier !== 0) {
+                container.appendChild(AccelButton(i, true, this.tileset));
+            } else if (i.str !== "") {
+                container.appendChild(AccelButton(i, false, this.tileset));
+            }
+        });
 
-        const accel = i.accelerator;
-        if (i.groupAcc !== 0 && !currentGroupAccels.includes(i.groupAcc)) {
-          currentGroupAccels.push(i.groupAcc);
-        }
-
-        const label = document.createElement("label");
-        label.htmlFor = id;
-        label.innerHTML = i.str;
-
-        div.appendChild(elem);
-        if (i.tile && this.tileset) {
-          const img = this.tileset.createBackgroundImage(i.tile, accel);
-          div.appendChild(img);
-        } else {
-          label.innerHTML = `${String.fromCharCode(accel)} - ${label.innerHTML
-            }`;
-        }
-        div.appendChild(label);
-      } else {
-        prependGroupAccel();
-        currentGroupAccels = [];
-        currentGroupTitle = document.createTextNode(i.str || " ");
-        div.appendChild(currentGroupTitle);
-      }
-
-      list.appendChild(div);
-    });
-    prependGroupAccel();
-
-    return list;
-  }
+        return container;
+    }
 }

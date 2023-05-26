@@ -33,20 +33,21 @@ describe("MenuSelect", () => {
 
   it("should select by group accel", () => {
     const items: Item[] = [
+      { ...EMPTY_ITEM, identifier: 0, accelerator: code("%"), active: false },
       { ...EMPTY_ITEM, identifier: 1, groupAcc: code("%"), accelerator: code("a"), active: false },
-      { ...EMPTY_ITEM, identifier: 1, groupAcc: code("%"), accelerator: code("b"), active: false },
+      { ...EMPTY_ITEM, identifier: 2, groupAcc: code("%"), accelerator: code("b"), active: false },
     ];
     toggleMenuItems(code("%"), -1, items);
-    expect(items.map((i) => i.active)).toEqual([true, true]);
+    expect(items.map((i) => i.active)).toEqual([false, true, true]);
 
     toggleMenuItems(code("%"), -1, items);
-    expect(items.map((i) => i.active)).toEqual([false, false]);
+    expect(items.map((i) => i.active)).toEqual([false, false, false]);
 
     toggleMenuItems(code("b"), -1, items);
-    expect(items.map((i) => i.active)).toEqual([false, true]);
+    expect(items.map((i) => i.active)).toEqual([false, false, true]);
 
     toggleMenuItems(code("%"), -1, items);
-    expect(items.map((i) => i.active)).toEqual([true, true]);
+    expect(items.map((i) => i.active)).toEqual([false, true, true]);
   });
 
   it("should select all", () => {

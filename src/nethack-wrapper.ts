@@ -12,6 +12,7 @@ import {
   EMPTY_ITEM,
   clearMenuItems,
   getCountForSelect,
+  setAccelerators,
   toggleMenuItems,
 } from "./helper/menu-select";
 import { listBackupFiles, loadSaveFiles, syncSaveFiles } from "./helper/save-files";
@@ -34,8 +35,12 @@ export class NetHackWrapper implements NetHackJS {
     [Command.RAW_PRINT_BOLD]: async (str) => this.ui.printLine(str),
 
     // Map
-    [Command.PRINT_GLYPH]: async (winid, x, y, glyph) =>
-      this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph) }]),
+    [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph) => {
+      this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph) }]);
+      if (bkglyph !== 0 && bkglyph !== 5991) {
+        console.log(`%c Background Tile found! ${bkglyph}, ${this.util.toTile(bkglyph)}`, 'background: #222; color: #bada55');
+      }
+    },
 
     [Command.CURSOR]: async (winid, x, y) =>
       winid == this.global.globals.WIN_MAP && this.ui.moveCursor(x, y),
@@ -201,8 +206,13 @@ export class NetHackWrapper implements NetHackJS {
 
   // Getting input from user
 
-  public sendInput(key: number) {
-    this.input$.next(key);
+  public async sendInput(...keys: (number | string)[]) {
+    for (const key of keys) {
+      const k = (typeof(key) === 'string') ? key.charCodeAt(0) : key;
+      this.log("Sending input", k);
+      this.input$.next(k);
+      await this.waitForAwaitingInput();
+    }
   }
 
   public sendLine(line: string) {
@@ -225,6 +235,10 @@ export class NetHackWrapper implements NetHackJS {
   private async waitLine() {
     this.awaitingInput$.next(true);
     return await firstValueFrom(this.line$);
+  }
+
+  private async waitForAwaitingInput() {
+    return await firstValueFrom(this.awaitingInput$.pipe(filter(x => x)));
   }
 
   // Commands
@@ -340,6 +354,7 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     const itemIds = await this.startUserMenuSelect(winid, this.menuPrompt, select, this.menuItems);
+    this.ui.closeDialog(winid); // sometimes it's not closed
     if (itemIds.length === 0) {
       return -1;
     }
@@ -389,10 +404,7 @@ export class NetHackWrapper implements NetHackJS {
     select: MENU_SELECT,
     items: Item[]
   ) {
-    this.accel.reset();
-    items
-      .filter((i) => i.identifier !== 0 && i.accelerator === 0)
-      .forEach((i) => (i.accelerator = this.accel.next()));
+    setAccelerators(items, this.accel);
 
     const count = getCountForSelect(select);
     let char = 0;
@@ -402,6 +414,10 @@ export class NetHackWrapper implements NetHackJS {
       char = await this.waitInput();
       if (count !== 0) {
         toggleMenuItems(char, count, items);
+
+        if (count === 1 && items.some(i => i.active)) {
+          break;
+        }
       }
     }
 

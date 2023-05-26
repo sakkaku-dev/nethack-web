@@ -10,7 +10,6 @@ import { TileSet, TileMap } from "../components/tilemap";
 import { Screen } from "./screen";
 
 export class GameScreen extends Screen {
-
     public tileset: TileSet;
     public tilemap: TileMap;
     public inventory: Inventory;
@@ -45,11 +44,12 @@ export class GameScreen extends Screen {
         this.activeMenu = undefined;
     }
 
-
     public openMenu(prompt: string, count: number, items: Item[]) {
         if (!this.activeMenu) {
+            const dialog = new Dialog();
             this.activeMenu = new Menu(prompt, this.tileset!);
-            this.elem.appendChild(this.activeMenu.elem);
+            dialog.elem.appendChild(this.activeMenu.elem);
+            this.elem.appendChild(dialog.elem);
         }
 
         this.activeMenu.updateMenu(items, count);

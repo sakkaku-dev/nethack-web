@@ -24,13 +24,19 @@ describe("Nethack", () => {
     };
     const ui = mock<NetHackUI>();
     const util = { selectItems: jest.fn(), toTile: (x) => x } as NethackUtil;
-    const wrapper = new NetHackWrapper(false, Module, util, {
-      ...globalThis,
-      nethackUI: ui,
-      nethackGlobal: {
-        globals: { WIN_STATUS, WIN_INVEN, WIN_MAP },
-      },
-    } as any, false);
+    const wrapper = new NetHackWrapper(
+      false,
+      Module,
+      util,
+      {
+        ...globalThis,
+        nethackUI: ui,
+        nethackGlobal: {
+          globals: { WIN_STATUS, WIN_INVEN, WIN_MAP },
+        },
+      } as any,
+      false
+    );
     return [wrapper, ui, util] as [NetHackWrapper, NetHackUI, NethackUtil];
   };
 
@@ -144,18 +150,12 @@ describe("Nethack", () => {
   };
 
   const send = async (...chars: (string | number)[]) => {
-    chars.forEach((c) => {
-      if (typeof c === "string") {
-        wrapper.sendInput(c.charCodeAt(0));
-      } else {
-        wrapper.sendInput(c);
-      }
-    });
+    wrapper.sendInput(...chars);
     await wait(10);
   };
 
   describe("Menu", () => {
-    it("should open menu", async () => {
+    it("should pick one menu", async () => {
       const item1: Item = {
         ...item,
         identifier: 1,
@@ -168,43 +168,69 @@ describe("Nethack", () => {
         identifier: 2,
         accelerator: "b".charCodeAt(0),
       };
-      const item3: Item = {
-        ...item1,
-        str: "Item 3",
-        identifier: 3,
-        accelerator: "c".charCodeAt(0),
-      };
 
-      await sendMenu([item1, item2, item3], "Select one");
+      await sendMenu([item1, item2], "Select one");
       wrapper
         .handle(Command.MENU_SELECT, WIN_ANY, MENU_SELECT.PICK_ONE, ANY_POINTER)
         .then((len) => {
           expect(len).toEqual(1);
         });
-      expect(ui.openMenu).toBeCalledWith(WIN_ANY, "Select one", 1, item1, item2, item3);
+      expect(ui.openMenu).toBeCalledWith(WIN_ANY, "Select one", 1, item1, item2);
 
       await send("a");
       expect(ui.openMenu).toBeCalledWith(
-        WIN_ANY,
-        "Select one",
+        expect.anything(),
+        expect.anything(),
         1,
         { ...item1, active: true },
-        item2,
-        item3
+        item2
+      );
+
+      expect(util.selectItems).toBeCalledWith([1], ANY_POINTER);
+    });
+
+    it("should pick many menu", async () => {
+      const item1: Item = {
+        ...item,
+        identifier: 1,
+        str: "Item 1",
+        accelerator: "a".charCodeAt(0),
+      };
+      const item2: Item = {
+        ...item1,
+        str: "Item 2",
+        identifier: 2,
+        accelerator: "b".charCodeAt(0),
+      };
+
+      await sendMenu([item1, item2], "Select many");
+      wrapper
+        .handle(Command.MENU_SELECT, WIN_ANY, MENU_SELECT.PICK_ANY, ANY_POINTER)
+        .then((len) => {
+          expect(len).toEqual(2);
+        });
+      expect(ui.openMenu).toBeCalledWith(WIN_ANY, "Select many", -1, item1, item2);
+
+      await send("a");
+      expect(ui.openMenu).toBeCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        { ...item1, active: true },
+        item2
       );
 
       await send("b");
       expect(ui.openMenu).toBeCalledWith(
-        WIN_ANY,
-        "Select one",
-        1,
-        item1,
-        { ...item2, active: true },
-        item3
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        { ...item1, active: true },
+        { ...item2, active: true }
       );
 
       await send(" ");
-      expect(util.selectItems).toBeCalledWith([2], ANY_POINTER);
+      expect(util.selectItems).toBeCalledWith([1, 2], ANY_POINTER);
     });
 
     it("should cancel menu", async () => {
@@ -215,17 +241,15 @@ describe("Nethack", () => {
         accelerator: "a".charCodeAt(0),
       };
 
-      await sendMenu([item1], "Select one");
+      await sendMenu([item1], "Select many");
       wrapper
-        .handle(Command.MENU_SELECT, WIN_ANY, MENU_SELECT.PICK_ONE, ANY_POINTER)
+        .handle(Command.MENU_SELECT, WIN_ANY, MENU_SELECT.PICK_ANY, ANY_POINTER)
         .then((len) => {
           expect(len).toEqual(-1);
         });
 
       await send("a");
-      expect(ui.openMenu).toBeCalledWith(WIN_ANY, "Select one", 1, { ...item1, active: true });
-
-      await send(27, " ");
+      await send(27);
       expect(util.selectItems).not.toBeCalled();
     });
   });

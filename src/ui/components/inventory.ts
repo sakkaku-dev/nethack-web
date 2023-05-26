@@ -33,7 +33,7 @@ export class Inventory {
     private elem: HTMLElement;
 
     constructor(root: HTMLElement, private tileset: TileSet) {
-        this.elem = document.createElement('pre');
+        this.elem = document.createElement('div');
         this.elem.id = 'inventory';
         root.appendChild(this.elem);
     }
