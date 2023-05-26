@@ -5,3 +5,4 @@ build/*
 
 *.import
 node_modules
+_sprites

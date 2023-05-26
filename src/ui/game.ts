@@ -16,7 +16,7 @@ export class Game implements NetHackUI {
 
     constructor() {
         document.body.onresize = (e) => this.current?.onResize();
-        document.onkeydown = (e) => {
+        document.body.onkeydown = (e) => {
             if (this.current?.inputHandler) {
                 this.current.inputHandler.onInput(e);
             } else {

@@ -28,8 +28,8 @@
     font-weight: normal;
   }
 
-  button:hover, button.active {
-    /* border: 1p solid white; */
+  button:hover,
+  button.active {
     box-shadow: var(--shadow);
   }
 
@@ -40,13 +40,12 @@
   }
 
   #inventory {
-    flex-grow: 1;
     overflow-y: auto;
     background: var(--bg-color);
     position: absolute;
     right: 0;
     top: 0;
-    bottom: 8rem;
+    bottom: 10rem;
     padding: 0.5rem;
     margin: 0;
     opacity: 0.8;
@@ -68,6 +67,7 @@
     padding: 0.5rem;
     background: var(--bg-color);
     opacity: 0.8;
+    min-width: 30rem;
   }
 
   #output {
@@ -110,6 +110,63 @@
   }
   .dialog.open {
     margin-top: 0;
+  }
+
+  /* Icons: https://css.gg/app */
+
+  .gg-minimize-alt {
+    box-sizing: border-box;
+    position: relative;
+    display: block;
+    transform: rotate(-45deg) scale(var(--ggs, 1));
+    width: 26px;
+    height: 2px;
+    border-left: 10px solid;
+    border-right: 10px solid;
+  }
+  .gg-minimize-alt::after,
+  .gg-minimize-alt::before {
+    content: "";
+    display: block;
+    box-sizing: border-box;
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-top: 2px solid;
+    top: -2px;
+  }
+  .gg-minimize-alt::before {
+    border-right: 2px solid;
+    left: -5px;
+    transform: rotate(45deg);
+  }
+  .gg-minimize-alt::after {
+    border-left: 2px solid;
+    right: -5px;
+    transform: rotate(-45deg);
+  }
+  .gg-arrows-expand-right {
+    box-sizing: border-box;
+    position: relative;
+    display: block;
+    transform: scale(var(--ggs, 1));
+    width: 14px;
+    height: 14px;
+    margin: 2px;
+    box-shadow: -6px 6px 0 -4px, 6px -6px 0 -4px;
+  }
+  .gg-arrows-expand-right::before {
+    content: "";
+    display: block;
+    box-sizing: border-box;
+    position: absolute;
+    width: 2px;
+    height: 22px;
+    top: -4px;
+    left: 6px;
+    transform: rotate(45deg);
+    border-top: 9px solid;
+    border-bottom: 9px solid;
   }
 </style>
 
