@@ -1,5 +1,5 @@
 import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
-import { Item, NetHackJS, Status, NetHackUI, Tile, GameState } from "./models";
+import { Item, NetHackJS, Status, NetHackUI, Tile, GameState, InventoryItem } from "./models";
 import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
 // @ts-ignore
@@ -18,6 +18,7 @@ import {
 import { listBackupFiles, loadSaveFiles, syncSaveFiles } from "./helper/save-files";
 import { CONTINUE_KEYS, ESC } from "./helper/keys";
 import { parseAndMapStatus } from "./helper/parse-status";
+import { toInventoryItem } from "./helper/inventory";
 
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 
@@ -38,7 +39,10 @@ export class NetHackWrapper implements NetHackJS {
     [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph) => {
       this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph) }]);
       if (bkglyph !== 0 && bkglyph !== 5991) {
-        console.log(`%c Background Tile found! ${bkglyph}, ${this.util.toTile(bkglyph)}`, 'background: #222; color: #bada55');
+        console.log(
+          `%c Background Tile found! ${bkglyph}, ${this.util.toTile(bkglyph)}`,
+          "background: #222; color: #bada55"
+        );
       }
     },
 
@@ -57,9 +61,8 @@ export class NetHackWrapper implements NetHackJS {
 
     // Waiting input
     [Command.DISPLAY_WINDOW]: this.displayWindow.bind(this),
-    [Command.GET_CHAR]: () => this.waitInput(),
-    [Command.GET_POSKEY]: () => this.waitInput(),
-    [Command.ASK_NAME]: () => this.waitInput(),
+    [Command.GET_CHAR]: () => this.waitForNextAction(),
+    [Command.GET_POSKEY]: () => this.waitForNextAction(),
     [Command.YN_FUNCTION]: this.yesNoQuestion.bind(this),
     [Command.GET_LINE]: this.getLine.bind(this),
     [Command.GET_EXT_CMD]: this.getExtCmd.bind(this),
@@ -81,7 +84,7 @@ export class NetHackWrapper implements NetHackJS {
   private line$ = new Subject<string>();
 
   private status$ = new BehaviorSubject<Status>({});
-  private inventory$ = new Subject<Item[]>();
+  private inventory$ = new Subject<InventoryItem[]>();
   private tiles$ = new BehaviorSubject<Tile[]>([]);
   private awaitingInput$ = new BehaviorSubject(false);
   private gameState$ = new BehaviorSubject(GameState.START);
@@ -208,7 +211,7 @@ export class NetHackWrapper implements NetHackJS {
 
   public async sendInput(...keys: (number | string)[]) {
     for (const key of keys) {
-      const k = (typeof(key) === 'string') ? key.charCodeAt(0) : key;
+      const k = typeof key === "string" ? key.charCodeAt(0) : key;
       this.log("Sending input", k);
       this.input$.next(k);
       await this.waitForAwaitingInput();
@@ -238,7 +241,16 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async waitForAwaitingInput() {
-    return await firstValueFrom(this.awaitingInput$.pipe(filter(x => x)));
+    return await firstValueFrom(this.awaitingInput$.pipe(filter((x) => x)));
+  }
+
+  private async waitForNextAction() {
+    const code = await this.waitInput();
+    if (code === "i".charCodeAt(0)) {
+      this.ui.toggleInventory();
+    }
+
+    return code;
   }
 
   // Commands
@@ -342,10 +354,8 @@ export class NetHackWrapper implements NetHackJS {
 
   private async menuSelect(winid: number, select: MENU_SELECT, selected: number) {
     if (winid === this.global.globals.WIN_INVEN) {
-      const activeRegex =
-        /\((wielded( in other hand)?|in quiver|weapon in hands?|being worn|on (left|right) (hand|foreclaw|paw|pectoral fin))\)/;
-      this.menuItems.forEach((i) => (i.active = activeRegex.test(i.str)));
-      this.inventory$.next(this.menuItems);
+      const items = this.menuItems.map((i) => toInventoryItem(i));
+      this.inventory$.next(items);
       return 0;
     }
 
@@ -415,7 +425,7 @@ export class NetHackWrapper implements NetHackJS {
       if (count !== 0) {
         toggleMenuItems(char, count, items);
 
-        if (count === 1 && items.some(i => i.active)) {
+        if (count === 1 && items.some((i) => i.active)) {
           break;
         }
       }

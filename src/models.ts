@@ -18,7 +18,8 @@ export interface NetHackUI {
   clearMap: () => void;
   updateMap: (...tiles: Tile[]) => void;
   updateStatus: (status: Status) => void;
-  updateInventory: (...items: Item[]) => void;
+  updateInventory: (...items: InventoryItem[]) => void;
+  toggleInventory: () => void;
   updateState: (state: GameState) => void;
 }
 
@@ -59,6 +60,18 @@ export interface Item {
   str: string;
   identifier: number;
   active: boolean;
+}
+
+export enum BUCState {
+  BLESSED = 'blessed',
+  UNCURSED = 'uncursed',
+  CURSED = 'cursed',
+}
+
+export interface InventoryItem extends Item {
+  count: number;
+  buc: BUCState | null;
+  description: string;
 }
 
 // See botl.c

@@ -1,7 +1,7 @@
 import { StartScreen } from "./screens/start-screen";
 import { GameScreen } from "./screens/game-screen";
 import { Screen } from "./screens/screen";
-import { GameState, Item, NetHackUI, Status, Tile } from "../models";
+import { GameState, InventoryItem, Item, NetHackUI, Status, Tile } from "../models";
 
 const SPECIAL_KEY_MAP: Record<string, number> = {
     Enter: 13,
@@ -66,7 +66,8 @@ export class Game implements NetHackUI {
     clearMap = () => this.game.tilemap.clearMap();
     updateMap = (...tiles: Tile[]) => this.game.tilemap.addTile(...tiles);
     updateStatus = (s: Status) => this.game.status.update(s);
-    updateInventory = (...items: Item[]) => this.game.inventory.updateItems(items);
+    updateInventory = (...items: InventoryItem[]) => this.game.inventory.updateItems(items);
+    toggleInventory = () => this.game.inventory.toggle();
 
     updateState = (state: GameState) => {
         switch (state) {
@@ -89,5 +90,6 @@ export class Game implements NetHackUI {
 
         this.current = screen;
         document.body.appendChild(this.current.elem);
+        this.current.onResize();
     }
 }

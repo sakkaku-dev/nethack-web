@@ -1,6 +1,6 @@
 import { Item } from "../../models";
 import { Menu } from "../components/menu";
-import { title, vert } from "../styles";
+import { title } from "../styles";
 import { Screen } from "./screen";
 
 export class StartScreen extends Screen {

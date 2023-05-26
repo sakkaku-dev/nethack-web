@@ -52,3 +52,9 @@ export function title(elem: HTMLElement) {
     elem.style.fontWeight = "bold";
     elem.style.padding = "0.5rem 1rem";
 }
+
+export function grid(elem: HTMLElement, col: number) {
+    elem.style.display = 'grid';
+    elem.style.gap = '0.5rem';
+    elem.style.gridTemplateColumns = `repeat(${col}, minmax(0, 1fr))`;
+}
