@@ -1146,6 +1146,12 @@ var GameState;
     GameState[GameState["RUNNING"] = 1] = "RUNNING";
     GameState[GameState["GAMEOVER"] = 2] = "GAMEOVER";
 })(GameState || (GameState = {}));
+var BUCState;
+(function (BUCState) {
+    BUCState["BLESSED"] = "blessed";
+    BUCState["UNCURSED"] = "uncursed";
+    BUCState["CURSED"] = "cursed";
+})(BUCState || (BUCState = {}));
 
 // This is a generated file. Do not edit.
 var WIN_TYPE;
@@ -1720,14 +1726,31 @@ const EMPTY_ITEM = {
     identifier: 0,
     active: false,
 };
+function setAccelerators(items, accel) {
+    accel.reset();
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.identifier !== 0) {
+            if (item.accelerator === 0) {
+                item.accelerator = accel.next();
+            }
+        }
+        else if (i < items.length - 1) {
+            const nextItem = items[i + 1];
+            if (nextItem.groupAcc) {
+                item.accelerator = nextItem.groupAcc;
+            }
+        }
+    }
+}
 function clearMenuItems(items) {
     items.forEach((i) => (i.active = false));
 }
-const SELECT_ALL = '.'.charCodeAt(0);
-const DESELECT_ALL = '-'.charCodeAt(0);
-const TOGGLE_ALL = '@'.charCodeAt(0);
+const SELECT_ALL = ".".charCodeAt(0);
+const DESELECT_ALL = "-".charCodeAt(0);
+const TOGGLE_ALL = "@".charCodeAt(0);
 function toggleMenuItems(accel, count, items) {
-    const selectable = items.filter(i => i.accelerator !== 0);
+    const selectable = items.filter((i) => i.identifier !== 0 && i.accelerator !== 0);
     const selected = selectable.findIndex((i) => i.accelerator === accel);
     if (selected !== -1) {
         if (count === 1) {
@@ -1737,20 +1760,20 @@ function toggleMenuItems(accel, count, items) {
         item.active = !item.active;
     }
     else if (count === -1) {
-        const groups = selectable.filter(i => i.groupAcc !== 0 && i.groupAcc === accel);
-        const enable = groups.some(i => !i.active);
-        groups.forEach(i => i.active = enable);
+        const groups = selectable.filter((i) => i.groupAcc !== 0 && i.groupAcc === accel);
+        const enable = groups.some((i) => !i.active);
+        groups.forEach((i) => (i.active = enable));
         if (groups.length === 0) {
             switch (accel) {
                 case SELECT_ALL:
-                    selectable.forEach(i => i.active = true);
+                    selectable.forEach((i) => (i.active = true));
                     break;
                 case DESELECT_ALL:
-                    selectable.forEach(i => i.active = false);
+                    selectable.forEach((i) => (i.active = false));
                     break;
                 case TOGGLE_ALL:
-                    const toggleEnable = selectable.some(i => !i.active);
-                    selectable.forEach(i => i.active = toggleEnable);
+                    const toggleEnable = selectable.some((i) => !i.active);
+                    selectable.forEach((i) => (i.active = toggleEnable));
                     break;
             }
         }
@@ -1902,6 +1925,32 @@ function parseAndMapStatus(str, status) {
     }
 }
 
+// From BrowserHack
+const activeRegex = /\((wielded( in other hand)?|in quiver|weapon in hands?|being worn|on (left|right) (hand|foreclaw|paw|pectoral fin))\)/;
+function toInventoryItem(item) {
+    // parse count
+    let description = item.str;
+    let r = description.split(/^(a|an|\d+)\s+/);
+    let count = 1;
+    if (r.length == 3) {
+        description = r[2];
+        count = parseInt(r[1]) || 1;
+    }
+    let buc = null;
+    r = description.split(/^(blessed|uncursed|cursed)\s+/);
+    if (r.length == 3) {
+        description = r[2];
+        buc = r[1];
+    }
+    return {
+        ...item,
+        active: activeRegex.test(item.str),
+        count,
+        buc,
+        description,
+    };
+}
+
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 class NetHackWrapper {
     constructor(debug = false, module, util, win = window, autostart = true) {
@@ -1921,7 +1970,12 @@ class NetHackWrapper {
             [Command.RAW_PRINT]: async (str) => this.ui.printLine(str),
             [Command.RAW_PRINT_BOLD]: async (str) => this.ui.printLine(str),
             // Map
-            [Command.PRINT_GLYPH]: async (winid, x, y, glyph) => this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph) }]),
+            [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph) => {
+                this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph) }]);
+                if (bkglyph !== 0 && bkglyph !== 5991) {
+                    console.log(`%c Background Tile found! ${bkglyph}, ${this.util.toTile(bkglyph)}`, "background: #222; color: #bada55");
+                }
+            },
             [Command.CURSOR]: async (winid, x, y) => winid == this.global.globals.WIN_MAP && this.ui.moveCursor(x, y),
             [Command.CLIPAROUND]: async (x, y) => this.ui.centerView(x, y),
             // Status
@@ -1933,9 +1987,8 @@ class NetHackWrapper {
             [Command.MENU_SELECT]: this.menuSelect.bind(this),
             // Waiting input
             [Command.DISPLAY_WINDOW]: this.displayWindow.bind(this),
-            [Command.GET_CHAR]: () => this.waitInput(),
-            [Command.GET_POSKEY]: () => this.waitInput(),
-            [Command.ASK_NAME]: () => this.waitInput(),
+            [Command.GET_CHAR]: () => this.waitForNextAction(),
+            [Command.GET_POSKEY]: () => this.waitForNextAction(),
             [Command.YN_FUNCTION]: this.yesNoQuestion.bind(this),
             [Command.GET_LINE]: this.getLine.bind(this),
             [Command.GET_EXT_CMD]: this.getExtCmd.bind(this),
@@ -2038,8 +2091,13 @@ class NetHackWrapper {
         }
     }
     // Getting input from user
-    sendInput(key) {
-        this.input$.next(key);
+    async sendInput(...keys) {
+        for (const key of keys) {
+            const k = typeof key === "string" ? key.charCodeAt(0) : key;
+            this.log("Sending input", k);
+            this.input$.next(k);
+            await this.waitForAwaitingInput();
+        }
     }
     sendLine(line) {
         if (line.length >= MAX_STRING_LENGTH) {
@@ -2057,6 +2115,16 @@ class NetHackWrapper {
     async waitLine() {
         this.awaitingInput$.next(true);
         return await firstValueFrom(this.line$);
+    }
+    async waitForAwaitingInput() {
+        return await firstValueFrom(this.awaitingInput$.pipe(filter$1((x) => x)));
+    }
+    async waitForNextAction() {
+        const code = await this.waitInput();
+        if (code === "i".charCodeAt(0)) {
+            this.ui.toggleInventory();
+        }
+        return code;
     }
     // Commands
     async handle(cmd, ...args) {
@@ -2133,15 +2201,15 @@ class NetHackWrapper {
     }
     async menuSelect(winid, select, selected) {
         if (winid === this.global.globals.WIN_INVEN) {
-            const activeRegex = /\((wielded( in other hand)?|in quiver|weapon in hands?|being worn|on (left|right) (hand|foreclaw|paw|pectoral fin))\)/;
-            this.menuItems.forEach((i) => (i.active = activeRegex.test(i.str)));
-            this.inventory$.next(this.menuItems);
+            const items = this.menuItems.map((i) => toInventoryItem(i));
+            this.inventory$.next(items);
             return 0;
         }
         if (this.menuItems.length === 0) {
             return 0;
         }
         const itemIds = await this.startUserMenuSelect(winid, this.menuPrompt, select, this.menuItems);
+        this.ui.closeDialog(winid); // sometimes it's not closed
         if (itemIds.length === 0) {
             return -1;
         }
@@ -2182,10 +2250,7 @@ class NetHackWrapper {
     }
     // Utils
     async startUserMenuSelect(id, prompt, select, items) {
-        this.accel.reset();
-        items
-            .filter((i) => i.identifier !== 0 && i.accelerator === 0)
-            .forEach((i) => (i.accelerator = this.accel.next()));
+        setAccelerators(items, this.accel);
         const count = getCountForSelect(select);
         let char = 0;
         while (!CONTINUE_KEYS.includes(char)) {
@@ -2193,6 +2258,9 @@ class NetHackWrapper {
             char = await this.waitInput();
             if (count !== 0) {
                 toggleMenuItems(char, count, items);
+                if (count === 1 && items.some((i) => i.active)) {
+                    break;
+                }
             }
         }
         if (char === ESC) {

@@ -40,15 +40,82 @@ function title(elem) {
     elem.style.padding = "0.5rem 1rem";
 }
 
+const createAccel = (accel) => {
+    const accelElem = document.createElement("div");
+    accelElem.classList.add("accel");
+    accelElem.innerHTML = String.fromCharCode(accel);
+    return accelElem;
+};
+function AccelButton(item, prepend = true, tileset) {
+    const btn = document.createElement("button");
+    horiz(btn);
+    btn.onclick = () => window.nethackJS.sendInput(item.accelerator);
+    if (item.active) {
+        btn.classList.add("active");
+    }
+    const label = document.createElement("span");
+    label.innerHTML = item.str;
+    if (prepend) {
+        btn.appendChild(createAccel(item.accelerator));
+    }
+    if (item.tile && tileset) {
+        const img = tileset.createBackgroundImage(item.tile);
+        btn.appendChild(img);
+    }
+    btn.appendChild(label);
+    if (!prepend) {
+        btn.appendChild(createAccel(item.accelerator));
+    }
+    return btn;
+}
+
+class Menu {
+    constructor(prompt, tileset) {
+        this.prompt = prompt;
+        this.tileset = tileset;
+        this.elem = document.createElement("div");
+        vert(this.elem);
+        this.label = this.createLabel();
+        this.elem.appendChild(this.label);
+    }
+    updateMenu(items, count) {
+        if (this.menuContainer) {
+            this.elem.removeChild(this.menuContainer);
+        }
+        this.menuContainer = document.createElement('div');
+        vert(this.menuContainer);
+        this.createMenu(items, this.menuContainer);
+        this.elem.appendChild(this.menuContainer);
+    }
+    createLabel() {
+        const label = document.createElement("div");
+        label.innerHTML = this.prompt;
+        return label;
+    }
+    createMenu(items, container) {
+        items.forEach((i) => {
+            if (i.identifier !== 0) {
+                container.appendChild(AccelButton(i, true, this.tileset));
+            }
+            else if (i.str !== "") {
+                container.appendChild(AccelButton(i, false, this.tileset));
+            }
+        });
+        return container;
+    }
+}
+
 class Dialog {
-    constructor(text) {
-        const overlay = document.createElement('div');
-        overlay.style.zIndex = '1';
-        overlay.classList.add('dialog-overlay');
+    constructor(text = '') {
+        const overlay = document.createElement("div");
+        overlay.style.zIndex = "1";
+        overlay.classList.add("dialog-overlay");
         fullScreen(overlay);
         document.body.appendChild(overlay);
         this.elem = document.createElement("pre");
-        this.elem.innerHTML = this.escapeHtml(text);
+        if (text !== "") {
+            this.elem.innerHTML = this.escapeHtml(text);
+        }
         vert(this.elem);
         this.elem.classList.add("dialog");
         setTimeout(() => {
@@ -69,7 +136,7 @@ class Dialog {
             elem.classList.remove("open");
             setTimeout(() => {
                 elem.remove();
-                document.querySelectorAll('.dialog-overlay').forEach(e => e.remove());
+                document.querySelectorAll(".dialog-overlay").forEach((e) => e.remove());
             }, 200);
         });
     }
@@ -101,29 +168,14 @@ class Screen {
 class StartScreen extends Screen {
     constructor() {
         super();
-        this.container = document.createElement("div");
-        vert(this.container);
-        this.header = document.createElement("div");
-        this.header.style.marginBottom = "2rem";
-        title(this.header);
-        this.container.appendChild(this.header);
-        this.elem.appendChild(this.container);
+        this.menu = new Menu('Test');
+        this.menu.label.style.marginBottom = '2rem';
+        title(this.menu.label);
+        this.elem.appendChild(this.menu.elem);
     }
     onMenu(prompt, count, items) {
-        this.header.innerHTML = prompt;
-        if (this.menuContainer) {
-            this.container.removeChild(this.menuContainer);
-        }
-        this.menuContainer = document.createElement('div');
-        vert(this.menuContainer);
-        this.container.appendChild(this.menuContainer);
-        items.forEach(i => {
-            const btn = this.createButton(`${String.fromCharCode(i.accelerator)} - ${i.str}`);
-            if (i.active) {
-                btn.classList.add('active');
-            }
-            this.menuContainer?.appendChild(btn);
-        });
+        this.menu.label.innerHTML = prompt;
+        this.menu.updateMenu(items, count);
     }
 }
 
@@ -1146,89 +1198,68 @@ class Console {
     }
 }
 
-// From BrowserHack
-const parse_inventory_description = (item) => {
-    // parse count
-    let description = item.str;
-    let r = description.split(/^(a|an|\d+)\s+/);
-    let count = 1;
-    if (r.length == 3) {
-        description = r[2];
-        count = parseInt(r[1]) || 1;
-    }
-    // parse BCU
-    let bcu = null;
-    r = description.split(/^(blessed|uncursed|cursed)\s+/);
-    if (r.length == 3) {
-        description = r[2];
-        bcu = r[1];
-    }
-    return {
-        count: count,
-        bcu: bcu,
-        description: description
-    };
-};
 class Inventory {
     constructor(root, tileset) {
         this.tileset = tileset;
-        this.elem = document.createElement('pre');
-        this.elem.id = 'inventory';
+        this.expanded = false;
+        this.elem = document.createElement("div");
+        this.elem.id = "inventory";
+        vert(this.elem);
         root.appendChild(this.elem);
     }
     clear() {
         Array.from(this.elem.children).forEach((c) => this.elem.removeChild(c));
     }
+    toggle() {
+        this.expanded = !this.expanded;
+        // Update not necessary, the toggle key will automatically request a reload of the inventory
+    }
     updateItems(items) {
         this.clear();
-        this.createInventoryRows(items).forEach(row => this.elem.appendChild(row));
+        this.createInventoryRows(items);
     }
     createInventoryRows(items) {
-        const rows = [];
-        const newRow = () => {
-            const row = document.createElement("div");
-            row.classList.add('row');
-            return row;
-        };
-        let current = newRow();
-        items
-            .forEach((item) => {
+        items.forEach((item) => {
+            if (item.str.toLowerCase() === "coins" || item.accelerator === "$".charCodeAt(0)) {
+                return; // we have the coins in the status
+            }
             if (item.identifier === 0) {
-                if (current.childNodes.length > 0) {
-                    rows.push(current);
-                    current = newRow();
+                if (this.expanded) {
+                    const title = document.createElement("div");
+                    title.style.marginBottom = "0.5rem 0";
+                    title.innerHTML = item.str;
+                    this.elem.appendChild(title);
                 }
-                current.innerHTML = item.str;
-                current.classList.remove('row');
-                current.classList.add('title');
-                rows.push(current);
-                current = newRow();
             }
             else {
-                // Inventory should always have accelerator
-                const img = this.tileset.createBackgroundImage(item.tile, item.accelerator);
-                const desc = parse_inventory_description(item);
-                if (desc.count > 1) {
-                    const count = document.createElement('div');
-                    count.classList.add('count');
-                    count.innerHTML = `${desc.count}`;
-                    img.appendChild(count);
+                const container = document.createElement("div");
+                horiz(container);
+                const img = this.createItemImage(item);
+                container.appendChild(img);
+                if (this.expanded) {
+                    const text = document.createElement("div");
+                    text.innerHTML = item.str;
+                    container.appendChild(text);
                 }
-                img.classList.add('item');
-                if (item.active) {
-                    img.classList.add('active');
-                }
-                img.title = item.str;
-                current.appendChild(img);
+                this.elem.appendChild(container);
             }
         });
-        if (current.childNodes.length > 0) {
-            rows.push(current);
-            current = newRow();
-        }
-        return rows;
     }
-    ;
+    createItemImage(item) {
+        const img = this.tileset.createBackgroundImage(item.tile, item.accelerator);
+        if (item.count > 1) {
+            const count = document.createElement("div");
+            count.classList.add("count");
+            count.innerHTML = `${item.count}`;
+            img.appendChild(count);
+        }
+        img.classList.add("item");
+        if (item.active) {
+            img.classList.add("active");
+        }
+        img.title = item.description;
+        return img;
+    }
 }
 
 const CANCEL_KEY = ['Escape'];
@@ -1288,76 +1319,6 @@ class Line extends Dialog {
     }
 }
 
-class Menu extends Dialog {
-    constructor(prompt, tileset) {
-        super(prompt);
-        this.tileset = tileset;
-    }
-    updateMenu(items, count) {
-        this.elem.childNodes.forEach((x) => x.remove());
-        this.elem.appendChild(this.createMenu(items, count));
-    }
-    createMenu(items, count) {
-        const list = document.createElement("div");
-        list.style.display = "flex";
-        list.style.flexDirection = "column";
-        list.id = "menu";
-        let currentGroupTitle = null;
-        let currentGroupAccels = [];
-        const prependGroupAccel = () => {
-            if (currentGroupTitle != null && currentGroupAccels.length > 0) {
-                const title = currentGroupTitle;
-                if (title.textContent !== "") {
-                    // e.g 'D' - it will have an empty title
-                    // In case there are more than one group accel, but hopefully not
-                    const groupAccel = currentGroupAccels
-                        .map((c) => String.fromCharCode(c))
-                        .join(", ");
-                    title.textContent = groupAccel + " - " + title.textContent;
-                }
-            }
-        };
-        items.forEach((i) => {
-            const div = document.createElement("div");
-            horiz(div);
-            if (i.identifier !== 0) {
-                const id = `menu-${i.identifier}`;
-                const elem = document.createElement("input");
-                elem.type = count === 1 ? "radio" : "checkbox";
-                elem.name = "menuSelect";
-                elem.id = id;
-                elem.checked = i.active || false;
-                elem.value = `${i.identifier}`;
-                const accel = i.accelerator;
-                if (i.groupAcc !== 0 && !currentGroupAccels.includes(i.groupAcc)) {
-                    currentGroupAccels.push(i.groupAcc);
-                }
-                const label = document.createElement("label");
-                label.htmlFor = id;
-                label.innerHTML = i.str;
-                div.appendChild(elem);
-                if (i.tile && this.tileset) {
-                    const img = this.tileset.createBackgroundImage(i.tile, accel);
-                    div.appendChild(img);
-                }
-                else {
-                    label.innerHTML = `${String.fromCharCode(accel)} - ${label.innerHTML}`;
-                }
-                div.appendChild(label);
-            }
-            else {
-                prependGroupAccel();
-                currentGroupAccels = [];
-                currentGroupTitle = document.createTextNode(i.str || " ");
-                div.appendChild(currentGroupTitle);
-            }
-            list.appendChild(div);
-        });
-        prependGroupAccel();
-        return list;
-    }
-}
-
 class StatusLine {
     constructor(root) {
         this.elem = document.createElement("pre");
@@ -1387,6 +1348,12 @@ function sub(v1, v2) {
 function mult(v1, v2) {
     return { x: v1.x * v2.x, y: v1.y * v2.y };
 }
+var BUCState;
+(function (BUCState) {
+    BUCState["BLESSED"] = "blessed";
+    BUCState["UNCURSED"] = "uncursed";
+    BUCState["CURSED"] = "cursed";
+})(BUCState || (BUCState = {}));
 
 class TileSet {
     constructor(file, tileSize, tileCol) {
@@ -1531,8 +1498,10 @@ class GameScreen extends Screen {
     }
     openMenu(prompt, count, items) {
         if (!this.activeMenu) {
+            const dialog = new Dialog();
             this.activeMenu = new Menu(prompt, this.tileset);
-            this.elem.appendChild(this.activeMenu.elem);
+            dialog.elem.appendChild(this.activeMenu.elem);
+            this.elem.appendChild(dialog.elem);
         }
         this.activeMenu.updateMenu(items, count);
     }
@@ -1567,6 +1536,7 @@ class Game {
         this.updateMap = (...tiles) => this.game.tilemap.addTile(...tiles);
         this.updateStatus = (s) => this.game.status.update(s);
         this.updateInventory = (...items) => this.game.inventory.updateItems(items);
+        this.toggleInventory = () => this.game.inventory.toggle();
         this.updateState = (state) => {
             switch (state) {
                 case GameState.START:
@@ -1623,6 +1593,7 @@ class Game {
         }
         this.current = screen;
         document.body.appendChild(this.current.elem);
+        this.current.onResize();
     }
 }
 

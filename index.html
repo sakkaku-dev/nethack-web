@@ -2,7 +2,9 @@
   :root {
     --bg-color: black;
     --text-color: white;
-    --shadow: 1px 1px 20px #fff9;
+    --shadow: 0px 0px 5px #fff9;
+
+    --accel-bg-color: #6669;
   }
 
   * {
@@ -23,10 +25,18 @@
     border: 0;
     border-radius: 0.5rem;
     cursor: pointer;
+    font-weight: normal;
   }
 
   button:hover, button.active {
+    /* border: 1p solid white; */
     box-shadow: var(--shadow);
+  }
+
+  .accel {
+    background: var(--accel-bg-color);
+    border-radius: 100%;
+    padding: 0 0.5rem; /* No vertical padding, since there is already a line height */
   }
 
   #inventory {
@@ -41,16 +51,8 @@
     margin: 0;
     opacity: 0.8;
   }
-  #inventory .row {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.5rem;
-  }
   #inventory .active {
     border: 1px solid red;
-  }
-  #inventory .title {
-    margin: 0.5rem 0;
   }
   #inventory .item .count {
     position: absolute;
