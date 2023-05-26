@@ -46,8 +46,9 @@ const createAccel = (accel) => {
     accelElem.innerHTML = String.fromCharCode(accel);
     return accelElem;
 };
-function AccelButton(item, prepend = true, tileset) {
+function MenuButton(item, prepend = true, tileset) {
     const btn = document.createElement("button");
+    btn.disabled = item.accelerator === 0;
     horiz(btn);
     btn.onclick = () => window.nethackJS.sendInput(item.accelerator);
     if (item.active) {
@@ -95,10 +96,10 @@ class Menu {
     createMenu(items, container) {
         items.forEach((i) => {
             if (i.identifier !== 0) {
-                container.appendChild(AccelButton(i, true, this.tileset));
+                container.appendChild(MenuButton(i, true, this.tileset));
             }
             else if (i.str !== "") {
-                container.appendChild(AccelButton(i, false, this.tileset));
+                container.appendChild(MenuButton(i, false, this.tileset));
             }
         });
         return container;
@@ -1319,17 +1320,123 @@ class Line extends Dialog {
     }
 }
 
+function Icon(name) {
+    const icon = document.createElement('i');
+    icon.classList.add(`gg-${name}`);
+    return icon;
+}
+
+function Slider(value, maxValue, fg, bg) {
+    const slider = document.createElement('div');
+    horiz(slider);
+    slider.style.height = '16px';
+    slider.style.backgroundColor = bg;
+    slider.style.flexGrow = '1';
+    slider.style.position = 'relative';
+    slider.style.alignItems = 'stretch';
+    const filled = (value / maxValue) * 100;
+    const fill = document.createElement('div');
+    fill.style.width = `${filled}%`;
+    fill.style.backgroundColor = fg;
+    const text = document.createElement('span');
+    fullScreen(text);
+    text.style.textAlign = 'center';
+    text.innerHTML = `${value} / ${maxValue}`;
+    slider.appendChild(text);
+    slider.appendChild(fill);
+    return slider;
+}
+
 class StatusLine {
     constructor(root) {
-        this.elem = document.createElement("pre");
+        this.expand = false;
+        this.elem = document.createElement("div");
         this.elem.id = "status";
         root.appendChild(this.elem);
+        this.heartIcon = this.createIcon('UI_Heart.png');
+        this.manaIcon = this.createIcon('UI_Mana.png');
+        this.armorIcon = this.createIcon('UI_Armor.png');
     }
-    // TODO: will be refactored
+    toggleExpandButton() {
+        const icon = this.expand ? 'minimize-alt' : 'arrows-expand-right';
+        const container = document.createElement('div');
+        center(container);
+        container.appendChild(Icon(icon));
+        container.style.height = '16px';
+        container.onclick = () => {
+            this.expand = !this.expand;
+            this.update(this.status || {});
+        };
+        container.style.cursor = 'pointer';
+        return container;
+    }
     update(s) {
-        this.elem.innerHTML = `${s.title || "No Title"} ${s.align || "No Alignment"} ${s.time != null ? "T:" + s.time : ""} \t ${s.hunger || ""}`;
-        this.elem.innerHTML += `\nStr: ${s.str ?? "-"} Dex: ${s.dex ?? "-"} Con: ${s.con ?? "-"} Int: ${s.int ?? "-"} Wis: ${s.wis ?? "-"} Cha: ${s.cha ?? "-"}`;
-        this.elem.innerHTML += `\nDlvl ${s.dungeonLvl ?? "-"} HP: ${s.hp ?? "-"}/${s.hpMax ?? "-"} Pw: ${s.power ?? "-"}/${s.powerMax ?? "-"} AC: ${s.armor ?? "-"} EXP: ${s.expLvl}${s.exp != null ? "/" + s.exp : ""} $: ${s.gold ?? "-"}`;
+        Array.from(this.elem.children).forEach(c => this.elem.removeChild(c));
+        this.status = s;
+        const firstRow = this.createRow();
+        const conditions = document.createElement('div');
+        conditions.innerHTML = s.hunger || '';
+        conditions.style.fontWeight = 'bold';
+        conditions.style.flexGrow = '1';
+        firstRow.appendChild(conditions);
+        firstRow.appendChild(this.toggleExpandButton());
+        this.elem.appendChild(this.createMinMaxValue(this.heartIcon, '#D33', '#600', s.hp, s.hpMax));
+        this.elem.appendChild(this.createMinMaxValue(this.manaIcon, '#33D', '#006', s.power, s.powerMax));
+        const lastRow = this.createRow();
+        lastRow.appendChild(this.createIconText(this.armorIcon, `${s.armor ?? '-'}`));
+        const lvl = document.createElement('div');
+        lvl.innerHTML = `LV ${s.expLvl}${s.exp != null ? '/' + s.exp : ''}`;
+        lvl.title = s.title || 'Untitled';
+        lastRow.appendChild(lvl);
+        const other = document.createElement('div');
+        other.innerHTML = `${s.align || "No Alignment"} Dlvl ${s.dungeonLvl ?? "-"}`;
+        other.style.flexGrow = '1';
+        lastRow.appendChild(other);
+        const money = document.createElement('div');
+        money.innerHTML = `$: ${s.gold ?? "-"}`;
+        lastRow.appendChild(money);
+        if (this.expand) {
+            const stats = this.createRow();
+            stats.innerHTML += `\nStr: ${s.str ?? "-"} Dex: ${s.dex ?? "-"} Con: ${s.con ?? "-"} Int: ${s.int ?? "-"} Wis: ${s.wis ?? "-"} Cha: ${s.cha ?? "-"}`;
+            stats.style.justifyContent = 'end';
+            const extras = this.createRow();
+            extras.style.justifyContent = 'end';
+            if (s.time != null)
+                extras.innerHTML += `T: ${s.time}`;
+        }
+    }
+    createRow() {
+        const row = document.createElement('div');
+        horiz(row);
+        this.elem.appendChild(row);
+        return row;
+    }
+    createIconText(icon, txt) {
+        const elem = document.createElement('div');
+        elem.style.position = 'relative';
+        const label = document.createElement('div');
+        fullScreen(label);
+        center(label);
+        label.innerHTML = txt;
+        label.title = txt;
+        elem.appendChild(icon);
+        elem.appendChild(label);
+        return elem;
+    }
+    createMinMaxValue(icon, fg, bg, v, maxV) {
+        const elem = document.createElement('div');
+        horiz(elem);
+        elem.style.gap = '0';
+        icon.style.marginRight = '-1rem';
+        icon.style.zIndex = '1';
+        elem.appendChild(icon);
+        elem.appendChild(Slider(v || 0, maxV || 1, fg, bg));
+        return elem;
+    }
+    createIcon(file) {
+        const img = new Image();
+        img.src = file;
+        return img;
     }
 }
 
@@ -1551,7 +1658,7 @@ class Game {
             }
         };
         document.body.onresize = (e) => this.current?.onResize();
-        document.onkeydown = (e) => {
+        document.body.onkeydown = (e) => {
             if (this.current?.inputHandler) {
                 this.current.inputHandler.onInput(e);
             }
