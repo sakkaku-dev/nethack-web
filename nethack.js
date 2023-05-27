@@ -1788,6 +1788,7 @@ function getCountForSelect(select) {
 }
 
 const SAVE_FILES_STORAGE_KEY = "sakkaku-dev-nethack-savefiles";
+const RECORD_FILE_STORAGE_KEY = "sakkaku-dev-nethack-records";
 function listBackupFiles() {
     const result = [];
     for (let i = 0, len = localStorage.length; i < len; i++) {
@@ -1804,8 +1805,8 @@ function loadBackupSaveFile(file, module) {
         const { data } = JSON.parse(strData);
         try {
             const bytes = atob(data);
-            var buf = new ArrayBuffer(bytes.length);
-            var array = new Uint8Array(buf);
+            const buf = new ArrayBuffer(bytes.length);
+            const array = new Uint8Array(buf);
             for (var i = 0; i < bytes.length; ++i)
                 array[i] = bytes.charCodeAt(i);
             module.FS.writeFile(file, array, { encoding: "binary" });
@@ -1831,19 +1832,27 @@ function saveBackupFiles(module) {
             let file = savefiles[i];
             if (file == "." || file == "..")
                 continue;
-            if (file === "record")
-                continue; // This is just in save folder, so it gets persisted, nethack should not delete it like the save file
-            file = "/nethack/save/" + file;
-            try {
-                const data = btoa(String.fromCharCode.apply(null, module.FS.readFile(file, { encoding: "binary" })));
-                localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, JSON.stringify({ data }));
+            if (file === "record") {
+                file = "/nethack/save/" + file;
+                const data = readFile(module, file);
+                localStorage.setItem(RECORD_FILE_STORAGE_KEY, data);
             }
-            catch (e) {
-                console.warn("Failed to sync save file", file);
+            else {
+                file = "/nethack/save/" + file;
+                try {
+                    const data = readFile(module, file);
+                    localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, JSON.stringify({ data }));
+                }
+                catch (e) {
+                    console.warn("Failed to sync save file", file);
+                }
             }
         }
     }
     catch (e) { }
+}
+function readFile(module, file) {
+    return btoa(String.fromCharCode.apply(null, module.FS.readFile(file, { encoding: "binary" })));
 }
 function loadSaveFiles(module, backupFile) {
     try {
@@ -1859,6 +1868,10 @@ function loadSaveFiles(module, backupFile) {
     if (backupFile) {
         loadBackupSaveFile(backupFile, module);
     }
+}
+function loadRecords() {
+    const data = localStorage.getItem(RECORD_FILE_STORAGE_KEY) || '';
+    return atob(data);
 }
 
 const ENTER = 13;
@@ -2053,6 +2066,7 @@ class NetHackWrapper {
             const id = await this.openCustomMenu("Welcome to NetHack", [
                 "Start Game",
                 "Load from backup",
+                "Leaderboard",
             ]);
             switch (id) {
                 case 0:
@@ -2065,6 +2079,12 @@ class NetHackWrapper {
                     if (backupId !== -1) {
                         this.backupFile = files[backupId];
                     }
+                    break;
+                case 2:
+                    const records = loadRecords();
+                    this.ui.openDialog(-1, records);
+                    await this.waitInput(true);
+                    this.ui.closeDialog(-1);
                     break;
             }
         }
