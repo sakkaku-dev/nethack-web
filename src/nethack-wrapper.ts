@@ -15,7 +15,7 @@ import {
   setAccelerators,
   toggleMenuItems,
 } from "./helper/menu-select";
-import { listBackupFiles, loadSaveFiles, syncSaveFiles } from "./helper/save-files";
+import { listBackupFiles, loadRecords, loadSaveFiles, syncSaveFiles } from "./helper/save-files";
 import { CONTINUE_KEYS, ESC } from "./helper/keys";
 import { parseAndMapStatus } from "./helper/parse-status";
 import { toInventoryItem } from "./helper/inventory";
@@ -163,6 +163,7 @@ export class NetHackWrapper implements NetHackJS {
       const id = await this.openCustomMenu("Welcome to NetHack", [
         "Start Game",
         "Load from backup",
+        "Leaderboard",
       ]);
 
       switch (id) {
@@ -176,6 +177,12 @@ export class NetHackWrapper implements NetHackJS {
           if (backupId !== -1) {
             this.backupFile = files[backupId];
           }
+          break;
+        case 2:
+          const records = loadRecords();
+          this.ui.openDialog(-1, records);
+          await this.waitInput(true);
+          this.ui.closeDialog(-1);
           break;
       }
     }

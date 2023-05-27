@@ -1,4 +1,5 @@
 const SAVE_FILES_STORAGE_KEY = "sakkaku-dev-nethack-savefiles";
+const RECORD_FILE_STORAGE_KEY = "sakkaku-dev-nethack-records";
 
 export function listBackupFiles() {
   const result: string[] = [];
@@ -18,8 +19,8 @@ function loadBackupSaveFile(file: string, module: any) {
     const { data } = JSON.parse(strData);
     try {
       const bytes = atob(data);
-      var buf = new ArrayBuffer(bytes.length);
-      var array = new Uint8Array(buf);
+      const buf = new ArrayBuffer(bytes.length);
+      const array = new Uint8Array(buf);
       for (var i = 0; i < bytes.length; ++i) array[i] = bytes.charCodeAt(i);
       module.FS.writeFile(file, array, { encoding: "binary" });
     } catch (e) {
@@ -45,25 +46,35 @@ function saveBackupFiles(module: any) {
     for (let i = 0; i < savefiles.length; ++i) {
       let file = savefiles[i];
       if (file == "." || file == "..") continue;
-      if (file === "record") continue; // This is just in save folder, so it gets persisted, nethack should not delete it like the save file
 
-      file = "/nethack/save/" + file;
-      try {
-        const data = btoa(
-          String.fromCharCode.apply(null, module.FS.readFile(file, { encoding: "binary" }))
-        );
-        localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, JSON.stringify({ data }));
-      } catch (e) {
-        console.warn("Failed to sync save file", file);
+      if (file === "record") {
+        file = "/nethack/save/" + file;
+        const data = readFile(module, file);
+        localStorage.setItem(RECORD_FILE_STORAGE_KEY, data);
+      } else {
+        file = "/nethack/save/" + file;
+        try {
+          const data = readFile(module, file);
+          localStorage.setItem(`${SAVE_FILES_STORAGE_KEY}-${file}`, JSON.stringify({ data }));
+        } catch (e) {
+          console.warn("Failed to sync save file", file);
+        }
       }
+
     }
-  } catch (e) {}
+  } catch (e) { }
+}
+
+function readFile(module: any, file: string) {
+  return btoa(
+    String.fromCharCode.apply(null, module.FS.readFile(file, { encoding: "binary" }))
+  );
 }
 
 export function loadSaveFiles(module: any, backupFile: string) {
   try {
     module.FS.mkdir("/nethack/save");
-  } catch (e) {}
+  } catch (e) { }
   module.FS.mount(module.IDBFS, {}, "/nethack/save");
   module.FS.syncfs(true, (err: any) => {
     if (err) {
@@ -72,6 +83,11 @@ export function loadSaveFiles(module: any, backupFile: string) {
   });
 
   if (backupFile) {
-	loadBackupSaveFile(backupFile, module);
+    loadBackupSaveFile(backupFile, module);
   }
+}
+
+export function loadRecords() {
+  const data =  localStorage.getItem(RECORD_FILE_STORAGE_KEY) || '';
+  return atob(data);
 }
