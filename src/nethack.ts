@@ -11,6 +11,7 @@ const options = [
   "autoopen",
   "!cmdassist",
   "sortloot:full",
+  "time",
 ];
 
 const Module: any = {};
