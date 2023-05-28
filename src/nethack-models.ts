@@ -45,39 +45,43 @@ export enum ItemFlag {
   SKIPINVERT = 2,
 }
 
-export const statusMap: Record<STATUS_FIELD, (s: Status, v: string) => void> = {
-  [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v.trim()),
+export const statusMap: Record<STATUS_FIELD, (s: Status, v?: string) => void> = {
+  [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v?.trim()),
   [STATUS_FIELD.BL_STR]: (s, v) => (s.str = v),
-  [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseInt(v)),
-  [STATUS_FIELD.BL_CO]: (s, v) => (s.con = parseInt(v)),
-  [STATUS_FIELD.BL_IN]: (s, v) => (s.int = parseInt(v)),
-  [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = parseInt(v)),
-  [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = parseInt(v)),
+  [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_CO]: (s, v) => (s.con = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_IN]: (s, v) => (s.int = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = parseNumberOrUndefined(v)),
   [STATUS_FIELD.BL_ALIGN]: (s, v) => (s.align = v),
   [STATUS_FIELD.BL_SCORE]: (s, v) => (s.score = v),
   [STATUS_FIELD.BL_CAP]: (s, v) => (s.carryCap = v),
-  // [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v.split(":")[1])),
-  [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v)),
-  [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = parseInt(v)),
-  [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = parseInt(v)),
-  [STATUS_FIELD.BL_XP]: (s, v) => (s.exp = parseInt(v)),
-  [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = parseInt(v)),
+  // [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseNumberOrUndefined(v.split(":")[1])),
+  [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_XP]: (s, v) => (s.exp = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = parseNumberOrUndefined(v)),
   [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = (v || "").trim()),
-  [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = parseInt(v)),
-  [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = parseInt(v)),
+  [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = parseNumberOrUndefined(v)),
   [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v),
-  [STATUS_FIELD.BL_EXP]: (s, v) => (s.expLvl = parseInt(v)),
+  [STATUS_FIELD.BL_EXP]: (s, v) => (s.expLvl = parseNumberOrUndefined(v)),
   [STATUS_FIELD.BL_CONDITION]: (s, v) =>
-    (s.condition = conditionMap[parseInt(v) as CONDITION] ?? undefined),
+    (s.condition = conditionMap[parseNumberOrUndefined(v) as CONDITION] ?? undefined),
   // [STATUS_FIELD.BL_CHARACTERISTICS]: () => {},
   // [STATUS_FIELD.BL_RESET]: () => {},
   // [STATUS_FIELD.BL_FLUSH]: () => {},
   [STATUS_FIELD.BL_HD]: () => {},
   [STATUS_FIELD.BL_TIME]: (s, v) => {
-    s.time = parseInt(v);
+    s.time = parseNumberOrUndefined(v);
   },
   // [STATUS_FIELD.MAXBLSTATS]: () => {},
 };
+
+function parseNumberOrUndefined(value?: string) {
+  return value ? parseInt(value) : undefined;
+}
 
 // See mswproc.c
 export const conditionMap: Record<CONDITION, string> = {
