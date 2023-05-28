@@ -2,25 +2,46 @@ import { Status } from "../../models";
 import { center, fullScreen, horiz } from "../styles";
 import { Icon } from "./icon";
 import { Slider } from "./slider";
+import { Sprite } from "./sprite";
+
+const LOW_HP_THRESHOLD = 0.3;
 
 export class StatusLine {
   private elem: HTMLElement;
-  private heartIcon: HTMLImageElement;
-  private manaIcon: HTMLImageElement;
-  private armorIcon: HTMLImageElement;
+
+  private heartIcon: HTMLElement;
+  private heartAnim: Animation;
+
+  private manaIcon: HTMLElement;
+  private armorIcon: HTMLElement;
 
   private expand = false;
   private status?: Status;
+
+  // private pulseBorder: HTMLElement;
 
   constructor(root: HTMLElement) {
     this.elem = document.createElement("div");
     this.elem.id = "status";
     root.appendChild(this.elem);
 
-    this.heartIcon = this.createIcon('UI_Heart.png');
-    this.manaIcon = this.createIcon('UI_Mana.png');
-    this.armorIcon = this.createIcon('UI_Armor.png');
+    const hp = Sprite('UI_Heart.png', 32, 2);
+    this.heartIcon = hp.sprite;
+    this.heartAnim = hp.anim;
 
+    this.manaIcon = Sprite('UI_Mana.png', 32, 1).sprite;
+    this.armorIcon = Sprite('UI_Armor.png', 32, 1).sprite;
+
+    // Enable this after we have settings to disable it
+    // this.pulseBorder = document.createElement('div');
+    // this.pulseBorder.style.backgroundImage = 'url("PulseBorder.png")';
+    // this.pulseBorder.style.backgroundPosition = 'center';
+    // this.pulseBorder.style.backgroundSize = 'cover';
+    // this.pulseBorder.style.backgroundRepeat = 'no-repeat';
+    // this.pulseBorder.style.display = 'none;'
+    // fullScreen(this.pulseBorder);
+    // this.pulseBorder.animate({ opacity: [0, 0.2, 0] }, { duration: 1000 * 1.5, iterations: Infinity });
+    // root.appendChild(this.pulseBorder);
   }
 
   private toggleExpandButton() {
@@ -81,6 +102,17 @@ export class StatusLine {
 
       if (s.time != null) extras.innerHTML += `T: ${s.time}`;
     }
+
+    if (s.hp && s.hpMax) {
+      const hpPercent = s.hp / s.hpMax
+      if (hpPercent < LOW_HP_THRESHOLD) {
+        if (this.heartAnim.playState !== 'running') {
+          this.heartAnim.play();
+        }
+      } else {
+        this.heartAnim.cancel();
+      }
+    }
   }
 
   private createRow() {
@@ -90,7 +122,7 @@ export class StatusLine {
     return row;
   }
 
-  private createIconText(icon: HTMLImageElement, txt: string) {
+  private createIconText(icon: HTMLElement, txt: string) {
     const elem = document.createElement('div');
     elem.style.position = 'relative';
 
@@ -105,7 +137,7 @@ export class StatusLine {
     return elem;
   }
 
-  private createMinMaxValue(icon: HTMLImageElement, fg: string, bg: string, v?: number, maxV?: number) {
+  private createMinMaxValue(icon: HTMLElement, fg: string, bg: string, v?: number, maxV?: number) {
     const elem = document.createElement('div');
     horiz(elem);
     elem.style.gap = '0';
@@ -116,11 +148,5 @@ export class StatusLine {
 
     elem.appendChild(Slider(v || 0, maxV || 1, fg, bg));
     return elem;
-  }
-
-  private createIcon(file: string) {
-    const img = new Image();
-    img.src = file;
-    return img;
   }
 }
