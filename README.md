@@ -40,6 +40,12 @@ Header set Cross-Origin-Opener-Policy "same-origin"
 Header set Cross-Origin-Embedder-Policy "require-corp"
 ```
 
+## Assets
+
+- `Nevanda_32.png`
+  - By Nevanda
+  - https://nethackwiki.com/mediawiki/images/2/26/Nevanda.png
+
 ## References
 
 - https://github.com/coolwanglu/BrowserHack (3.4)
