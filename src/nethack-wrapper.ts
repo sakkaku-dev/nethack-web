@@ -1,6 +1,6 @@
 import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
 import { Item, NetHackJS, Status, NetHackUI, Tile, GameState, InventoryItem } from "./models";
-import { MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
+import { ATTR, MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
 // @ts-ignore
 import nethackLib from "../lib/nethack.js";
@@ -32,8 +32,8 @@ export class NetHackWrapper implements NetHackJS {
 
     // Text / Dialog
     [Command.PUTSTR]: this.handlePutStr.bind(this),
-    [Command.RAW_PRINT]: async (str) => this.ui.printLine(str),
-    [Command.RAW_PRINT_BOLD]: async (str) => this.ui.printLine(str),
+    [Command.RAW_PRINT]: async (str) => this.handlePrintLine(ATTR.ATR_NONE, str),
+    [Command.RAW_PRINT_BOLD]: async (str) => this.handlePrintLine(ATTR.ATR_BOLD, str),
 
     // Map
     [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph) => {
@@ -77,6 +77,7 @@ export class NetHackWrapper implements NetHackJS {
   private menuItems: Item[] = [];
   private menuPrompt = "";
   private putStr = "";
+  private putStrWinId = 0;
   private backupFile = "";
   private accel = new AccelIterator();
 
@@ -319,9 +320,13 @@ export class NetHackWrapper implements NetHackJS {
 
   private async displayWindow(winid: number, blocking: number) {
     if (this.putStr !== "") {
-      this.ui.openDialog(winid, this.putStr);
-      await this.waitInput(true);
-      this.putStr = "";
+      if (this.putStrWinId === winid) {
+        this.ui.openDialog(winid, this.putStr);
+        await this.waitInput(true);
+        this.putStr = "";
+      } else {
+        this.log('putStr has value but another window is displayed', winid);
+      }
     }
   }
 
@@ -385,9 +390,21 @@ export class NetHackWrapper implements NetHackJS {
       const status = this.status$.value;
       parseAndMapStatus(str, status);
       this.status$.next(status);
+    } else if (winid === this.global.globals.WIN_MESSAGE) {
+      this.handlePrintLine(attr, str);
     } else {
+      if (this.putStrWinId !== winid) {
+        this.log('putStr value changed without displaying it', str, winid);
+        this.putStr = '';
+      }
+
       this.putStr += str + "\n";
+      this.putStrWinId = winid;
     }
+  }
+
+  private handlePrintLine(attr: ATTR, str: string) {
+    this.ui.printLine(str);
   }
 
   private async statusUpdate(type: STATUS_FIELD, ptr: number) {
