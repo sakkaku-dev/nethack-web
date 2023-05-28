@@ -1347,15 +1347,46 @@ function Slider(value, maxValue, fg, bg) {
     return slider;
 }
 
+function Sprite(file, size, frames, durationInSec = 1) {
+    const sprite = document.createElement("div");
+    sprite.style.backgroundImage = `url(${file})`;
+    sprite.style.backgroundSize = `${size * frames}px`;
+    sprite.style.width = `${size}px`;
+    sprite.style.height = `${size}px`;
+    sprite.style.backgroundPositionX = `-${frames * size}px`;
+    sprite.classList.add('pixel');
+    const positions = [];
+    for (let i = 0; i < frames; i++) {
+        positions.push(-i * size);
+    }
+    const anim = sprite.animate({ backgroundPositionX: positions }, { duration: 1000 * durationInSec, iterations: Infinity, easing: `steps(${frames})` });
+    anim.cancel();
+    return { sprite, anim };
+}
+
+const LOW_HP_THRESHOLD = 0.3;
 class StatusLine {
+    // private pulseBorder: HTMLElement;
     constructor(root) {
         this.expand = false;
         this.elem = document.createElement("div");
         this.elem.id = "status";
         root.appendChild(this.elem);
-        this.heartIcon = this.createIcon('UI_Heart.png');
-        this.manaIcon = this.createIcon('UI_Mana.png');
-        this.armorIcon = this.createIcon('UI_Armor.png');
+        const hp = Sprite('UI_Heart.png', 32, 2);
+        this.heartIcon = hp.sprite;
+        this.heartAnim = hp.anim;
+        this.manaIcon = Sprite('UI_Mana.png', 32, 1).sprite;
+        this.armorIcon = Sprite('UI_Armor.png', 32, 1).sprite;
+        // Enable this after we have settings to disable it
+        // this.pulseBorder = document.createElement('div');
+        // this.pulseBorder.style.backgroundImage = 'url("PulseBorder.png")';
+        // this.pulseBorder.style.backgroundPosition = 'center';
+        // this.pulseBorder.style.backgroundSize = 'cover';
+        // this.pulseBorder.style.backgroundRepeat = 'no-repeat';
+        // this.pulseBorder.style.display = 'none;'
+        // fullScreen(this.pulseBorder);
+        // this.pulseBorder.animate({ opacity: [0, 0.2, 0] }, { duration: 1000 * 1.5, iterations: Infinity });
+        // root.appendChild(this.pulseBorder);
     }
     toggleExpandButton() {
         const icon = this.expand ? 'minimize-alt' : 'arrows-expand-right';
@@ -1404,6 +1435,17 @@ class StatusLine {
             if (s.time != null)
                 extras.innerHTML += `T: ${s.time}`;
         }
+        if (s.hp && s.hpMax) {
+            const hpPercent = s.hp / s.hpMax;
+            if (hpPercent < LOW_HP_THRESHOLD) {
+                if (this.heartAnim.playState !== 'running') {
+                    this.heartAnim.play();
+                }
+            }
+            else {
+                this.heartAnim.cancel();
+            }
+        }
     }
     createRow() {
         const row = document.createElement('div');
@@ -1432,11 +1474,6 @@ class StatusLine {
         elem.appendChild(icon);
         elem.appendChild(Slider(v || 0, maxV || 1, fg, bg));
         return elem;
-    }
-    createIcon(file) {
-        const img = new Image();
-        img.src = file;
-        return img;
     }
 }
 

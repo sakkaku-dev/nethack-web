@@ -1620,37 +1620,40 @@ var ItemFlag;
     ItemFlag[ItemFlag["SKIPINVERT"] = 2] = "SKIPINVERT";
 })(ItemFlag || (ItemFlag = {}));
 const statusMap = {
-    [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v.trim()),
+    [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v?.trim()),
     [STATUS_FIELD.BL_STR]: (s, v) => (s.str = v),
-    [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseInt(v)),
-    [STATUS_FIELD.BL_CO]: (s, v) => (s.con = parseInt(v)),
-    [STATUS_FIELD.BL_IN]: (s, v) => (s.int = parseInt(v)),
-    [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = parseInt(v)),
-    [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = parseInt(v)),
+    [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseNumberOrUndefined(v)),
+    [STATUS_FIELD.BL_CO]: (s, v) => (s.con = parseNumberOrUndefined(v)),
+    [STATUS_FIELD.BL_IN]: (s, v) => (s.int = parseNumberOrUndefined(v)),
+    [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = parseNumberOrUndefined(v)),
+    [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = parseNumberOrUndefined(v)),
     [STATUS_FIELD.BL_ALIGN]: (s, v) => (s.align = v),
     [STATUS_FIELD.BL_SCORE]: (s, v) => (s.score = v),
     [STATUS_FIELD.BL_CAP]: (s, v) => (s.carryCap = v),
-    // [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v.split(":")[1])),
-    [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseInt(v)),
-    [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = parseInt(v)),
-    [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = parseInt(v)),
-    [STATUS_FIELD.BL_XP]: (s, v) => (s.exp = parseInt(v)),
-    [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = parseInt(v)),
+    // [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseNumberOrUndefined(v.split(":")[1])),
+    [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseNumberOrUndefined(v)),
+    [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = parseNumberOrUndefined(v)),
+    [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = parseNumberOrUndefined(v)),
+    [STATUS_FIELD.BL_XP]: (s, v) => (s.exp = parseNumberOrUndefined(v)),
+    [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = parseNumberOrUndefined(v)),
     [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = (v || "").trim()),
-    [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = parseInt(v)),
-    [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = parseInt(v)),
+    [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = parseNumberOrUndefined(v)),
+    [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = parseNumberOrUndefined(v)),
     [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v),
-    [STATUS_FIELD.BL_EXP]: (s, v) => (s.expLvl = parseInt(v)),
-    [STATUS_FIELD.BL_CONDITION]: (s, v) => (s.condition = conditionMap[parseInt(v)] ?? undefined),
+    [STATUS_FIELD.BL_EXP]: (s, v) => (s.expLvl = parseNumberOrUndefined(v)),
+    [STATUS_FIELD.BL_CONDITION]: (s, v) => (s.condition = conditionMap[parseNumberOrUndefined(v)] ?? undefined),
     // [STATUS_FIELD.BL_CHARACTERISTICS]: () => {},
     // [STATUS_FIELD.BL_RESET]: () => {},
     // [STATUS_FIELD.BL_FLUSH]: () => {},
     [STATUS_FIELD.BL_HD]: () => { },
     [STATUS_FIELD.BL_TIME]: (s, v) => {
-        s.time = parseInt(v);
+        s.time = parseNumberOrUndefined(v);
     },
     // [STATUS_FIELD.MAXBLSTATS]: () => {},
 };
+function parseNumberOrUndefined(value) {
+    return value ? parseInt(value) : undefined;
+}
 // See mswproc.c
 const conditionMap = {
     [CONDITION.BL_MASK_BLIND]: "Blind",
@@ -1887,37 +1890,28 @@ function parseAndMapStatus(str, status) {
     // Split regex more in case some things can be hidden/shown
     if (statLineRegex.test(str)) {
         let m = str.match(/\w ([a-zA-z\s]+) .* St:.*Ch:\d+ [\s]* (\w+)/);
-        if (m) {
-            statusMap[STATUS_FIELD.BL_TITLE](status, m[1]);
-            statusMap[STATUS_FIELD.BL_ALIGN](status, m[2]);
-        }
+        statusMap[STATUS_FIELD.BL_TITLE](status, getMatch(m, 1));
+        statusMap[STATUS_FIELD.BL_ALIGN](status, getMatch(m, 2));
         m = str.match(/St:([\d\/]+) Dx:(\d+) Co:(\d+) In:(\d+) Wi:(\d+) Ch:(\d+)/);
-        if (m) {
-            statusMap[STATUS_FIELD.BL_STR](status, m[1]);
-            statusMap[STATUS_FIELD.BL_DX](status, m[2]);
-            statusMap[STATUS_FIELD.BL_CO](status, m[3]);
-            statusMap[STATUS_FIELD.BL_IN](status, m[4]);
-            statusMap[STATUS_FIELD.BL_WI](status, m[5]);
-            statusMap[STATUS_FIELD.BL_CH](status, m[6]);
-        }
+        statusMap[STATUS_FIELD.BL_STR](status, getMatch(m, 1));
+        statusMap[STATUS_FIELD.BL_DX](status, getMatch(m, 2));
+        statusMap[STATUS_FIELD.BL_CO](status, getMatch(m, 3));
+        statusMap[STATUS_FIELD.BL_IN](status, getMatch(m, 4));
+        statusMap[STATUS_FIELD.BL_WI](status, getMatch(m, 5));
+        statusMap[STATUS_FIELD.BL_CH](status, getMatch(m, 6));
     }
     else {
         let m = str.match(/HP:(\d+)\((\d+)\).*Pw:(\d+)\((\d+)\)/);
-        if (m) {
-            statusMap[STATUS_FIELD.BL_HP](status, m[1]);
-            statusMap[STATUS_FIELD.BL_HPMAX](status, m[2]);
-            statusMap[STATUS_FIELD.BL_ENE](status, m[3]);
-            statusMap[STATUS_FIELD.BL_ENEMAX](status, m[4]);
-        }
+        statusMap[STATUS_FIELD.BL_HP](status, getMatch(m, 1));
+        statusMap[STATUS_FIELD.BL_HPMAX](status, getMatch(m, 2));
+        statusMap[STATUS_FIELD.BL_ENE](status, getMatch(m, 3));
+        statusMap[STATUS_FIELD.BL_ENEMAX](status, getMatch(m, 4));
         m = str.match(/Dlvl:(\d+)/);
-        if (m)
-            statusMap[STATUS_FIELD.BL_LEVELDESC](status, m[1]);
+        statusMap[STATUS_FIELD.BL_LEVELDESC](status, getMatch(m, 1));
         m = str.match(/\$:(\d+)/);
-        if (m)
-            statusMap[STATUS_FIELD.BL_GOLD](status, m[1]);
+        statusMap[STATUS_FIELD.BL_GOLD](status, getMatch(m, 1));
         m = str.match(/AC:([-]?\d+)/);
-        if (m)
-            statusMap[STATUS_FIELD.BL_AC](status, m[1]);
+        statusMap[STATUS_FIELD.BL_AC](status, getMatch(m, 1));
         m = str.match(/Xp:(\d+\/\d+)/); // Contains lvl + exp
         if (m) {
             const v = m[1].split("/");
@@ -1926,16 +1920,17 @@ function parseAndMapStatus(str, status) {
         }
         else {
             m = str.match(/Exp:(\d+)/);
-            if (m)
-                statusMap[STATUS_FIELD.BL_EXP](status, m[1]);
+            statusMap[STATUS_FIELD.BL_EXP](status, getMatch(m, 1));
+            statusMap[STATUS_FIELD.BL_XP](status, undefined);
         }
         m = str.match(/T:(\d+)/);
-        if (m)
-            statusMap[STATUS_FIELD.BL_TIME](status, m[1]);
+        statusMap[STATUS_FIELD.BL_TIME](status, getMatch(m, 1));
         m = str.match(/([a-zA-Z\s]+)$/); // Contains everything status related, eg hunger, conditions
-        if (m)
-            statusMap[STATUS_FIELD.BL_HUNGER](status, m[1]);
+        statusMap[STATUS_FIELD.BL_HUNGER](status, getMatch(m, 1));
     }
+}
+function getMatch(match, index) {
+    return match ? match[index] : undefined;
 }
 
 // From BrowserHack
@@ -1980,8 +1975,8 @@ class NetHackWrapper {
             [Command.GAME_END]: this.gameEnd.bind(this),
             // Text / Dialog
             [Command.PUTSTR]: this.handlePutStr.bind(this),
-            [Command.RAW_PRINT]: async (str) => this.ui.printLine(str),
-            [Command.RAW_PRINT_BOLD]: async (str) => this.ui.printLine(str),
+            [Command.RAW_PRINT]: async (str) => this.handlePrintLine(ATTR.ATR_NONE, str),
+            [Command.RAW_PRINT_BOLD]: async (str) => this.handlePrintLine(ATTR.ATR_BOLD, str),
             // Map
             [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph) => {
                 this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph) }]);
@@ -2014,6 +2009,7 @@ class NetHackWrapper {
         this.menuItems = [];
         this.menuPrompt = "";
         this.putStr = "";
+        this.putStrWinId = 0;
         this.backupFile = "";
         this.accel = new AccelIterator();
         this.input$ = new Subject();
@@ -2192,9 +2188,14 @@ class NetHackWrapper {
     }
     async displayWindow(winid, blocking) {
         if (this.putStr !== "") {
-            this.ui.openDialog(winid, this.putStr);
-            await this.waitInput(true);
-            this.putStr = "";
+            if (this.putStrWinId === winid) {
+                this.ui.openDialog(winid, this.putStr);
+                await this.waitInput(true);
+                this.putStr = "";
+            }
+            else {
+                this.log('putStr has value but another window is displayed', winid);
+            }
         }
     }
     async clearWindow(winid) {
@@ -2242,9 +2243,20 @@ class NetHackWrapper {
             parseAndMapStatus(str, status);
             this.status$.next(status);
         }
-        else {
-            this.putStr += str + "\n";
+        else if (winid === this.global.globals.WIN_MESSAGE) {
+            this.handlePrintLine(attr, str);
         }
+        else {
+            if (this.putStrWinId !== winid) {
+                this.log('putStr value changed without displaying it', str, winid);
+                this.putStr = '';
+            }
+            this.putStr += str + "\n";
+            this.putStrWinId = winid;
+        }
+    }
+    handlePrintLine(attr, str) {
+        this.ui.printLine(str);
     }
     async statusUpdate(type, ptr) {
         // const ignored = [STATUS_FIELD.BL_FLUSH, STATUS_FIELD.BL_RESET];
