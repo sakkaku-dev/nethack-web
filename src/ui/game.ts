@@ -32,13 +32,12 @@ export class Game implements NetHackUI {
                         code = specialKey;
                     } else {
                         code = e.key.charCodeAt(0);
+
+                        // Same as in cmd.c for M() and C()
                         if (e.ctrlKey) {
-                            if (code >= 65 && code <= 90) {
-                                // A~Z
-                                code = code - 64;
-                            } else if (code >= 97 && code <= 122) {
-                                code = code - 96;
-                            }
+                            code = code & 0x1f
+                        } else if (e.altKey) {
+                            code = 0x80 | code
                         }
                     }
                     window.nethackJS.sendInput(code);
