@@ -7,24 +7,26 @@ export class Question extends Dialog {
         super(question);
         horiz(this.elem);
 
-        const choicesContainer = document.createElement('div');
-        horiz(choicesContainer);
-        choicesContainer.style.gap = '0';
-        choicesContainer.innerHTML = '[';
+        if (choices.length > 0) {
+            const choicesContainer = document.createElement('div');
+            horiz(choicesContainer);
+            choicesContainer.style.gap = '0';
+            choicesContainer.innerHTML = '[';
 
-        choices.forEach(c => {
-            const node = document.createElement('span');
-            node.innerHTML = c;
+            choices.forEach(c => {
+                const node = document.createElement('span');
+                node.innerHTML = c;
 
-            if (c === defaultChoice) {
-                node.style.fontWeight = 'bold';
-                node.style.color = 'red';
-            }
+                if (c === defaultChoice) {
+                    node.style.fontWeight = 'bold';
+                    node.style.color = 'red';
+                }
 
-            choicesContainer.appendChild(node);
-        });
+                choicesContainer.appendChild(node);
+            });
 
-        choicesContainer.innerHTML += ']';
-        this.elem.appendChild(choicesContainer);
+            choicesContainer.innerHTML += ']';
+            this.elem.appendChild(choicesContainer);
+        }
     }
 }
