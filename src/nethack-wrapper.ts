@@ -305,14 +305,23 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async yesNoQuestion(question: string, choices: string, defaultChoice: number) {
-    // Question already contains the choices
-    const m = question.split(/\s+\[([a-zA-Z]+)\]/);
+    // const m = question.split(/\s+\[([\$a-zA-Z\-]+)(\sor\s[\*\?]+)\]/);
+    const m = question.split(/\s+\[([\$a-zA-Z\s\-\*\?]+)\]/);
     if (m.length >= 2) {
       question = m[0];
       choices = m[1];
     }
 
-    this.ui.openQuestion(question, String.fromCharCode(defaultChoice), ...(choices || ''));
+    let allChoices: string | string[] = choices ?? '';
+    if (!!choices && !choices.includes('-') && !choices.includes(' or ')) {
+      allChoices = choices.split('');
+    }
+
+    if (Array.isArray(allChoices)) {
+      this.ui.openQuestion(question, String.fromCharCode(defaultChoice), ...allChoices);
+    } else {
+      this.ui.openQuestion(question, String.fromCharCode(defaultChoice), allChoices);
+    }
 
     let c = 0;
     do {
@@ -333,7 +342,7 @@ export class NetHackWrapper implements NetHackJS {
 
       // TODO: handle choice #, allows numbers
 
-    } while (choices != null && !choices.includes(String.fromCharCode(c)));
+    } while (Array.isArray(allChoices) && !allChoices.includes(String.fromCharCode(c)));
 
     this.ui.closeDialog(-1);
     return c;
