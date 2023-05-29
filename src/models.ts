@@ -7,7 +7,7 @@ export interface NetHackJS {
 export interface NetHackUI {
   openMenu: (id: number, prompt: string, count: number, ...items: Item[]) => void;
   openDialog: (id: number, msg: string) => void;
-  openQuestion: (question: string, ...choices: string[]) => void;
+  openQuestion: (question: string, defaultChoice: string, ...choices: string[]) => void;
   openGetLine: (question: string, ...autocomplete: string[]) => void;
 
   printLine: (msg: string) => void;

@@ -8,6 +8,7 @@ import { Menu } from "../components/menu";
 import { StatusLine } from "../components/status";
 import { TileSet, TileMap } from "../components/tilemap";
 import { Screen } from "./screen";
+import { Question } from "../components/question";
 
 export class GameScreen extends Screen {
     public tileset: TileSet;
@@ -60,10 +61,14 @@ export class GameScreen extends Screen {
         line.onLineEnter = (line) => {
             window.nethackJS.sendLine(line);
             this.inputHandler = undefined;
-            Dialog.removeAll(); // Usually not opened as a dialog, so close it ourself
         };
         this.inputHandler = line;
         this.elem.appendChild(line.elem);
         line.focus();
+    }
+
+    public openQuestion(question: string, choices: string[], defaultChoice: string) {
+        const dialog = new Question(question, choices, defaultChoice);
+        this.elem.appendChild(dialog.elem);
     }
 }

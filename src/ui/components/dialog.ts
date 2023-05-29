@@ -3,7 +3,7 @@ import { fullScreen, vert } from "../styles";
 export class Dialog {
     public elem: HTMLElement;
 
-    constructor(text = '') {
+    constructor(text = '', escape = true) {
         const overlay = document.createElement("div");
         overlay.style.zIndex = "1";
         overlay.classList.add("dialog-overlay");
@@ -12,7 +12,7 @@ export class Dialog {
 
         this.elem = document.createElement("pre");
         if (text !== "") {
-            this.elem.innerHTML = this.escapeHtml(text);
+            this.elem.innerHTML = escape ? this.escapeHtml(text) : text;
         }
         vert(this.elem);
 

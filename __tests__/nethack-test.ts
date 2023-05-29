@@ -6,6 +6,8 @@ import { Item, NetHackUI } from "../src/models";
 import { Status } from "../src/models";
 import { NethackUtil } from "../src/helper/nethack-util";
 import { MENU_SELECT } from "../src/generated";
+import { EMPTY_ITEM } from "../src/helper/menu-select";
+import { ENTER, ESC, SPACE } from "../src/helper/keys";
 
 describe("Nethack", () => {
   const WIN_STATUS = 1;
@@ -139,31 +141,23 @@ describe("Nethack", () => {
     await wrapper.handle(Command.MENU_END, WIN_ANY, prompt);
   };
 
-  const item: Item = {
-    identifier: 0,
-    str: "",
-    tile: 0,
-    accelerator: 0,
-    groupAcc: 0,
-    attr: 0,
-    active: false,
-  };
-
   const send = async (...chars: (string | number)[]) => {
     wrapper.sendInput(...chars);
     await wait(10);
   };
 
+  const code = (c: string) => c.charCodeAt(0);
+
   describe("Menu", () => {
     it("should pick one menu", async () => {
       const item1: Item = {
-        ...item,
+        ...EMPTY_ITEM,
         identifier: 1,
         str: "Item 1",
         accelerator: "a".charCodeAt(0),
       };
       const item2: Item = {
-        ...item1,
+        ...EMPTY_ITEM,
         str: "Item 2",
         identifier: 2,
         accelerator: "b".charCodeAt(0),
@@ -191,7 +185,7 @@ describe("Nethack", () => {
 
     it("should pick many menu", async () => {
       const item1: Item = {
-        ...item,
+        ...EMPTY_ITEM,
         identifier: 1,
         str: "Item 1",
         accelerator: "a".charCodeAt(0),
@@ -235,7 +229,7 @@ describe("Nethack", () => {
 
     it("should cancel menu", async () => {
       const item1: Item = {
-        ...item,
+        ...EMPTY_ITEM,
         identifier: 1,
         str: "Item 1",
         accelerator: "a".charCodeAt(0),
@@ -252,5 +246,69 @@ describe("Nethack", () => {
       await send(27);
       expect(util.selectItems).not.toBeCalled();
     });
+  });
+
+  describe('YN Question', () => {
+
+    it('should show question', async () => {
+      wrapper.handle(Command.YN_FUNCTION, 'Save game?', 'yn', code('n'));
+      expect(ui.openQuestion).toBeCalledWith('Save game?', 'n', 'y', 'n');
+    });
+
+    it('should get choices from question', async () => {
+      wrapper.handle(Command.YN_FUNCTION, 'Save game? [ynaq]', 'yn', code('n'))
+      expect(ui.openQuestion).toBeCalledWith('Save game?', 'n', 'y', 'n', 'a', 'q');
+    });
+
+    it('should return one of choices', async () => {
+      const p = wrapper.handle(Command.YN_FUNCTION, 'Save game?', 'yn', code('n'))
+      send('y');
+      await expect(p).resolves.toEqual(code('y'));
+    });
+
+    it('should wait until valid choices', async () => {
+      const p = wrapper.handle(Command.YN_FUNCTION, 'Save game?', 'yn', code('n'))
+      await send('a');
+      await send('i');
+      await send('y');
+      await expect(p).resolves.toEqual(code('y'));
+    });
+
+    it('should accept all choices if empty', async () => {
+      const p = wrapper.handle(Command.YN_FUNCTION, 'Save game?', null, code('n'))
+      send('H');
+      await expect(p).resolves.toEqual(code('H'));
+    });
+
+    it('should map ESC to quit', async () => {
+      const p = wrapper.handle(Command.YN_FUNCTION, 'Save game?', 'ynq', code('n'))
+      send(ESC);
+      await expect(p).resolves.toEqual(code('q'));
+    });
+
+    it('should map ESC to no', async () => {
+      const p = wrapper.handle(Command.YN_FUNCTION, 'Save game?', 'yn', code('y'))
+      send(ESC);
+      await expect(p).resolves.toEqual(code('n'));
+    });
+
+    it('should map ESC to default', async () => {
+      const p = wrapper.handle(Command.YN_FUNCTION, 'Save game?', 'ya', code('y'))
+      send(ESC);
+      await expect(p).resolves.toEqual(code('y'));
+    });
+
+    it('should map SPACE to default', async () => {
+      const p = wrapper.handle(Command.YN_FUNCTION, 'Save game?', 'ya', code('y'))
+      send(SPACE);
+      await expect(p).resolves.toEqual(code('y'));
+    });
+
+    it('should map RETURN to default', async () => {
+      const p = wrapper.handle(Command.YN_FUNCTION, 'Save game?', 'ya', code('y'))
+      send(ENTER);
+      await expect(p).resolves.toEqual(code('y'));
+    });
+
   });
 });

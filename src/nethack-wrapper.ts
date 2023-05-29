@@ -16,7 +16,7 @@ import {
   toggleMenuItems,
 } from "./helper/menu-select";
 import { listBackupFiles, loadRecords, loadSaveFiles, syncSaveFiles } from "./helper/save-files";
-import { CONTINUE_KEYS, ESC } from "./helper/keys";
+import { CONTINUE_KEYS, ENTER, ESC, SPACE } from "./helper/keys";
 import { parseAndMapStatus } from "./helper/parse-status";
 import { toInventoryItem } from "./helper/inventory";
 
@@ -301,16 +301,42 @@ export class NetHackWrapper implements NetHackJS {
     const line = await this.waitLine();
     const ptr = this.global.helpers.getPointerValue("nethack.getLine", searchPointer, Type.POINTER);
     this.global.helpers.setPointerValue("nethack.getLine", ptr, Type.STRING, line);
+    this.ui.closeDialog(-1);
   }
 
-  private async yesNoQuestion(question: string, choices: string[]) {
+  private async yesNoQuestion(question: string, choices: string, defaultChoice: number) {
     // Question already contains the choices
-    if (/\[[a-zA-Z]+\]/.test(question)) {
-      choices = [];
+    const m = question.split(/\s+\[([a-zA-Z]+)\]/);
+    if (m.length >= 2) {
+      question = m[0];
+      choices = m[1];
     }
 
-    this.ui.openQuestion(question, ...choices);
-    return this.waitInput();
+    this.ui.openQuestion(question, String.fromCharCode(defaultChoice), ...(choices || ''));
+
+    let c = 0;
+    do {
+      c = await this.waitInput();
+
+      // Default behaviour described in window.doc
+      if (c === ESC) {
+        if (choices.includes('q')) {
+          c = 'q'.charCodeAt(0);
+        } else if (choices.includes('n')) {
+          c = 'n'.charCodeAt(0);
+        } else {
+          c = defaultChoice;
+        }
+      } else if ([SPACE, ENTER].includes(c)) {
+        c = defaultChoice;
+      }
+
+      // TODO: handle choice #, allows numbers
+
+    } while (choices != null && !choices.includes(String.fromCharCode(c)));
+
+    this.ui.closeDialog(-1);
+    return c;
   }
 
   private async createWindow(type: WIN_TYPE) {
