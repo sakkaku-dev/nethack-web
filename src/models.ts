@@ -103,9 +103,7 @@ interface StatusAll {
   condition?: string;
 
   time?: number;
-
-  // TODO: ??
-  hd: any;
+  hd?: number;
 }
 
 export type Status = Partial<StatusAll>;

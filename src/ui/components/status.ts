@@ -74,8 +74,12 @@ export class StatusLine {
     lastRow.appendChild(this.createIconText(this.armorIcon, `${s.armor ?? '-'}`));
 
     const lvl = document.createElement('div');
-    lvl.innerHTML = `LV ${s.expLvl}${s.exp != null ? '/' + s.exp : ''}`;
-    lvl.title = s.title || 'Untitled';
+    if (s.expLvl) {
+      lvl.innerHTML = `LV ${s.expLvl}${s.exp != null ? '/' + s.exp : ''}`;
+      lvl.title = s.title || 'Untitled';
+    } else if (s.hd) {
+      lvl.innerHTML = `HD: ${s.hd}`;
+    }
     lastRow.appendChild(lvl);
 
     const other = document.createElement('div');

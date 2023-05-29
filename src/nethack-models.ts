@@ -72,7 +72,7 @@ export const statusMap: Record<STATUS_FIELD, (s: Status, v?: string) => void> = 
   // [STATUS_FIELD.BL_CHARACTERISTICS]: () => {},
   // [STATUS_FIELD.BL_RESET]: () => {},
   // [STATUS_FIELD.BL_FLUSH]: () => {},
-  [STATUS_FIELD.BL_HD]: () => {},
+  [STATUS_FIELD.BL_HD]: (s, v) => s.hd = parseNumberOrUndefined(v),
   [STATUS_FIELD.BL_TIME]: (s, v) => {
     s.time = parseNumberOrUndefined(v);
   },

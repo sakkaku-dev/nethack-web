@@ -49,6 +49,9 @@ export function parseAndMapStatus(str: string, status: Status) {
 			statusMap[STATUS_FIELD.BL_XP](status, undefined);
 		}
 
+		m = str.match(/HD:(\d+)/)
+		statusMap[STATUS_FIELD.BL_HD](status, getMatch(m, 1));
+
 		m = str.match(/T:(\d+)/);
 		statusMap[STATUS_FIELD.BL_TIME](status, getMatch(m, 1));
 
