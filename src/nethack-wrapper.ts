@@ -289,6 +289,7 @@ export class NetHackWrapper implements NetHackJS {
     const line = await this.waitLine();
     const idx = commands.findIndex((x) => x === line);
 
+    this.ui.closeDialog(-1);
     if (idx >= 0 && idx < commands.length) {
       return idx;
     }
@@ -313,7 +314,7 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     let allChoices: string | string[] = choices ?? '';
-    if (!!choices && !choices.includes('-') && !choices.includes(' or ')) {
+    if (!!choices && !choices.includes('-') && !choices.includes(' or ') && !choices.includes('*')) {
       allChoices = choices.split('');
     }
 
@@ -336,8 +337,10 @@ export class NetHackWrapper implements NetHackJS {
         } else {
           c = defaultChoice;
         }
+        break;
       } else if ([SPACE, ENTER].includes(c)) {
         c = defaultChoice;
+        break;
       }
 
       // TODO: handle choice #, allows numbers

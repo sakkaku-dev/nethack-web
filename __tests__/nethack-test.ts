@@ -265,6 +265,12 @@ describe("Nethack", () => {
       expect(ui.openQuestion).toBeCalledWith('Save game?', 'n', 'a-f or ?*');
     });
 
+    it('should allow all choies with only asterix', async () => {
+      const p = wrapper.handle(Command.YN_FUNCTION, 'Save game? [*]', '', code('n'))
+      send('I');
+      await expect(p).resolves.toEqual(code('I'));
+    });
+
     it('should return one of choices', async () => {
       const p = wrapper.handle(Command.YN_FUNCTION, 'Save game?', 'yn', code('n'))
       send('y');
@@ -277,6 +283,12 @@ describe("Nethack", () => {
       await send('i');
       await send('y');
       await expect(p).resolves.toEqual(code('y'));
+    });
+
+    it('should accept ESC as valid choice', async () => {
+      const p = wrapper.handle(Command.YN_FUNCTION, 'Save game?', '', code('n'))
+      await send(ESC);
+      await expect(p).resolves.toEqual(code('n'));
     });
 
     it('should accept all choices if null', async () => {
