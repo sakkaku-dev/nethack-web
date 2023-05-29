@@ -970,10 +970,10 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..bc99ad0a8
+index 000000000..afc2be9ab
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,1115 @@
+@@ -0,0 +1,1128 @@
 +#include "hack.h"
 +#include "dlb.h"
 +#include "func_tab.h"
@@ -1027,7 +1027,6 @@ index 000000000..bc99ad0a8
 +}
 +
 +VDECLCB(shim_askname,(void), "v")
-+VDECLCB(shim_get_nh_event,(void), "v")
 +VDECLCB(shim_exit_nhwindows,(const char *str), "vs", P2V str)
 +VDECLCB(shim_suspend_nhwindows,(const char *str), "vs", P2V str)
 +VDECLCB(shim_resume_nhwindows,(void), "v")
@@ -1035,7 +1034,16 @@ index 000000000..bc99ad0a8
 +VDECLCB(shim_clear_nhwindow,(winid window), "vi", A2P window)
 +VDECLCB(shim_display_nhwindow,(winid window, BOOLEAN_P blocking), "vii", A2P window, A2P blocking)
 +VDECLCB(shim_destroy_nhwindow,(winid window), "vi", A2P window)
-+VDECLCB(shim_curs,(winid a, int x, int y), "viii", A2P a, A2P x, A2P y)
++
++void shim_get_nh_event() {} // Should not be needed
++
++// VDECLCB(shim_curs,(winid a, int x, int y), "viii", A2P a, A2P x, A2P y)
++// VDECLCB(shim_cliparound,(int x, int y), "vii", A2P x, A2P y)
++
++void shim_curs(winid w, int x, int y);
++void shim_cliparound(int x, int y);
++
++
 +void shim_putstr(winid w, int attr, const char *str);
 +
 +// VDECLCB(shim_display_file,(const char *name, BOOLEAN_P complain), "vsi", P2V name, A2P complain)
@@ -1077,7 +1085,6 @@ index 000000000..bc99ad0a8
 +DECLCB(char, shim_message_menu,(CHAR_P let, int how, const char *mesg), "ciis", A2P let, A2P how, P2V mesg)
 +VDECLCB(shim_mark_synch,(void), "v")
 +VDECLCB(shim_wait_synch,(void), "v")
-+VDECLCB(shim_cliparound,(int x, int y), "vii", A2P x, A2P y)
 +VDECLCB(shim_update_positionbar,(char *posbar), "vp", P2V posbar)
 +
 +void shim_print_glyph(winid w, int x, int y, int glyph, int bkglyph);
@@ -2012,6 +2019,12 @@ index 000000000..bc99ad0a8
 +})
 +EM_JS(void, shim_add_menu, (winid w, int glyph, const ANY_P *identifier, CHAR_P ch, CHAR_P gch, int attr, const char *str, BOOLEAN_P preselected), {
 +    globalThis.nethackJS.handle('shim_add_menu', w, glyph, getValue(identifier, "*"), ch, gch, attr, UTF8ToString(str), preselected);
++});
++EM_JS(void, shim_curs, (winid w, int x, int y), {
++    globalThis.nethackJS.handle('shim_curs', w, x, y);
++});
++EM_JS(void, shim_cliparound, (int x, int y), {
++    globalThis.nethackJS.handle('shim_cliparound', x, y);
 +});
 +
 +/* convert the C callback to a JavaScript callback */
