@@ -9,6 +9,7 @@ import { StatusLine } from "../components/status";
 import { TileSet, TileMap } from "../components/tilemap";
 import { Screen } from "./screen";
 import { Question } from "../components/question";
+import { Gameover } from "../components/gameover";
 
 export class GameScreen extends Screen {
     public tileset: TileSet;
@@ -70,5 +71,11 @@ export class GameScreen extends Screen {
     public openQuestion(question: string, choices: string[], defaultChoice: string) {
         const dialog = new Question(question, choices, defaultChoice);
         this.elem.appendChild(dialog.elem);
+    }
+
+    public openGameover() {
+        const gameover = new Gameover();
+        this.inputHandler = gameover;
+        this.elem.appendChild(gameover.elem);
     }
 }

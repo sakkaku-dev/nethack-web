@@ -2,6 +2,7 @@ import { StartScreen } from "./screens/start-screen";
 import { GameScreen } from "./screens/game-screen";
 import { Screen } from "./screens/screen";
 import { GameState, InventoryItem, Item, NetHackUI, Status, Tile } from "../models";
+import { Gameover } from "./components/gameover";
 
 const SPECIAL_KEY_MAP: Record<string, number> = {
     Enter: 13,
@@ -65,7 +66,7 @@ export class Game implements NetHackUI {
     updateInventory = (...items: InventoryItem[]) => this.game.inventory.updateItems(items);
     toggleInventory = () => this.game.inventory.toggle();
 
-    updateState = (state: GameState) => {
+    updateState = async (state: GameState) => {
         switch (state) {
             case GameState.START:
                 this.changeScreen(this.start);
@@ -74,7 +75,7 @@ export class Game implements NetHackUI {
                 this.changeScreen(this.game);
                 break;
             case GameState.GAMEOVER:
-                window.location.reload();
+                this.game.openGameover();
                 break;
         }
     };
