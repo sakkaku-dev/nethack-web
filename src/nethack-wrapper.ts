@@ -442,7 +442,7 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private handlePrintLine(attr: ATTR, str: string) {
-    if (str.includes('You died')) {
+    if (str.match(/You die/)) {
       this.gameState$.next(GameState.DIED);
     }
     this.ui.printLine(str);
