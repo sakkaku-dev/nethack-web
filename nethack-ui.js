@@ -107,7 +107,7 @@ class Menu {
 }
 
 class Dialog {
-    constructor(text = '') {
+    constructor(text = '', escape = true) {
         const overlay = document.createElement("div");
         overlay.style.zIndex = "1";
         overlay.classList.add("dialog-overlay");
@@ -115,7 +115,7 @@ class Dialog {
         document.body.appendChild(overlay);
         this.elem = document.createElement("pre");
         if (text !== "") {
-            this.elem.innerHTML = this.escapeHtml(text);
+            this.elem.innerHTML = escape ? this.escapeHtml(text) : text;
         }
         vert(this.elem);
         this.elem.classList.add("dialog");
@@ -1199,10 +1199,26 @@ class Console {
     }
 }
 
+function Icon(name) {
+    const icon = document.createElement('i');
+    icon.classList.add(`gg-${name}`);
+    return icon;
+}
+function IconButton(name) {
+    const container = document.createElement('div');
+    center(container);
+    container.style.justifyContent = 'end';
+    container.appendChild(Icon(name));
+    container.style.height = '16px';
+    container.style.cursor = 'pointer';
+    return container;
+}
+
 class Inventory {
     constructor(root, tileset) {
         this.tileset = tileset;
         this.expanded = false;
+        this.items = [];
         this.elem = document.createElement("div");
         this.elem.id = "inventory";
         vert(this.elem);
@@ -1215,8 +1231,19 @@ class Inventory {
         this.expanded = !this.expanded;
         // Update not necessary, the toggle key will automatically request a reload of the inventory
     }
+    open() {
+        this.expanded = true;
+        this.updateItems(this.items); // This is called manually, so we need to update it
+    }
     updateItems(items) {
+        this.items = items;
         this.clear();
+        const container = IconButton('arrows-h-alt');
+        container.onclick = () => {
+            this.toggle();
+            this.updateItems(this.items);
+        };
+        this.elem.appendChild(container);
         this.createInventoryRows(items);
     }
     createInventoryRows(items) {
@@ -1320,12 +1347,6 @@ class Line extends Dialog {
     }
 }
 
-function Icon(name) {
-    const icon = document.createElement('i');
-    icon.classList.add(`gg-${name}`);
-    return icon;
-}
-
 function Slider(value, maxValue, fg, bg) {
     const slider = document.createElement('div');
     horiz(slider);
@@ -1390,15 +1411,11 @@ class StatusLine {
     }
     toggleExpandButton() {
         const icon = this.expand ? 'minimize-alt' : 'arrows-expand-right';
-        const container = document.createElement('div');
-        center(container);
-        container.appendChild(Icon(icon));
-        container.style.height = '16px';
+        const container = IconButton(icon);
         container.onclick = () => {
             this.expand = !this.expand;
             this.update(this.status || {});
         };
-        container.style.cursor = 'pointer';
         return container;
     }
     update(s) {
@@ -1416,24 +1433,27 @@ class StatusLine {
         const lastRow = this.createRow();
         lastRow.appendChild(this.createIconText(this.armorIcon, `${s.armor ?? '-'}`));
         const lvl = document.createElement('div');
-        lvl.innerHTML = `LV ${s.expLvl}${s.exp != null ? '/' + s.exp : ''}`;
-        lvl.title = s.title || 'Untitled';
+        if (s.expLvl) {
+            lvl.innerHTML = `LV ${s.expLvl}${s.exp != null ? '/' + s.exp : ''}`;
+            lvl.title = s.title || 'Untitled';
+        }
+        else if (s.hd) {
+            lvl.innerHTML = `HD: ${s.hd}`;
+        }
         lastRow.appendChild(lvl);
         const other = document.createElement('div');
         other.innerHTML = `${s.align || "No Alignment"} Dlvl ${s.dungeonLvl ?? "-"}`;
         other.style.flexGrow = '1';
         lastRow.appendChild(other);
         const money = document.createElement('div');
-        money.innerHTML = `$: ${s.gold ?? "-"}`;
+        if (s.time != null)
+            money.innerHTML += `T: ${s.time} `;
+        money.innerHTML += `$: ${s.gold ?? "-"}`;
         lastRow.appendChild(money);
         if (this.expand) {
             const stats = this.createRow();
             stats.innerHTML += `\nStr: ${s.str ?? "-"} Dex: ${s.dex ?? "-"} Con: ${s.con ?? "-"} Int: ${s.int ?? "-"} Wis: ${s.wis ?? "-"} Cha: ${s.cha ?? "-"}`;
             stats.style.justifyContent = 'end';
-            const extras = this.createRow();
-            extras.style.justifyContent = 'end';
-            if (s.time != null)
-                extras.innerHTML += `T: ${s.time}`;
         }
         if (s.hp && s.hpMax) {
             const hpPercent = s.hp / s.hpMax;
@@ -1481,7 +1501,8 @@ var GameState;
 (function (GameState) {
     GameState[GameState["START"] = 0] = "START";
     GameState[GameState["RUNNING"] = 1] = "RUNNING";
-    GameState[GameState["GAMEOVER"] = 2] = "GAMEOVER";
+    GameState[GameState["DIED"] = 2] = "DIED";
+    GameState[GameState["GAMEOVER"] = 3] = "GAMEOVER";
 })(GameState || (GameState = {}));
 function add(v1, v2) {
     return { x: v1.x + v2.x, y: v1.y + v2.y };
@@ -1619,6 +1640,39 @@ class TileMap {
     }
 }
 
+class Question extends Dialog {
+    constructor(question, choices, defaultChoice) {
+        super(question);
+        horiz(this.elem);
+        if (choices.length > 0) {
+            const choicesContainer = document.createElement('div');
+            horiz(choicesContainer);
+            choicesContainer.style.gap = '0';
+            choicesContainer.innerHTML = '[';
+            choices.forEach(c => {
+                const node = document.createElement('span');
+                node.innerHTML = c;
+                if (c === defaultChoice) {
+                    node.style.fontWeight = 'bold';
+                    node.style.color = 'red';
+                }
+                choicesContainer.appendChild(node);
+            });
+            choicesContainer.innerHTML += ']';
+            this.elem.appendChild(choicesContainer);
+        }
+    }
+}
+
+class Gameover extends Dialog {
+    constructor() {
+        super('<div><strong>Gameover</strong></div> Press any key to go back to the menu.', false);
+    }
+    onInput(e) {
+        window.location.reload();
+    }
+}
+
 class GameScreen extends Screen {
     constructor() {
         super();
@@ -1654,11 +1708,20 @@ class GameScreen extends Screen {
         line.onLineEnter = (line) => {
             window.nethackJS.sendLine(line);
             this.inputHandler = undefined;
-            Dialog.removeAll(); // Usually not opened as a dialog, so close it ourself
         };
         this.inputHandler = line;
         this.elem.appendChild(line.elem);
         line.focus();
+    }
+    openQuestion(question, choices, defaultChoice) {
+        // this.console.appendLine(`${question} ${choices.map(c => c === defaultChoice ? `<strong style="color: red">${c}</strong>` : c)}`);
+        const dialog = new Question(question, choices, defaultChoice);
+        this.elem.appendChild(dialog.elem);
+    }
+    openGameover() {
+        const gameover = new Gameover();
+        this.inputHandler = gameover;
+        this.elem.appendChild(gameover.elem);
     }
 }
 
@@ -1669,7 +1732,7 @@ const SPECIAL_KEY_MAP = {
 class Game {
     constructor() {
         this.openMenu = (winid, prompt, count, ...items) => this.current?.onMenu(prompt, count, items);
-        this.openQuestion = (question, ...choices) => this.game.console.appendLine(`\n${question} ${choices}`);
+        this.openQuestion = (question, defaultChoice, ...choices) => this.game.openQuestion(question, choices, defaultChoice);
         this.openGetLine = (question, ...autocomplete) => this.game.openGetLine(question, autocomplete);
         this.openDialog = (winid, text) => this.current?.onDialog(text);
         this.closeDialog = (winid) => this.current?.onCloseDialog();
@@ -1681,7 +1744,7 @@ class Game {
         this.updateStatus = (s) => this.game.status.update(s);
         this.updateInventory = (...items) => this.game.inventory.updateItems(items);
         this.toggleInventory = () => this.game.inventory.toggle();
-        this.updateState = (state) => {
+        this.updateState = async (state) => {
             switch (state) {
                 case GameState.START:
                     this.changeScreen(this.start);
@@ -1689,8 +1752,11 @@ class Game {
                 case GameState.RUNNING:
                     this.changeScreen(this.game);
                     break;
+                case GameState.DIED:
+                    this.game.inventory.open();
+                    break;
                 case GameState.GAMEOVER:
-                    window.location.reload();
+                    this.game.openGameover();
                     break;
             }
         };
