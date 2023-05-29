@@ -74,6 +74,9 @@ export class Game implements NetHackUI {
             case GameState.RUNNING:
                 this.changeScreen(this.game);
                 break;
+            case GameState.DIED:
+                this.game.inventory.open();
+                break;
             case GameState.GAMEOVER:
                 this.game.openGameover();
                 break;

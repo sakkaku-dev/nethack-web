@@ -1,10 +1,12 @@
-import { InventoryItem } from "../../models";
+import { InventoryItem, Item } from "../../models";
 import { horiz, vert } from "../styles";
+import { Icon, IconButton } from "./icon";
 import { TileSet } from "./tilemap";
 
 export class Inventory {
   private elem: HTMLElement;
   private expanded = false;
+  private items: InventoryItem[] = [];
 
   constructor(root: HTMLElement, private tileset: TileSet) {
     this.elem = document.createElement("div");
@@ -22,8 +24,22 @@ export class Inventory {
     // Update not necessary, the toggle key will automatically request a reload of the inventory
   }
 
+  open() {
+    this.expanded = true;
+    this.updateItems(this.items); // This is called manually, so we need to update it
+  }
+
   updateItems(items: InventoryItem[]) {
+    this.items = items;
     this.clear();
+
+    const container = IconButton('arrows-h-alt');
+    container.onclick = () => {
+      this.toggle();
+      this.updateItems(this.items);
+    }
+    this.elem.appendChild(container);
+
     this.createInventoryRows(items);
   }
 

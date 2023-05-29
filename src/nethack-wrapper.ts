@@ -430,6 +430,9 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private handlePrintLine(attr: ATTR, str: string) {
+    if (str.includes('You died')) {
+      this.gameState$.next(GameState.DIED);
+    }
     this.ui.printLine(str);
   }
 

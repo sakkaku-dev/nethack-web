@@ -1,6 +1,6 @@
 import { Status } from "../../models";
 import { center, fullScreen, horiz } from "../styles";
-import { Icon } from "./icon";
+import { Icon, IconButton } from "./icon";
 import { Slider } from "./slider";
 import { Sprite } from "./sprite";
 
@@ -46,16 +46,11 @@ export class StatusLine {
 
   private toggleExpandButton() {
     const icon = this.expand ? 'minimize-alt' : 'arrows-expand-right';
-    const container = document.createElement('div');
-    center(container);
-    container.appendChild(Icon(icon));
-    container.style.height = '16px';
-
+    const container = IconButton(icon);
     container.onclick = () => {
       this.expand = !this.expand;
       this.update(this.status || {});
     }
-    container.style.cursor = 'pointer';
     return container;
   }
 
@@ -89,18 +84,16 @@ export class StatusLine {
     lastRow.appendChild(other)
 
     const money = document.createElement('div');
-    money.innerHTML = `$: ${s.gold ?? "-"}`;
+    if (s.time != null) money.innerHTML += `T: ${s.time} `;
+
+    money.innerHTML += `$: ${s.gold ?? "-"}`;
+
     lastRow.appendChild(money)
 
     if (this.expand) {
       const stats = this.createRow();
       stats.innerHTML += `\nStr: ${s.str ?? "-"} Dex: ${s.dex ?? "-"} Con: ${s.con ?? "-"} Int: ${s.int ?? "-"} Wis: ${s.wis ?? "-"} Cha: ${s.cha ?? "-"}`;
       stats.style.justifyContent = 'end';
-
-      const extras = this.createRow();
-      extras.style.justifyContent = 'end';
-
-      if (s.time != null) extras.innerHTML += `T: ${s.time}`;
     }
 
     if (s.hp && s.hpMax) {
