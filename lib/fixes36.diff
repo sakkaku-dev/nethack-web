@@ -3,9 +3,9 @@ index b606b5db1..579058bf6 100644
 --- a/include/config.h
 +++ b/include/config.h
 @@ -38,6 +38,11 @@
- 
+
  #include "config1.h" /* should auto-detect MSDOS, MAC, AMIGA, and WIN32 */
- 
+
 +#ifdef WEB_GRAPHICS
 +#define DEFAULT_WINDOW_SYS "web"
 +#define GRAPHIC_TOMBSTONE
@@ -17,7 +17,7 @@ index b606b5db1..579058bf6 100644
 @@ -261,7 +266,7 @@
   *
   */
- 
+
 -#if defined(UNIX) && !defined(ZLIB_COMP) && !defined(COMPRESS)
 +#if defined(UNIX) && !defined(ZLIB_COMP) && !defined(COMPRESS) && !defined(WEB_GRAPHICS)
  /* path and file name extension for compression program */
@@ -30,7 +30,7 @@ index a2b70d258..51a1c0632 100644
 @@ -29,7 +29,7 @@
   * Files expected to exist in the playground directory.
   */
- 
+
 -#define RECORD "record"         /* file containing list of topscorers */
 +#define RECORD "save/record"         /* file containing list of topscorers */
  #define HELP "help"             /* file containing command descriptions */
@@ -38,7 +38,7 @@ index a2b70d258..51a1c0632 100644
  #define KEYHELP "keyhelp"       /* explanatory text for 'whatdoes' command */
 @@ -243,7 +243,7 @@ typedef uchar nhsym;
  #endif
- 
+
  #if defined(X11_GRAPHICS) || defined(QT_GRAPHICS) || defined(GNOME_GRAPHICS) \
 -    || defined(WIN32)
 +    || defined(WIN32) || defined(WEB_GRAPHICS)
@@ -52,7 +52,7 @@ index c126d6839..f6ae00668 100644
 @@ -99,6 +99,12 @@
   *              Ralf Brown, 7/26/89 (from v2.3 hack of 10/10/88)
   */
- 
+
 +#ifdef WEB_GRAPHICS
 +#define NO_FILE_LINKS
 +#define LOCKDIR HACKDIR
@@ -61,7 +61,7 @@ index c126d6839..f6ae00668 100644
 +
  /* #define NO_FILE_LINKS */                       /* if no hard links */
  /* #define LOCKDIR "/usr/games/lib/nethackdir" */ /* where to put locks */
- 
+
 diff --git a/src/end.c b/src/end.c
 index 4df88cecb..12a073bab 100644
 --- a/src/end.c
@@ -69,7 +69,7 @@ index 4df88cecb..12a073bab 100644
 @@ -65,7 +65,7 @@ STATIC_DCL void NDECL(dump_plines);
  STATIC_DCL void FDECL(dump_everything, (int, time_t));
  STATIC_DCL int NDECL(num_extinct);
- 
+
 -#if defined(__BEOS__) || defined(MICRO) || defined(OS2)
 +#if defined(__BEOS__) || defined(MICRO) || defined(OS2) || defined(WEB_GRAPHICS)
  extern void FDECL(nethack_exit, (int));
@@ -80,16 +80,16 @@ index 60d9aa56a..0a18744b0 100644
 --- a/src/files.c
 +++ b/src/files.c
 @@ -5,6 +5,10 @@
- 
+
  #define NEED_VARARGS
- 
+
 +#ifdef WEB_GRAPHICS
 +#include <emscripten.h>
 +#endif
 +
  #include "hack.h"
  #include "dlb.h"
- 
+
 @@ -1058,6 +1062,10 @@ int
  delete_savefile()
  {
@@ -100,7 +100,7 @@ index 60d9aa56a..0a18744b0 100644
 +#endif
      return 0; /* for restore_saved_game() (ex-xxxmain.c) test */
  }
- 
+
 diff --git a/src/save.c b/src/save.c
 index e0af4b8d2..27d056c46 100644
 --- a/src/save.c
@@ -108,7 +108,7 @@ index e0af4b8d2..27d056c46 100644
 @@ -6,6 +6,10 @@
  #include "hack.h"
  #include "lev.h"
- 
+
 +#ifdef WEB_GRAPHICS
 +#include <emscripten.h>
 +#endif
@@ -135,7 +135,7 @@ index 94ac40f3e..9b00748e2 100644
 +++ b/src/windows.c
 @@ -3,6 +3,9 @@
  /* NetHack may be freely redistributed.  See license for details. */
- 
+
  #include "hack.h"
 +#ifdef WEB_GRAPHICS
 +extern struct window_procs web_procs;
@@ -158,72 +158,72 @@ index 00f604396..085edef11 100644
 --- a/sys/unix/Makefile.dat
 +++ b/sys/unix/Makefile.dat
 @@ -13,14 +13,14 @@ VARDAT = bogusmon data engrave epitaph rumors quest.dat oracles options
- 
+
  all:	$(VARDAT) spec_levs quest_levs dungeon
- 
+
 -../util/makedefs:
 -	(cd ../util ; $(MAKE) makedefs)
 +../util/makedefs.js:
 +	(cd ../util ; $(MAKE) makedefs.js)
- 
+
 -../util/dgn_comp:
 -	(cd ../util ; $(MAKE) dgn_comp)
 +../util/dgn_comp.js:
 +	(cd ../util ; $(MAKE) dgn_comp.js)
- 
+
 -../util/lev_comp:
 -	(cd ../util ; $(MAKE) lev_comp)
 +../util/lev_comp.js:
 +	(cd ../util ; $(MAKE) lev_comp.js)
- 
+
  ../util/tile2x11:
  	(cd ../util ; $(MAKE) tile2x11)
 @@ -100,70 +100,70 @@ GEM_RSC.RSC:
  	$(UUDECODE) ../win/gem/gem_rsc.uu
- 
- 
+
+
 -data:	data.base ../util/makedefs
 -	../util/makedefs -d
 +data:	data.base ../util/makedefs.js
 +	node ../util/makedefs.js -d
- 
+
 -rumors:	rumors.tru rumors.fal ../util/makedefs
 -	../util/makedefs -r
 +rumors:	rumors.tru rumors.fal ../util/makedefs.js
 +	node ../util/makedefs.js -r
- 
+
 -quest.dat:	quest.txt ../util/makedefs
 -	../util/makedefs -q
 +quest.dat:	quest.txt ../util/makedefs.js
 +	node ../util/makedefs.js -q
- 
+
 -oracles:	oracles.txt ../util/makedefs
 -	../util/makedefs -h
 +oracles:	oracles.txt ../util/makedefs.js
 +	node ../util/makedefs.js -h
- 
+
 -engrave:	engrave.txt ../util/makedefs
 -	../util/makedefs -s
 +engrave:	engrave.txt ../util/makedefs.js
 +	node ../util/makedefs.js -s
- 
+
 -epitaph:	epitaph.txt ../util/makedefs
 -	../util/makedefs -s
 +epitaph:	epitaph.txt ../util/makedefs.js
 +	node ../util/makedefs.js -s
- 
+
 -bogusmon:	bogusmon.txt ../util/makedefs
 -	../util/makedefs -s
 +bogusmon:	bogusmon.txt ../util/makedefs.js
 +	node ../util/makedefs.js -s
- 
+
  # note: 'options' should have already been made when include/date.h was created
 -options:	../util/makedefs
 -	../util/makedefs -v
 +options:	../util/makedefs.js
 +	node ../util/makedefs.js -v
- 
- 
+
+
 -spec_levs: ../util/lev_comp \
 +spec_levs: ../util/lev_comp.js \
  	bigroom.des castle.des endgame.des gehennom.des knox.des medusa.des \
@@ -251,7 +251,7 @@ index 00f604396..085edef11 100644
 +	node ../util/lev_comp.js tower.des
 +	node ../util/lev_comp.js yendor.des
  	touch spec_levs
- 
+
 -quest_levs: ../util/lev_comp \
 +quest_levs: ../util/lev_comp.js \
  	Arch.des Barb.des Caveman.des Healer.des Knight.des Monk.des \
@@ -284,14 +284,14 @@ index 00f604396..085edef11 100644
 +	node ../util/lev_comp.js Valkyrie.des
 +	node ../util/lev_comp.js Wizard.des
  	touch quest_levs
- 
+
 -dungeon: dungeon.def ../util/makedefs ../util/dgn_comp
 -	../util/makedefs -e
 -	../util/dgn_comp dungeon.pdf
 +dungeon: dungeon.def ../util/makedefs.js ../util/dgn_comp.js
 +	node ../util/makedefs.js -e
 +	node ../util/dgn_comp.js dungeon.pdf
- 
+
  # gitinfo.txt is optionally made by src/Makefile when creating date.h
  clean:
 diff --git a/sys/unix/Makefile.src b/sys/unix/Makefile.src
@@ -301,16 +301,16 @@ index eeb30b9a0..c4435facb 100644
 @@ -429,7 +429,7 @@ AT_V1 := @
  AT = $(AT_V$(QUIETCC))
  # Verbosity, end
- 
+
 -MAKEDEFS = ../util/makedefs
 +MAKEDEFS = ../util/makedefs.js
- 
+
  # timestamp files to reduce `make' overhead and shorten .o dependency lists
  CONFIG_H = ../src/config.h-t
 @@ -595,6 +595,10 @@ objects.o:
  	$(CC) $(CFLAGS) -c objects.c
  	@rm -f $(MAKEDEFS)
- 
+
 +web.o: ../win/web/web.c $(HACK_H) ../include/dlb.h \
 +		../include/patchlevel.h
 +	$(CC) $(CFLAGS) -c ../win/web/web.c
@@ -324,8 +324,8 @@ index eeb30b9a0..c4435facb 100644
  	-$(SHELL) ../sys/unix/gitinfo.sh $(GITINFO) #before 'makedefs -v'
 -	../util/makedefs -v
 +	node ../util/makedefs.js -v
- 
- 
+
+
  lint:
 diff --git a/sys/unix/Makefile.top b/sys/unix/Makefile.top
 index ad7607cd9..c9124e17f 100644
@@ -333,18 +333,18 @@ index ad7607cd9..c9124e17f 100644
 +++ b/sys/unix/Makefile.top
 @@ -184,11 +184,11 @@ title.img:
  	( cd dat ; $(MAKE) title.img )
- 
+
  check-dlb: options
 -	@if egrep -s librarian dat/options ; then $(MAKE) dlb ; else true ; fi
 +	@if egrep -s librarian dat/options ; then $(MAKE) dlb.js ; else true ; fi
- 
+
 -dlb:
 -	( cd util ; $(MAKE) dlb )
 -	( cd dat ; LC_ALL=C ; ../util/dlb cf nhdat $(DATDLB) )
 +dlb.js:
 +	( cd util ; $(MAKE) dlb.js )
 +	( cd dat ; LC_ALL=C ; node ../util/dlb.js cf nhdat $(DATDLB) )
- 
+
  # recover can be used when INSURANCE is defined in include/config.h
  # and the checkpoint option is true
 diff --git a/sys/unix/Makefile.utl b/sys/unix/Makefile.utl
@@ -354,27 +354,27 @@ index 78e9d725f..b94b1d7f9 100644
 @@ -102,6 +102,8 @@ NHSROOT=..
  # we avoid that by forcing it empty rather than by overriding default rules
  CPPFLAGS =
- 
+
 +UTIL_CFLAGS = --pre-js ../win/web/mount_nodefs.js
 +
  LIBS =
- 
+
  # If you are cross-compiling, you must use this:
 @@ -225,8 +227,8 @@ YACCDIST =
- 
+
  #	dependencies for makedefs
  #
 -makedefs:	$(MAKEOBJS) mdgrep.h
 -	$(CC) $(LFLAGS) -o makedefs $(MAKEOBJS)
 +makedefs.js:	$(MAKEOBJS) mdgrep.h
 +	$(CC) $(LFLAGS) $(UTIL_CFLAGS) -o makedefs.js $(MAKEOBJS)
- 
+
  makedefs.o: makedefs.c $(CONFIG_H) ../include/permonst.h \
  		../include/objclass.h ../include/monsym.h \
 @@ -238,12 +240,12 @@ makedefs.o: makedefs.c $(CONFIG_H) ../include/permonst.h \
  mdgreph: mdgrep.pl
  	perl mdgrep.pl
- 
+
 -../include/onames.h: makedefs
 -	./makedefs -o
 -../include/pm.h: makedefs
@@ -389,47 +389,47 @@ index 78e9d725f..b94b1d7f9 100644
 +	node ./makedefs.js -z
  # makedefs -z makes both vis_tab.h and vis_tab.c, but writes the .h first
  ../src/vis_tab.c: ../include/vis_tab.h
- 
+
 @@ -262,8 +264,8 @@ panic.o:     panic.c $(CONFIG_H)
- 
+
  #	dependencies for lev_comp
  #
 -lev_comp:  $(SPLEVOBJS)
 -	$(CC) $(LFLAGS) -o lev_comp $(SPLEVOBJS) $(LIBS)
 +lev_comp.js:  $(SPLEVOBJS)
 +	$(CC) $(LFLAGS) $(UTIL_CFLAGS) -o lev_comp.js $(SPLEVOBJS) $(LIBS)
- 
+
  lev_yacc.o:  lev_yacc.c $(HACK_H) ../include/sp_lev.h
  lev_main.o:  lev_main.c $(HACK_H) ../include/sp_lev.h ../include/tcap.h \
 @@ -308,8 +310,8 @@ lintlev:
- 
+
  #	dependencies for dgn_comp
  #
 -dgn_comp:  $(DGNCOMPOBJS)
 -	$(CC) $(LFLAGS) -o dgn_comp $(DGNCOMPOBJS) $(LIBS)
 +dgn_comp.js:  $(DGNCOMPOBJS)
 +	$(CC) $(LFLAGS) $(UTIL_CFLAGS) -o dgn_comp.js $(DGNCOMPOBJS) $(LIBS)
- 
+
  dgn_yacc.o:  dgn_yacc.c $(CONFIG_H) ../include/dgn_file.h ../include/date.h
  dgn_main.o:  dgn_main.c $(CONFIG_H) ../include/dlb.h
 @@ -351,8 +353,8 @@ recover.o: recover.c $(CONFIG_H) ../include/date.h
- 
+
  #	dependencies for dlb
  #
 -dlb:	$(DLBOBJS)
 -	$(CC) $(LFLAGS) -o dlb $(DLBOBJS) $(LIBS)
 +dlb.js:	$(DLBOBJS)
 +	$(CC) $(LFLAGS) $(UTIL_CFLAGS) -o dlb.js $(DLBOBJS) $(LIBS)
- 
+
  dlb_main.o: dlb_main.c $(CONFIG_H) ../include/dlb.h ../include/date.h
  	$(CC) $(CFLAGS) -c dlb_main.c
 @@ -365,7 +367,7 @@ TEXT_IO = tiletext.o tiletxt.o $(OALLOC) $(ONAMING)
  GIFREADERS = gifread.o
  PPMWRITERS = ppmwrite.o
- 
+
 -tileutils: tilemap gif2txt txt2ppm tile2x11
 +tileutils: tilemap.js gif2txt txt2ppm tile2x11
- 
+
  gif2txt: $(GIFREADERS) $(TEXT_IO)
  	$(CC) $(LFLAGS) -o gif2txt $(GIFREADERS) $(TEXT_IO) $(LIBS)
 @@ -392,10 +394,10 @@ tile2beos: tile2beos.o $(TEXT_IO)
@@ -444,7 +444,7 @@ index 78e9d725f..b94b1d7f9 100644
 +	$(CC) $(LFLAGS) $(UTIL_CFLAGS) -o tilemap.js tilemap.o $(LIBS)
 +../src/tile.c: tilemap.js
 +	node ./tilemap.js
- 
+
  ../include/tile.h: ../win/share/tile.h
  	cp ../win/share/tile.h ../include/tile.h
 @@ -502,6 +504,6 @@ spotless: clean
@@ -461,7 +461,7 @@ index 862915053..01f6506cb 100644
 --- a/sys/unix/hints/linux
 +++ b/sys/unix/hints/linux
 @@ -11,8 +11,8 @@
- 
+
  #PREFIX=/usr
  PREFIX=$(wildcard ~)/nh/install
 -HACKDIR=$(PREFIX)/games/lib/$(GAME)dir
@@ -470,11 +470,11 @@ index 862915053..01f6506cb 100644
 +SHELLDIR = $(PREFIX)/nethack
  INSTDIR=$(HACKDIR)
  VARDIR = $(HACKDIR)
- 
+
 @@ -20,28 +20,46 @@ VARDIR = $(HACKDIR)
- 
+
  POSTINSTALL=cp -n sys/unix/sysconf $(INSTDIR)/sysconf; $(CHOWN) $(GAMEUID) $(INSTDIR)/sysconf; $(CHGRP) $(GAMEGRP) $(INSTDIR)/sysconf; chmod $(VARFILEPERM) $(INSTDIR)/sysconf;
- 
+
 -CFLAGS=-g -O -I../include -DNOTPARMDECL
 +CFLAGS=-g -O3 -I../include -DNOTPARMDECL
  CFLAGS+=-DDLB
@@ -492,7 +492,7 @@ index 862915053..01f6506cb 100644
  #CFLAGS+=-DSCORE_ON_BOTL
  #CFLAGS+=-DMSGHANDLER
  #CFLAGS+=-DTTY_TILES_ESCCODES
- 
+
 +CC=emcc
 +CFLAGS+= -DWEB_GRAPHICS -DNOTTYGRAPHICS -Wno-undefined
 +GAME=
@@ -515,14 +515,14 @@ index 862915053..01f6506cb 100644
 +WINWEBSRC = ../win/web/web.c tile.c
 +WINWEBOBJ = web.o tile.o
 +WINWEBLIB =
- 
+
 -WINSRC = $(WINTTYSRC) $(WINCURSESSRC)
 -WINOBJ = $(WINTTYOBJ) $(WINCURSESOBJ)
 -WINLIB = $(WINTTYLIB) $(WINCURSESLIB)
 +WINSRC = $(WINWEBSRC)
 +WINOBJ = $(WINWEBOBJ)
 +WINLIB = $(WINWEBLIB)
- 
+
  # if TTY_TILES_ESCCODES
  #WINSRC += tile.c
 diff --git a/sys/unix/unixmain.c b/sys/unix/unixmain.c
@@ -532,7 +532,7 @@ index 1e7880165..e73aedc23 100644
 @@ -16,6 +16,13 @@
  #include <fcntl.h>
  #endif
- 
+
 +#ifdef __EMSCRIPTEN__
 +#include <emscripten/emscripten.h>
 +void js_helpers_init();
@@ -559,7 +559,7 @@ index 1e7880165..e73aedc23 100644
      init_sco_cons();
 @@ -808,3 +822,355 @@ sys_random_seed()
  }
- 
+
  /*unixmain.c*/
 +
 +
@@ -920,7 +920,7 @@ index cd971bcc0..bb36cd5f6 100644
 +++ b/util/makedefs.c
 @@ -1544,6 +1544,9 @@ build_savebones_compat_string()
  }
- 
+
  static const char *build_opts[] = {
 +#ifdef WEB_GRAPHICS
 +    "Web",
@@ -938,9 +938,22 @@ index cd971bcc0..bb36cd5f6 100644
  #ifdef CURSES_GRAPHICS
      { "curses", "terminal-based graphics" },
  #endif
+diff --git a/win/share/tilemap.c b/win/share/tilemap.c
+index f859f44e8..44ac62198 100644
+--- a/win/share/tilemap.c
++++ b/win/share/tilemap.c
+@@ -24,7 +24,7 @@ extern void FDECL(exit, (int));
+ #endif
+ #endif
+
+-#if defined(MSDOS) || defined(WIN32) || defined(X11_GRAPHICS)
++#if defined(MSDOS) || defined(WIN32) || defined(X11_GRAPHICS) || defined(WEB_GRAPHICS)
+ #define STATUES_LOOK_LIKE_MONSTERS
+ #endif
+
 diff --git a/win/web/mount_nodefs.js b/win/web/mount_nodefs.js
 new file mode 100644
-index 000000000..cfdd94d72
+index 000000000..f12807532
 --- /dev/null
 +++ b/win/web/mount_nodefs.js
 @@ -0,0 +1,24 @@
@@ -958,7 +971,7 @@ index 000000000..cfdd94d72
 +  var cur_dir = path.normalize(process.cwd());
 +  var top_dir = path.normalize(cur_dir+'/..');
 +  assert(fs.existsSync(top_dir+'/README'));
-+  
++
 +  // mount directories
 +  ['dat', 'include', 'src', 'util'].forEach(function(dn) {
 +      var slash_dn = '/' + dn;
