@@ -1292,54 +1292,78 @@ class Inventory {
 
 const CANCEL_KEY = ['Escape'];
 
-class Line extends Dialog {
+class Line {
     constructor(question, autocomplete) {
-        super(question);
         this.autocomplete = autocomplete;
+        this.possibleItems = [];
         this.onLineEnter = (line) => { };
-        console.log(autocomplete);
-        horiz(this.elem);
-        // this.onClose = () => this.onLineEnter('');
-        const input = document.createElement('input');
+        this.elem = document.createElement("div");
+        vert(this.elem);
+        const container = document.createElement("div");
+        horiz(container);
+        this.elem.appendChild(container);
+        container.appendChild(document.createTextNode(question));
+        this.possibleItems = autocomplete;
+        const input = document.createElement("input");
         this.input = input;
-        this.elem.appendChild(input);
-        input.onkeydown = e => {
-            if (e.key === 'Tab') {
+        container.appendChild(input);
+        input.onkeydown = (e) => {
+            if (e.key === "Tab") {
                 //prevent losing focus
                 e.preventDefault();
             }
         };
-        input.onkeyup = e => {
+        input.onkeyup = (e) => {
             // From BrowserHack
-            if (e.key === 'Enter') {
+            if (e.key === "Enter") {
                 e.preventDefault();
                 this.onLineEnter(input.value);
             }
             else if (this.autocomplete.length) {
-                if (e.key === 'Backspace') {
+                this.updatePossibleItems();
+                if (e.key === "Backspace") {
                     input.value = input.value.substring(0, input.selectionStart || 0);
                 }
                 else {
-                    const possibleItems = [];
-                    const search = input.value;
-                    this.autocomplete.forEach(function (str) {
-                        if (str.indexOf(search) == 0)
-                            possibleItems.push(str);
-                    });
                     // we may press a, then press b before releasing a
                     // thus for the string "ab" we will receive two keyup events
                     // do not clear the selection
-                    if ((possibleItems.length == 1) && (input.selectionStart == input.selectionEnd)) {
-                        input.value = possibleItems[0];
-                        input.setSelectionRange(search.length, possibleItems[0].length);
+                    if (this.possibleItems.length == 1 && input.selectionStart == input.selectionEnd) {
+                        const search = input.value;
+                        input.value = this.possibleItems[0];
+                        input.setSelectionRange(search.length, this.possibleItems[0].length);
                     }
                 }
             }
         };
+        this.list = document.createElement("div");
+        vert(this.list);
+        if (this.autocomplete.length) {
+            this.elem.appendChild(this.list);
+            this.updateList();
+        }
+    }
+    updatePossibleItems() {
+        const possibleItems = [];
+        const search = this.input.value;
+        this.autocomplete.forEach(function (str) {
+            if (str.indexOf(search) == 0)
+                possibleItems.push(str);
+        });
+        this.possibleItems = possibleItems.filter(x => x.length > 1); // filter out #, ?
+        this.updateList();
+    }
+    updateList() {
+        Array.from(this.list.children).forEach((e) => this.list.removeChild(e));
+        this.possibleItems.forEach((item) => {
+            const node = document.createElement("div");
+            node.innerHTML = item;
+            this.list.appendChild(node);
+        });
     }
     onInput(e) {
         if (CANCEL_KEY.includes(e.key)) {
-            this.onLineEnter('');
+            this.onLineEnter("");
         }
     }
     focus() {
@@ -1679,9 +1703,11 @@ class GameScreen extends Screen {
         this.resize$ = new Subject();
         this.tileset = new TileSet("Nevanda.png", 32, 40);
         this.tilemap = new TileMap(this.elem, this.tileset);
-        this.inventory = new Inventory(this.elem, this.tileset);
         this.console = new Console(this.elem);
-        this.status = new StatusLine(this.elem);
+        const sidebar = document.querySelector('#sidebar');
+        this.inventory = new Inventory(sidebar, this.tileset);
+        this.status = new StatusLine(sidebar);
+        this.elem.appendChild(sidebar);
         this.resize$.pipe(debounceTime(200)).subscribe(() => this.tilemap?.onResize());
     }
     onResize() {
@@ -1704,13 +1730,15 @@ class GameScreen extends Screen {
         this.activeMenu.updateMenu(items, count);
     }
     openGetLine(question, autocomplete) {
+        const dialog = new Dialog();
         const line = new Line(question, autocomplete);
+        dialog.elem.appendChild(line.elem);
         line.onLineEnter = (line) => {
             window.nethackJS.sendLine(line);
             this.inputHandler = undefined;
         };
         this.inputHandler = line;
-        this.elem.appendChild(line.elem);
+        this.elem.appendChild(dialog.elem);
         line.focus();
     }
     openQuestion(question, choices, defaultChoice) {

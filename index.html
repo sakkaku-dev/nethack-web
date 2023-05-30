@@ -39,16 +39,23 @@
     padding: 0 0.5rem; /* No vertical padding, since there is already a line height */
   }
 
-  #inventory {
-    overflow-y: auto;
-    background: var(--bg-color);
+  #sidebar {
     position: absolute;
     right: 0;
     top: 0;
-    bottom: 10rem;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+  }
+
+  #inventory {
+    overflow-y: auto;
     padding: 0.5rem;
     margin: 0;
+    background: var(--bg-color);
     opacity: 0.8;
+    flex-grow: 1;
   }
   #inventory .active {
     border: 1px solid red;
@@ -61,12 +68,9 @@
   }
 
   #status {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    padding: 0.5rem;
     background: var(--bg-color);
     opacity: 0.8;
+    padding: 0.5rem;
     min-width: 30rem;
   }
 
@@ -208,7 +212,7 @@
 </style>
 
 <body>
-  <div></div>
+  <div id="sidebar"></div>
 </body>
 
 <script src="./nethack-ui.js"></script>
