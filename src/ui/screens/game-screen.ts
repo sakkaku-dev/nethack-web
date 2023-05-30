@@ -26,9 +26,12 @@ export class GameScreen extends Screen {
 
         this.tileset = new TileSet("Nevanda.png", 32, 40);
         this.tilemap = new TileMap(this.elem, this.tileset);
-        this.inventory = new Inventory(this.elem, this.tileset);
         this.console = new Console(this.elem);
-        this.status = new StatusLine(this.elem);
+
+        const sidebar = document.querySelector('#sidebar') as HTMLElement;
+        this.inventory = new Inventory(sidebar, this.tileset);
+        this.status = new StatusLine(sidebar);
+        this.elem.appendChild(sidebar);
 
         this.resize$.pipe(debounceTime(200)).subscribe(() => this.tilemap?.onResize());
     }
