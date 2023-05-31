@@ -83,7 +83,7 @@ export class StatusLine {
     lastRow.appendChild(lvl);
 
     const other = document.createElement('div');
-    other.innerHTML = `${s.align || "No Alignment"} Dlvl ${s.dungeonLvl ?? "-"}`;
+    other.innerHTML = `${s.align || "No Alignment"} ${s.dungeonLvl ?? "-"}`;
     other.style.flexGrow = '1';
     lastRow.appendChild(other)
 

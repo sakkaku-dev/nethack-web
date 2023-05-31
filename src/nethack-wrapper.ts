@@ -17,7 +17,6 @@ import {
 } from "./helper/menu-select";
 import { listBackupFiles, loadRecords, loadSaveFiles, syncSaveFiles } from "./helper/save-files";
 import { CONTINUE_KEYS, ENTER, ESC, SPACE } from "./helper/keys";
-import { parseAndMapStatus } from "./helper/parse-status";
 import { toInventoryItem } from "./helper/inventory";
 
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
@@ -52,6 +51,7 @@ export class NetHackWrapper implements NetHackJS {
 
     // Status
     [Command.STATUS_UPDATE]: this.statusUpdate.bind(this),
+    [Command.STATUS_ENABLE_FIELD]: this.statusEnableField.bind(this),
 
     // Menu
     [Command.MENU_START]: async () => (this.menuItems = []),
@@ -80,11 +80,11 @@ export class NetHackWrapper implements NetHackJS {
   private putStrWinId = 0;
   private backupFile = "";
   private accel = new AccelIterator();
+  private status: Status = {};
 
   private input$ = new Subject<number>();
   private line$ = new Subject<string>();
 
-  private status$ = new BehaviorSubject<Status>({});
   private inventory$ = new Subject<InventoryItem[]>();
   private tiles$ = new BehaviorSubject<Tile[]>([]);
   private awaitingInput$ = new BehaviorSubject(false);
@@ -117,13 +117,13 @@ export class NetHackWrapper implements NetHackJS {
       )
       .subscribe();
 
-    this.status$
-      .pipe(
-        skip(1),
-        debounceTime(100),
-        tap((s) => this.ui.updateStatus(s))
-      )
-      .subscribe();
+    // this.status$
+    //   .pipe(
+    //     skip(1),
+    //     debounceTime(100),
+    //     tap((s) => this.ui.updateStatus(s))
+    //   )
+    //   .subscribe();
 
     this.input$.subscribe(() => this.awaitingInput$.next(false));
 
@@ -424,11 +424,11 @@ export class NetHackWrapper implements NetHackJS {
   }
 
   private async handlePutStr(winid: number, attr: any, str: string) {
-    if (winid === this.global.globals.WIN_STATUS) {
-      const status = this.status$.value;
-      parseAndMapStatus(str, status);
-      this.status$.next(status);
-    } else if (winid === this.global.globals.WIN_MESSAGE) {
+    // if (winid === this.global.globals.WIN_STATUS) {
+    //   const status = this.status$.value;
+    //   parseAndMapStatus(str, status);
+    //   this.status$.next(status);
+    if (winid === this.global.globals.WIN_MESSAGE) {
       this.handlePrintLine(attr, str);
     } else {
       if (this.putStrWinId !== winid) {
@@ -448,25 +448,30 @@ export class NetHackWrapper implements NetHackJS {
     this.ui.printLine(str);
   }
 
-  private async statusUpdate(type: STATUS_FIELD, ptr: number) {
-    // const ignored = [STATUS_FIELD.BL_FLUSH, STATUS_FIELD.BL_RESET];
+  private async statusEnableField(type: STATUS_FIELD, name: number, format: number, enable: number) {
+    if (!enable) {
+      statusMap[type](this.status, undefined);
+    }
+  }
 
-    // if (ignored.includes(type)) {
-    //   return;
-    // }
+  private async statusUpdate(type: STATUS_FIELD, ptr: number) {
+    if (type === STATUS_FIELD.BL_FLUSH) {
+      console.log(this.status);
+      this.ui.updateStatus(this.status);
+      return;
+    }
 
     const mapper = statusMap[type];
     if (mapper) {
       let value;
       if (type == STATUS_FIELD.BL_CONDITION) {
-        value = this.getPointerValue(ptr, Type.INT);
+        value = this.global.helpers.getPointerValue('status', ptr, Type.INT);
       } else {
-        value = this.getPointerValue(ptr, Type.STRING);
+        value = this.global.helpers.getPointerValue('status', ptr, Type.STRING);
       }
 
-      var status = this.status$.value;
-      mapper(status, value);
-      this.status$.next(status);
+      mapper(this.status, value);
+      console.log(STATUS_FIELD[type], value);
     } else {
       this.log("Unhandled status type", STATUS_FIELD[type]);
     }

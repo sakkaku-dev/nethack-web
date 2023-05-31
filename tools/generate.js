@@ -22,6 +22,9 @@ globalThis.nethackCallback = async function (cmd, ...args) {
             return 0;
     }
 }
+globalThis.nethackJS = {
+    handle: () => {},
+}
 
 
 async function init() {
@@ -64,4 +67,6 @@ function generate() {
     });
 }
 
-init().then(() => generate());
+init().then(() => {
+    generate();
+});

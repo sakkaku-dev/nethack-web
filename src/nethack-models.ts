@@ -16,6 +16,7 @@ export enum Command {
 
   STATUS_INIT = "shim_status_init",
   STATUS_UPDATE = "shim_status_update",
+  STATUS_ENABLE_FIELD = "shim_status_enablefield",
 
   CREATE_WINDOW = "shim_create_nhwindow",
   DESTROY_WINDOW = "shim_destroy_nhwindow",
@@ -56,22 +57,21 @@ export const statusMap: Record<STATUS_FIELD, (s: Status, v?: string) => void> = 
   [STATUS_FIELD.BL_ALIGN]: (s, v) => (s.align = v),
   [STATUS_FIELD.BL_SCORE]: (s, v) => (s.score = v),
   [STATUS_FIELD.BL_CAP]: (s, v) => (s.carryCap = v),
-  // [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseNumberOrUndefined(v.split(":")[1])),
-  [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseNumberOrUndefined(v?.split(":")[1])),
   [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = parseNumberOrUndefined(v)),
   [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_XP]: (s, v) => (s.exp = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_EXP]: (s, v) => (s.exp = parseNumberOrUndefined(v)),
   [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = (v || "").trim()),
+  [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = v?.trim()),
   [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = parseNumberOrUndefined(v)),
   [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v),
-  [STATUS_FIELD.BL_EXP]: (s, v) => (s.expLvl = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v?.trim()),
+  [STATUS_FIELD.BL_XP]: (s, v) => (s.expLvl = parseNumberOrUndefined(v)),
   [STATUS_FIELD.BL_CONDITION]: (s, v) =>
     (s.condition = conditionMap[parseNumberOrUndefined(v) as CONDITION] ?? undefined),
   // [STATUS_FIELD.BL_CHARACTERISTICS]: () => {},
   // [STATUS_FIELD.BL_RESET]: () => {},
-  // [STATUS_FIELD.BL_FLUSH]: () => {},
+  [STATUS_FIELD.BL_FLUSH]: () => {},
   [STATUS_FIELD.BL_HD]: (s, v) => s.hd = parseNumberOrUndefined(v),
   [STATUS_FIELD.BL_TIME]: (s, v) => {
     s.time = parseNumberOrUndefined(v);

@@ -32,6 +32,7 @@ export enum STATUS_FIELD {
     BL_LEVELDESC = 20,
     BL_EXP = 21,
     BL_CONDITION = 22,
+    BL_FLUSH = -1,
 }
 
 export enum ATTR {

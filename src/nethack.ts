@@ -8,6 +8,7 @@ const options = [
   "pickup_types:$",
   "pickup_thrown",
   "pickup_burden:S",
+  "statuscolors",
   "autoopen",
   "!cmdassist",
   "sortloot:full",

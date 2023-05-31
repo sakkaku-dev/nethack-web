@@ -526,7 +526,7 @@ index 862915053..01f6506cb 100644
  # if TTY_TILES_ESCCODES
  #WINSRC += tile.c
 diff --git a/sys/unix/unixmain.c b/sys/unix/unixmain.c
-index 1e7880165..e73aedc23 100644
+index 1e7880165..9b653c754 100644
 --- a/sys/unix/unixmain.c
 +++ b/sys/unix/unixmain.c
 @@ -16,6 +16,13 @@
@@ -756,7 +756,7 @@ index 1e7880165..e73aedc23 100644
 +
 +    // SET_CONSTANT("STATUS_FIELD", BL_CHARACTERISTICS)
 +    // SET_CONSTANT("STATUS_FIELD", BL_RESET)
-+    // SET_CONSTANT("STATUS_FIELD", BL_FLUSH)
++    SET_CONSTANT("STATUS_FIELD", BL_FLUSH)
 +    // SET_CONSTANT("STATUS_FIELD", MAXBLSTATS)
 +
 +    // text attributes
@@ -970,10 +970,10 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..afc2be9ab
+index 000000000..3fd80d092
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,1128 @@
+@@ -0,0 +1,1137 @@
 +#include "hack.h"
 +#include "dlb.h"
 +#include "func_tab.h"
@@ -1116,10 +1116,11 @@ index 000000000..afc2be9ab
 +    "vippi",
 +    A2P fieldidx, P2V nm, P2V fmt, A2P enable)
 +/* XXX: the second argument to shim_status_update is sometimes an integer and sometimes a pointer */
-+VDECLCB(shim_status_update,
-+    (int fldidx, genericptr_t ptr, int chg, int percent, int color, unsigned long *colormasks),
-+    "vioiiip",
-+    A2P fldidx, P2V ptr, A2P chg, A2P percent, A2P color, P2V colormasks)
++// VDECLCB(shim_status_update,
++//     (int fldidx, genericptr_t ptr, int chg, int percent, int color, unsigned long *colormasks),
++//     "vioiiip",
++//     A2P fldidx, P2V ptr, A2P chg, A2P percent, A2P color, P2V colormasks)
++void shim_status_update(int fldidx, genericptr_t ptr, int chg, int percent, int color, unsigned long *colormasks);
 +
 +	/* XXX: calling display_inventory() from shim_update_inventory() causes reentrancy that breaks emscripten Asyncify */
 +/* this should be fine since according to windows.doc, the only purpose of shim_update_inventory() is to call display_inventory() */
@@ -1945,7 +1946,7 @@ index 000000000..afc2be9ab
 +struct window_procs web_procs = {
 +	"web",
 +	WC_HILITE_PET | WC_MOUSE_SUPPORT,
-+	0L, // wincap2
++	WC2_HILITE_STATUS | WC2_FLUSH_STATUS, // wincap2
 +	{1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1}, // disable colors?
 +	shim_init_nhwindows,
 +	shim_player_selection,
@@ -2026,6 +2027,9 @@ index 000000000..afc2be9ab
 +EM_JS(void, shim_cliparound, (int x, int y), {
 +    globalThis.nethackJS.handle('shim_cliparound', x, y);
 +});
++EM_JS(void, shim_status_update, (int fldidx, genericptr_t ptr, int chg, int percent, int color, unsigned long *colormasks), {
++    globalThis.nethackJS.handle('shim_status_update', fldidx, ptr, chg, percent, color, colormasks);
++});
 +
 +/* convert the C callback to a JavaScript callback */
 +EM_JS(void, local_callback, (const char *cb_name, const char *shim_name, void *ret_ptr, const char *fmt_str, void *args), {
@@ -2039,6 +2043,11 @@ index 000000000..afc2be9ab
 +        let fmt = UTF8ToString(fmt_str);
 +        let cbName = UTF8ToString(cb_name);
 +        // console.log("local_callback:", cbName, fmt, name);
++
++        if (!globalThis.nethackGlobal) {
++            wakeUp();
++            return;
++        }
 +
 +        // get pointer / type conversion helpers
 +        let getPointerValue = globalThis.nethackGlobal.helpers.getPointerValue;
