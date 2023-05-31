@@ -169,14 +169,14 @@ export class NetHackWrapper implements NetHackJS {
 
       switch (id) {
         case 0:
-          this.gameState$.next(GameState.RUNNING);
-          nethackLib(this.module);
+          this.startGame();
           break;
         case 1:
           const files = listBackupFiles();
           const backupId = await this.openCustomMenu("Select backup file", files);
           if (backupId !== -1) {
             this.backupFile = files[backupId];
+            this.startGame();
           }
           break;
         case 2:
@@ -189,6 +189,11 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     this.ui.closeDialog(-1);
+  }
+
+  private startGame() {
+    this.gameState$.next(GameState.RUNNING);
+    nethackLib(this.module);
   }
 
   private async openCustomMenu(prompt: string, buttons: string[]) {
