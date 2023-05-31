@@ -79,7 +79,7 @@ pushd NetHack/src
 	popd
 
 	pushd ../win/share
-		gcc tilemap.c -I ../../include -o ../tilemap.o && cd ../ && ./tilemap.o
+		gcc tilemap.c -I ../../include -DWEB_GRAPHICS -DNOTTYPGRAPHICS -o ../tilemap.o && cd ../ && ./tilemap.o
 	popd
 	echo "Built tile.c"
 

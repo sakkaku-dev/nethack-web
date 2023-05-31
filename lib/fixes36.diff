@@ -938,6 +938,19 @@ index cd971bcc0..bb36cd5f6 100644
  #ifdef CURSES_GRAPHICS
      { "curses", "terminal-based graphics" },
  #endif
+diff --git a/win/share/tilemap.c b/win/share/tilemap.c
+index f859f44e8..44ac62198 100644
+--- a/win/share/tilemap.c
++++ b/win/share/tilemap.c
+@@ -24,7 +24,7 @@ extern void FDECL(exit, (int));
+ #endif
+ #endif
+ 
+-#if defined(MSDOS) || defined(WIN32) || defined(X11_GRAPHICS)
++#if defined(MSDOS) || defined(WIN32) || defined(X11_GRAPHICS) || defined(WEB_GRAPHICS)
+ #define STATUES_LOOK_LIKE_MONSTERS
+ #endif
+ 
 diff --git a/win/web/mount_nodefs.js b/win/web/mount_nodefs.js
 new file mode 100644
 index 000000000..cfdd94d72
