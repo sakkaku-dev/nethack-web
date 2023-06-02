@@ -163,31 +163,34 @@ export class NetHackWrapper implements NetHackJS {
 
   private async openStartScreen() {
     while (!this.isGameRunning()) {
-      const id = await this.openCustomMenu("Welcome to NetHack", [
-        "Start Game",
-        "Load from backup",
-        "Leaderboard",
-      ]);
+      const files = listBackupFiles();
+      const records = loadRecords();
 
-      switch (id) {
-        case 0:
-          this.startGame();
-          break;
-        case 1:
-          const files = listBackupFiles();
+      const actions = [async () => this.startGame()];
+      const startMenu = ["Start Game"];
+
+      if (files.length > 0) {
+        startMenu.push("Load from backup");
+        actions.push(async () => {
           const backupId = await this.openCustomMenu("Select backup file", files);
           if (backupId !== -1) {
             this.backupFile = files[backupId];
             this.startGame();
           }
-          break;
-        case 2:
-          const records = loadRecords();
+        });
+      }
+
+      if (records.length) {
+        startMenu.push("Leaderboard");
+        actions.push(async () => {
           this.ui.openDialog(-1, records);
           await this.waitInput(true);
           this.ui.closeDialog(-1);
-          break;
+        });
       }
+
+      const id = await this.openCustomMenu("Welcome to NetHack", startMenu);
+      await actions[id]();
     }
 
     this.ui.closeDialog(-1);
