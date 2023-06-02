@@ -1371,6 +1371,122 @@ class Line {
     }
 }
 
+// This is a generated file. Do not edit.
+var WIN_TYPE;
+(function (WIN_TYPE) {
+    WIN_TYPE[WIN_TYPE["NHW_MESSAGE"] = 1] = "NHW_MESSAGE";
+    WIN_TYPE[WIN_TYPE["NHW_STATUS"] = 2] = "NHW_STATUS";
+    WIN_TYPE[WIN_TYPE["NHW_MAP"] = 3] = "NHW_MAP";
+    WIN_TYPE[WIN_TYPE["NHW_MENU"] = 4] = "NHW_MENU";
+    WIN_TYPE[WIN_TYPE["NHW_TEXT"] = 5] = "NHW_TEXT";
+})(WIN_TYPE || (WIN_TYPE = {}));
+var STATUS_FIELD;
+(function (STATUS_FIELD) {
+    STATUS_FIELD[STATUS_FIELD["BL_TITLE"] = 0] = "BL_TITLE";
+    STATUS_FIELD[STATUS_FIELD["BL_STR"] = 1] = "BL_STR";
+    STATUS_FIELD[STATUS_FIELD["BL_DX"] = 2] = "BL_DX";
+    STATUS_FIELD[STATUS_FIELD["BL_CO"] = 3] = "BL_CO";
+    STATUS_FIELD[STATUS_FIELD["BL_IN"] = 4] = "BL_IN";
+    STATUS_FIELD[STATUS_FIELD["BL_WI"] = 5] = "BL_WI";
+    STATUS_FIELD[STATUS_FIELD["BL_CH"] = 6] = "BL_CH";
+    STATUS_FIELD[STATUS_FIELD["BL_ALIGN"] = 7] = "BL_ALIGN";
+    STATUS_FIELD[STATUS_FIELD["BL_SCORE"] = 8] = "BL_SCORE";
+    STATUS_FIELD[STATUS_FIELD["BL_CAP"] = 9] = "BL_CAP";
+    STATUS_FIELD[STATUS_FIELD["BL_GOLD"] = 10] = "BL_GOLD";
+    STATUS_FIELD[STATUS_FIELD["BL_ENE"] = 11] = "BL_ENE";
+    STATUS_FIELD[STATUS_FIELD["BL_ENEMAX"] = 12] = "BL_ENEMAX";
+    STATUS_FIELD[STATUS_FIELD["BL_XP"] = 13] = "BL_XP";
+    STATUS_FIELD[STATUS_FIELD["BL_AC"] = 14] = "BL_AC";
+    STATUS_FIELD[STATUS_FIELD["BL_HD"] = 15] = "BL_HD";
+    STATUS_FIELD[STATUS_FIELD["BL_TIME"] = 16] = "BL_TIME";
+    STATUS_FIELD[STATUS_FIELD["BL_HUNGER"] = 17] = "BL_HUNGER";
+    STATUS_FIELD[STATUS_FIELD["BL_HP"] = 18] = "BL_HP";
+    STATUS_FIELD[STATUS_FIELD["BL_HPMAX"] = 19] = "BL_HPMAX";
+    STATUS_FIELD[STATUS_FIELD["BL_LEVELDESC"] = 20] = "BL_LEVELDESC";
+    STATUS_FIELD[STATUS_FIELD["BL_EXP"] = 21] = "BL_EXP";
+    STATUS_FIELD[STATUS_FIELD["BL_CONDITION"] = 22] = "BL_CONDITION";
+    STATUS_FIELD[STATUS_FIELD["BL_FLUSH"] = -1] = "BL_FLUSH";
+})(STATUS_FIELD || (STATUS_FIELD = {}));
+var ATTR;
+(function (ATTR) {
+    ATTR[ATTR["ATR_NONE"] = 0] = "ATR_NONE";
+    ATTR[ATTR["ATR_BOLD"] = 1] = "ATR_BOLD";
+    ATTR[ATTR["ATR_DIM"] = 2] = "ATR_DIM";
+    ATTR[ATTR["ATR_ULINE"] = 4] = "ATR_ULINE";
+    ATTR[ATTR["ATR_BLINK"] = 5] = "ATR_BLINK";
+    ATTR[ATTR["ATR_INVERSE"] = 7] = "ATR_INVERSE";
+})(ATTR || (ATTR = {}));
+var CONDITION;
+(function (CONDITION) {
+    CONDITION[CONDITION["BL_MASK_STONE"] = 1] = "BL_MASK_STONE";
+    CONDITION[CONDITION["BL_MASK_SLIME"] = 2] = "BL_MASK_SLIME";
+    CONDITION[CONDITION["BL_MASK_STRNGL"] = 4] = "BL_MASK_STRNGL";
+    CONDITION[CONDITION["BL_MASK_FOODPOIS"] = 8] = "BL_MASK_FOODPOIS";
+    CONDITION[CONDITION["BL_MASK_TERMILL"] = 16] = "BL_MASK_TERMILL";
+    CONDITION[CONDITION["BL_MASK_BLIND"] = 32] = "BL_MASK_BLIND";
+    CONDITION[CONDITION["BL_MASK_DEAF"] = 64] = "BL_MASK_DEAF";
+    CONDITION[CONDITION["BL_MASK_STUN"] = 128] = "BL_MASK_STUN";
+    CONDITION[CONDITION["BL_MASK_CONF"] = 256] = "BL_MASK_CONF";
+    CONDITION[CONDITION["BL_MASK_HALLU"] = 512] = "BL_MASK_HALLU";
+    CONDITION[CONDITION["BL_MASK_LEV"] = 1024] = "BL_MASK_LEV";
+    CONDITION[CONDITION["BL_MASK_FLY"] = 2048] = "BL_MASK_FLY";
+    CONDITION[CONDITION["BL_MASK_RIDE"] = 4096] = "BL_MASK_RIDE";
+})(CONDITION || (CONDITION = {}));
+var MENU_SELECT;
+(function (MENU_SELECT) {
+    MENU_SELECT[MENU_SELECT["PICK_NONE"] = 0] = "PICK_NONE";
+    MENU_SELECT[MENU_SELECT["PICK_ONE"] = 1] = "PICK_ONE";
+    MENU_SELECT[MENU_SELECT["PICK_ANY"] = 2] = "PICK_ANY";
+})(MENU_SELECT || (MENU_SELECT = {}));
+var GLYPH;
+(function (GLYPH) {
+    GLYPH[GLYPH["GLYPH_MON_OFF"] = 0] = "GLYPH_MON_OFF";
+    GLYPH[GLYPH["GLYPH_PET_OFF"] = 382] = "GLYPH_PET_OFF";
+    GLYPH[GLYPH["GLYPH_INVIS_OFF"] = 764] = "GLYPH_INVIS_OFF";
+    GLYPH[GLYPH["GLYPH_DETECT_OFF"] = 765] = "GLYPH_DETECT_OFF";
+    GLYPH[GLYPH["GLYPH_BODY_OFF"] = 1147] = "GLYPH_BODY_OFF";
+    GLYPH[GLYPH["GLYPH_RIDDEN_OFF"] = 1529] = "GLYPH_RIDDEN_OFF";
+    GLYPH[GLYPH["GLYPH_OBJ_OFF"] = 1911] = "GLYPH_OBJ_OFF";
+    GLYPH[GLYPH["GLYPH_CMAP_OFF"] = 2365] = "GLYPH_CMAP_OFF";
+    GLYPH[GLYPH["GLYPH_EXPLODE_OFF"] = 2452] = "GLYPH_EXPLODE_OFF";
+    GLYPH[GLYPH["GLYPH_ZAP_OFF"] = 2515] = "GLYPH_ZAP_OFF";
+    GLYPH[GLYPH["GLYPH_SWALLOW_OFF"] = 2547] = "GLYPH_SWALLOW_OFF";
+    GLYPH[GLYPH["GLYPH_WARNING_OFF"] = 5603] = "GLYPH_WARNING_OFF";
+    GLYPH[GLYPH["GLYPH_STATUE_OFF"] = 5609] = "GLYPH_STATUE_OFF";
+    GLYPH[GLYPH["MAX_GLYPH"] = 5991] = "MAX_GLYPH";
+    GLYPH[GLYPH["NO_GLYPH"] = 5991] = "NO_GLYPH";
+    GLYPH[GLYPH["GLYPH_INVISIBLE"] = 764] = "GLYPH_INVISIBLE";
+})(GLYPH || (GLYPH = {}));
+var COLORS;
+(function (COLORS) {
+    COLORS[COLORS["CLR_BLACK"] = 0] = "CLR_BLACK";
+    COLORS[COLORS["CLR_RED"] = 1] = "CLR_RED";
+    COLORS[COLORS["CLR_GREEN"] = 2] = "CLR_GREEN";
+    COLORS[COLORS["CLR_BROWN"] = 3] = "CLR_BROWN";
+    COLORS[COLORS["CLR_BLUE"] = 4] = "CLR_BLUE";
+    COLORS[COLORS["CLR_MAGENTA"] = 5] = "CLR_MAGENTA";
+    COLORS[COLORS["CLR_CYAN"] = 6] = "CLR_CYAN";
+    COLORS[COLORS["CLR_GRAY"] = 7] = "CLR_GRAY";
+    COLORS[COLORS["NO_COLOR"] = 8] = "NO_COLOR";
+    COLORS[COLORS["CLR_ORANGE"] = 9] = "CLR_ORANGE";
+    COLORS[COLORS["CLR_BRIGHT_GREEN"] = 10] = "CLR_BRIGHT_GREEN";
+    COLORS[COLORS["CLR_YELLOW"] = 11] = "CLR_YELLOW";
+    COLORS[COLORS["CLR_BRIGHT_BLUE"] = 12] = "CLR_BRIGHT_BLUE";
+    COLORS[COLORS["CLR_BRIGHT_MAGENTA"] = 13] = "CLR_BRIGHT_MAGENTA";
+    COLORS[COLORS["CLR_BRIGHT_CYAN"] = 14] = "CLR_BRIGHT_CYAN";
+    COLORS[COLORS["CLR_WHITE"] = 15] = "CLR_WHITE";
+    COLORS[COLORS["CLR_MAX"] = 16] = "CLR_MAX";
+})(COLORS || (COLORS = {}));
+var COLOR_ATTR;
+(function (COLOR_ATTR) {
+    COLOR_ATTR[COLOR_ATTR["HL_ATTCLR_DIM"] = 16] = "HL_ATTCLR_DIM";
+    COLOR_ATTR[COLOR_ATTR["HL_ATTCLR_BLINK"] = 17] = "HL_ATTCLR_BLINK";
+    COLOR_ATTR[COLOR_ATTR["HL_ATTCLR_ULINE"] = 18] = "HL_ATTCLR_ULINE";
+    COLOR_ATTR[COLOR_ATTR["HL_ATTCLR_INVERSE"] = 19] = "HL_ATTCLR_INVERSE";
+    COLOR_ATTR[COLOR_ATTR["HL_ATTCLR_BOLD"] = 20] = "HL_ATTCLR_BOLD";
+    COLOR_ATTR[COLOR_ATTR["BL_ATTCLR_MAX"] = 21] = "BL_ATTCLR_MAX";
+})(COLOR_ATTR || (COLOR_ATTR = {}));
+
 function Slider(value, maxValue, fg, bg) {
     const slider = document.createElement('div');
     horiz(slider);
@@ -1409,19 +1525,24 @@ function Sprite(file, size, frames, durationInSec = 1) {
     return { sprite, anim };
 }
 
-const LOW_HP_THRESHOLD = 0.3;
+const COLOR_MAP = {
+    [COLORS.CLR_RED]: "red",
+    [COLORS.CLR_GREEN]: "green",
+    [COLORS.CLR_ORANGE]: "orange",
+    [COLORS.CLR_YELLOW]: "yellow",
+};
 class StatusLine {
     // private pulseBorder: HTMLElement;
     constructor(root) {
-        this.expand = false;
+        this.expand = true;
         this.elem = document.createElement("div");
         this.elem.id = "status";
         root.appendChild(this.elem);
-        const hp = Sprite('UI_Heart.png', 32, 2);
+        const hp = Sprite("UI_Heart.png", 32, 2);
         this.heartIcon = hp.sprite;
         this.heartAnim = hp.anim;
-        this.manaIcon = Sprite('UI_Mana.png', 32, 1).sprite;
-        this.armorIcon = Sprite('UI_Armor.png', 32, 1).sprite;
+        this.manaIcon = Sprite("UI_Mana.png", 32, 1).sprite;
+        this.armorIcon = Sprite("UI_Armor.png", 32, 1).sprite;
         // Enable this after we have settings to disable it
         // this.pulseBorder = document.createElement('div');
         // this.pulseBorder.style.backgroundImage = 'url("PulseBorder.png")';
@@ -1434,7 +1555,7 @@ class StatusLine {
         // root.appendChild(this.pulseBorder);
     }
     toggleExpandButton() {
-        const icon = this.expand ? 'minimize-alt' : 'arrows-expand-right';
+        const icon = this.expand ? "minimize-alt" : "arrows-expand-right";
         const container = IconButton(icon);
         container.onclick = () => {
             this.expand = !this.expand;
@@ -1442,47 +1563,96 @@ class StatusLine {
         };
         return container;
     }
+    createText(text, pulse = false) {
+        const elem = document.createElement("span");
+        if (text) {
+            elem.innerHTML = text.text;
+            if (pulse) {
+                elem.style.animationName = "pulse";
+                elem.style.animationDuration = "2s";
+                elem.style.animationIterationCount = "infinite";
+                elem.style.animationTimingFunction = "ease-in-out";
+            }
+            if (text.color in COLOR_MAP) {
+                const color = text.color;
+                elem.style.color = COLOR_MAP[color];
+            }
+            if (text.attr.includes(ATTR.ATR_BOLD)) {
+                elem.style.fontWeight = "bold";
+            }
+        }
+        return elem;
+    }
     update(s) {
-        Array.from(this.elem.children).forEach(c => this.elem.removeChild(c));
+        Array.from(this.elem.children).forEach((c) => this.elem.removeChild(c));
         this.status = s;
         const firstRow = this.createRow();
-        const conditions = document.createElement('div');
-        conditions.innerHTML = s.hunger || '';
-        conditions.style.fontWeight = 'bold';
-        conditions.style.flexGrow = '1';
+        const conditions = document.createElement("div");
+        horiz(conditions);
+        conditions.appendChild(this.createText(s.hunger, true));
+        s.condition?.forEach((c) => conditions.appendChild(this.createText(c, true)));
+        conditions.style.flexGrow = "1";
+        conditions.style.fontSize = "1.2rem";
         firstRow.appendChild(conditions);
-        firstRow.appendChild(this.toggleExpandButton());
-        this.elem.appendChild(this.createMinMaxValue(this.heartIcon, '#D33', '#600', s.hp, s.hpMax));
-        this.elem.appendChild(this.createMinMaxValue(this.manaIcon, '#33D', '#006', s.power, s.powerMax));
+        // firstRow.appendChild(this.toggleExpandButton());
+        this.elem.appendChild(this.createMinMaxValue(this.heartIcon, "#D33", "#600", s.hp, s.hpMax));
+        this.elem.appendChild(this.createMinMaxValue(this.manaIcon, "#33D", "#006", s.power, s.powerMax));
         const lastRow = this.createRow();
-        lastRow.appendChild(this.createIconText(this.armorIcon, `${s.armor ?? '-'}`));
-        const lvl = document.createElement('div');
+        lastRow.appendChild(this.createIconText(this.armorIcon, s.armor));
+        const lvl = document.createElement("div");
         if (s.expLvl) {
-            lvl.innerHTML = `LV ${s.expLvl}${s.exp != null ? '/' + s.exp : ''}`;
-            lvl.title = s.title || 'Untitled';
+            const lvlElem = this.createText(s.expLvl);
+            horiz(lvl);
+            lvl.style.gap = "0";
+            lvl.appendChild(document.createTextNode("LV"));
+            lvlElem.style.marginLeft = "0.5rem";
+            lvl.appendChild(lvlElem);
+            if (s.exp) {
+                const expElem = this.createText(s.exp);
+                lvl.appendChild(document.createTextNode("/"));
+                lvl.appendChild(expElem);
+            }
+            lvl.title = s.title?.text || "Untitled";
         }
         else if (s.hd) {
-            lvl.innerHTML = `HD: ${s.hd}`;
+            lvl.appendChild(this.createText(s.hd));
         }
         lastRow.appendChild(lvl);
-        const other = document.createElement('div');
-        other.innerHTML = `${s.align || "No Alignment"} ${s.dungeonLvl ?? "-"}`;
-        other.style.flexGrow = '1';
+        const other = document.createElement("div");
+        horiz(other);
+        other.appendChild(this.createText(s.align));
+        other.appendChild(this.createText(s.dungeonLvl));
+        other.style.flexGrow = "1";
         lastRow.appendChild(other);
-        const money = document.createElement('div');
-        if (s.time != null)
-            money.innerHTML += `T: ${s.time} `;
-        money.innerHTML += `$: ${s.gold ?? "-"}`;
+        const money = document.createElement("div");
+        horiz(money);
+        if (s.time != null) {
+            money.appendChild(document.createTextNode("T:"));
+            money.appendChild(this.createText(s.time));
+        }
+        money.appendChild(document.createTextNode("$:"));
+        money.appendChild(this.createText(s.gold));
         lastRow.appendChild(money);
         if (this.expand) {
             const stats = this.createRow();
-            stats.innerHTML += `\nStr: ${s.str ?? "-"} Dex: ${s.dex ?? "-"} Con: ${s.con ?? "-"} Int: ${s.int ?? "-"} Wis: ${s.wis ?? "-"} Cha: ${s.cha ?? "-"}`;
-            stats.style.justifyContent = 'end';
+            horiz(stats);
+            stats.appendChild(document.createTextNode("Str:"));
+            stats.appendChild(this.createText(s.str));
+            stats.appendChild(document.createTextNode("Dex:"));
+            stats.appendChild(this.createText(s.dex));
+            stats.appendChild(document.createTextNode("Con:"));
+            stats.appendChild(this.createText(s.con));
+            stats.appendChild(document.createTextNode("Int:"));
+            stats.appendChild(this.createText(s.int));
+            stats.appendChild(document.createTextNode("Wis:"));
+            stats.appendChild(this.createText(s.wis));
+            stats.appendChild(document.createTextNode("Cha:"));
+            stats.appendChild(this.createText(s.cha));
+            stats.style.justifyContent = "end";
         }
-        if (s.hp && s.hpMax) {
-            const hpPercent = s.hp / s.hpMax;
-            if (hpPercent < LOW_HP_THRESHOLD) {
-                if (this.heartAnim.playState !== 'running') {
+        if (s.hp) {
+            if (s.hp.color === COLORS.CLR_RED) {
+                if (this.heartAnim.playState !== "running") {
                     this.heartAnim.play();
                 }
             }
@@ -1492,31 +1662,30 @@ class StatusLine {
         }
     }
     createRow() {
-        const row = document.createElement('div');
+        const row = document.createElement("div");
         horiz(row);
         this.elem.appendChild(row);
         return row;
     }
-    createIconText(icon, txt) {
-        const elem = document.createElement('div');
-        elem.style.position = 'relative';
-        const label = document.createElement('div');
+    createIconText(icon, text) {
+        const elem = document.createElement("div");
+        elem.style.position = "relative";
+        const label = this.createText(text);
+        label.title = text?.text || "";
         fullScreen(label);
         center(label);
-        label.innerHTML = txt;
-        label.title = txt;
         elem.appendChild(icon);
         elem.appendChild(label);
         return elem;
     }
     createMinMaxValue(icon, fg, bg, v, maxV) {
-        const elem = document.createElement('div');
+        const elem = document.createElement("div");
         horiz(elem);
-        elem.style.gap = '0';
-        icon.style.marginRight = '-1rem';
-        icon.style.zIndex = '1';
+        elem.style.gap = "0";
+        icon.style.marginRight = "-1rem";
+        icon.style.zIndex = "1";
         elem.appendChild(icon);
-        elem.appendChild(Slider(v || 0, maxV || 1, fg, bg));
+        elem.appendChild(Slider(parseInt(v?.text || "0"), parseInt(maxV?.text || "1"), fg, bg));
         return elem;
     }
 }

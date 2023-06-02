@@ -1,8 +1,19 @@
+var Type;
+(function (Type) {
+    Type["INT"] = "i";
+    Type["STRING"] = "s";
+    Type["POINTER"] = "p";
+})(Type || (Type = {}));
 function toTile(glyph) {
     return window.module._glyph_to_tile(glyph);
 }
+const TYPE_SIZES = {
+    [Type.INT]: 4,
+    [Type.POINTER]: 4,
+    [Type.STRING]: 4, // TODO
+};
 function selectItems(itemIds, selectedPointer) {
-    const int_size = 4;
+    const int_size = TYPE_SIZES[Type.INT];
     const size = int_size * 2; // selected object has 3 fields, in 3.6 only 2
     const total_size = size * itemIds.length;
     const start_ptr = window.module._malloc(total_size);
@@ -18,12 +29,10 @@ function selectItems(itemIds, selectedPointer) {
     const selected_pp = window.nethackGlobal.helpers.getPointerValue("", selectedPointer, Type.POINTER);
     window.nethackGlobal.helpers.setPointerValue("nethack.menu.setSelected", selected_pp, Type.INT, start_ptr);
 }
-var Type;
-(function (Type) {
-    Type["INT"] = "i";
-    Type["STRING"] = "s";
-    Type["POINTER"] = "p";
-})(Type || (Type = {}));
+function getArrayValue(start_ptr, index, type) {
+    const ptr = start_ptr + index * TYPE_SIZES[type];
+    return window.nethackGlobal.helpers.getPointerValue("nethack.menu.setSelected", ptr, type);
+}
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -1193,8 +1202,9 @@ var STATUS_FIELD;
 var ATTR;
 (function (ATTR) {
     ATTR[ATTR["ATR_NONE"] = 0] = "ATR_NONE";
-    ATTR[ATTR["ATR_ULINE"] = 4] = "ATR_ULINE";
     ATTR[ATTR["ATR_BOLD"] = 1] = "ATR_BOLD";
+    ATTR[ATTR["ATR_DIM"] = 2] = "ATR_DIM";
+    ATTR[ATTR["ATR_ULINE"] = 4] = "ATR_ULINE";
     ATTR[ATTR["ATR_BLINK"] = 5] = "ATR_BLINK";
     ATTR[ATTR["ATR_INVERSE"] = 7] = "ATR_INVERSE";
 })(ATTR || (ATTR = {}));
@@ -1623,39 +1633,45 @@ var ItemFlag;
     ItemFlag[ItemFlag["SKIPINVERT"] = 2] = "SKIPINVERT";
 })(ItemFlag || (ItemFlag = {}));
 const statusMap = {
-    [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v?.trim()),
+    [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v),
     [STATUS_FIELD.BL_STR]: (s, v) => (s.str = v),
-    [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseNumberOrUndefined(v)),
-    [STATUS_FIELD.BL_CO]: (s, v) => (s.con = parseNumberOrUndefined(v)),
-    [STATUS_FIELD.BL_IN]: (s, v) => (s.int = parseNumberOrUndefined(v)),
-    [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = parseNumberOrUndefined(v)),
-    [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = parseNumberOrUndefined(v)),
+    [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = v),
+    [STATUS_FIELD.BL_CO]: (s, v) => (s.con = v),
+    [STATUS_FIELD.BL_IN]: (s, v) => (s.int = v),
+    [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = v),
+    [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = v),
     [STATUS_FIELD.BL_ALIGN]: (s, v) => (s.align = v),
     [STATUS_FIELD.BL_SCORE]: (s, v) => (s.score = v),
     [STATUS_FIELD.BL_CAP]: (s, v) => (s.carryCap = v),
-    [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseNumberOrUndefined(v?.split(":")[1])),
-    [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = parseNumberOrUndefined(v)),
-    [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = parseNumberOrUndefined(v)),
-    [STATUS_FIELD.BL_EXP]: (s, v) => (s.exp = parseNumberOrUndefined(v)),
-    [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = parseNumberOrUndefined(v)),
-    [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = v?.trim()),
-    [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = parseNumberOrUndefined(v)),
-    [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = parseNumberOrUndefined(v)),
-    [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v?.trim()),
-    [STATUS_FIELD.BL_XP]: (s, v) => (s.expLvl = parseNumberOrUndefined(v)),
-    [STATUS_FIELD.BL_CONDITION]: (s, v) => (s.condition = conditionMap[parseNumberOrUndefined(v)] ?? undefined),
+    [STATUS_FIELD.BL_GOLD]: (s, v) => {
+        if (v) {
+            v.text = v.text.split(':')[1];
+        }
+        s.gold = v;
+    },
+    [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = v),
+    [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = v),
+    [STATUS_FIELD.BL_EXP]: (s, v) => (s.exp = v),
+    [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = v),
+    [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = v),
+    [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = v),
+    [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = v),
+    [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v),
+    [STATUS_FIELD.BL_XP]: (s, v) => (s.expLvl = v),
+    [STATUS_FIELD.BL_CONDITION]: (s, v) => {
+        // if (v) {
+        //   const cond = parseNumberOrUndefined(v.text);
+        //   v.text = conditionMap[cond as CONDITION] ?? v.text;
+        // }
+        // s.condition = v;
+    },
     // [STATUS_FIELD.BL_CHARACTERISTICS]: () => {},
     // [STATUS_FIELD.BL_RESET]: () => {},
     [STATUS_FIELD.BL_FLUSH]: () => { },
-    [STATUS_FIELD.BL_HD]: (s, v) => s.hd = parseNumberOrUndefined(v),
-    [STATUS_FIELD.BL_TIME]: (s, v) => {
-        s.time = parseNumberOrUndefined(v);
-    },
+    [STATUS_FIELD.BL_HD]: (s, v) => s.hd = v,
+    [STATUS_FIELD.BL_TIME]: (s, v) => s.time = v,
     // [STATUS_FIELD.MAXBLSTATS]: () => {},
 };
-function parseNumberOrUndefined(value) {
-    return value ? parseInt(value) : undefined;
-}
 // See mswproc.c
 const conditionMap = {
     [CONDITION.BL_MASK_BLIND]: "Blind",
@@ -1910,6 +1926,62 @@ function toInventoryItem(item) {
     };
 }
 
+const ATTR_MAP = {
+    [COLOR_ATTR.HL_ATTCLR_DIM]: ATTR.ATR_DIM,
+    [COLOR_ATTR.HL_ATTCLR_BLINK]: ATTR.ATR_BLINK,
+    [COLOR_ATTR.HL_ATTCLR_ULINE]: ATTR.ATR_ULINE,
+    [COLOR_ATTR.HL_ATTCLR_INVERSE]: ATTR.ATR_INVERSE,
+    [COLOR_ATTR.HL_ATTCLR_BOLD]: ATTR.ATR_BOLD,
+};
+function createStatusText(text, colorValue) {
+    // Defined in window.doc -> status_update()
+    const color = colorValue & 0x00ff;
+    // Bold is for some reason 2
+    // Underline is 8, so to correct this shift by another bit
+    const attr = colorValue >> (8 + 1);
+    return { text, color, attr: [attr] };
+}
+// Similar to wintty.c render_status(), condcolor() and condattr()
+function createConditionStatusText(conditionBits, colorMask) {
+    const result = [];
+    for (let c of Object.values(CONDITION)) {
+        if (typeof c !== "number")
+            continue;
+        const condition = c;
+        if (conditionBits & condition) {
+            result.push({
+                text: conditionMap[condition],
+                color: parseConditionColor(condition, colorMask),
+                attr: parseConditionAttr(condition, colorMask),
+            });
+            conditionBits &= ~condition;
+        }
+    }
+    return result;
+}
+function parseConditionColor(condition, maskPointer) {
+    for (let i = COLORS.CLR_BLACK; i < COLORS.CLR_MAX; i++) {
+        if (i === COLORS.NO_COLOR)
+            continue; // Has lowest priority
+        const clr = getArrayValue(maskPointer, i, Type.INT);
+        if ((condition & clr) !== 0) {
+            return i;
+        }
+    }
+    return COLORS.NO_COLOR;
+}
+function parseConditionAttr(condition, maskPointer) {
+    const result = [];
+    for (let i = COLOR_ATTR.HL_ATTCLR_DIM; i < COLOR_ATTR.BL_ATTCLR_MAX; i++) {
+        const attr = getArrayValue(maskPointer, i, Type.INT);
+        if ((condition & attr) !== 0) {
+            result.push(ATTR_MAP[i]);
+        }
+    }
+    return result;
+}
+
+const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 class NetHackWrapper {
     constructor(debug = false, module, util, win = window, autostart = true) {
@@ -2084,9 +2156,9 @@ class NetHackWrapper {
         }
     }
     // Waiting for input from user
-    async waitInput(filterContinue = false) {
+    async waitInput(filterContinue = false, onlyAscii = false) {
         this.awaitingInput$.next(true);
-        return await firstValueFrom(this.input$.pipe(filter$1((c) => !filterContinue || CONTINUE_KEYS.includes(c))));
+        return await firstValueFrom(this.input$.pipe(filter$1((c) => (!filterContinue || CONTINUE_KEYS.includes(c)) && (!onlyAscii || c <= ASCII_MAX))));
     }
     async waitLine() {
         this.awaitingInput$.next(true);
@@ -2143,9 +2215,12 @@ class NetHackWrapper {
             question = m[0];
             choices = m[1];
         }
-        let allChoices = choices ?? '';
-        if (!!choices && !choices.includes('-') && !choices.includes(' or ') && !choices.includes('*')) {
-            allChoices = choices.split('');
+        let allChoices = choices ?? "";
+        if (!!choices &&
+            !choices.includes("-") &&
+            !choices.includes(" or ") &&
+            !choices.includes("*")) {
+            allChoices = choices.split("");
         }
         if (Array.isArray(allChoices)) {
             this.ui.openQuestion(question, String.fromCharCode(defaultChoice), ...allChoices);
@@ -2155,14 +2230,14 @@ class NetHackWrapper {
         }
         let c = 0;
         do {
-            c = await this.waitInput();
+            c = await this.waitInput(false, true);
             // Default behaviour described in window.doc
             if (c === ESC) {
-                if (choices.includes('q')) {
-                    c = 'q'.charCodeAt(0);
+                if (choices.includes("q")) {
+                    c = "q".charCodeAt(0);
                 }
-                else if (choices.includes('n')) {
-                    c = 'n'.charCodeAt(0);
+                else if (choices.includes("n")) {
+                    c = "n".charCodeAt(0);
                 }
                 else {
                     c = defaultChoice;
@@ -2190,7 +2265,7 @@ class NetHackWrapper {
                 this.putStr = "";
             }
             else {
-                this.log('putStr has value but another window is displayed', winid);
+                this.log("putStr has value but another window is displayed", winid);
             }
         }
     }
@@ -2243,8 +2318,8 @@ class NetHackWrapper {
         }
         else {
             if (this.putStrWinId !== winid) {
-                this.log('putStr value changed without displaying it', str, winid);
-                this.putStr = '';
+                this.log("putStr value changed without displaying it", str, winid);
+                this.putStr = "";
             }
             this.putStr += str + "\n";
             this.putStrWinId = winid;
@@ -2261,23 +2336,23 @@ class NetHackWrapper {
             statusMap[type](this.status, undefined);
         }
     }
-    async statusUpdate(type, ptr) {
+    async statusUpdate(type, ptr, chg, percentage, color, colormasks) {
         if (type === STATUS_FIELD.BL_FLUSH) {
-            console.log(this.status);
             this.ui.updateStatus(this.status);
             return;
         }
         const mapper = statusMap[type];
         if (mapper) {
-            let value;
             if (type == STATUS_FIELD.BL_CONDITION) {
-                value = this.global.helpers.getPointerValue('status', ptr, Type.INT);
+                const conditionBits = this.global.helpers.getPointerValue("status", ptr, Type.INT);
+                this.status.condition = createConditionStatusText(conditionBits, colormasks);
+                console.log(STATUS_FIELD[type], conditionBits, this.status.condition);
             }
             else {
-                value = this.global.helpers.getPointerValue('status', ptr, Type.STRING);
+                const text = this.global.helpers.getPointerValue("status", ptr, Type.STRING);
+                mapper(this.status, createStatusText(text, color));
+                console.log(STATUS_FIELD[type], text);
             }
-            mapper(this.status, value);
-            console.log(STATUS_FIELD[type], value);
         }
         else {
             this.log("Unhandled status type", STATUS_FIELD[type]);
@@ -2290,7 +2365,7 @@ class NetHackWrapper {
         let char = 0;
         while (!CONTINUE_KEYS.includes(char)) {
             this.ui.openMenu(id, prompt, count, ...items);
-            char = await this.waitInput();
+            char = await this.waitInput(false, true);
             if (count !== 0) {
                 toggleMenuItems(char, count, items);
                 if (count === 1 && items.some((i) => i.active)) {
@@ -2333,6 +2408,14 @@ const options = [
     "pickup_thrown",
     "pickup_burden:S",
     "statuscolors",
+    "hitpointbar",
+    "statushilites:10",
+    "hilite_status:characteristics/down/red",
+    "hilite_status:characteristics/up/green",
+    "hilite_status:hitpoints/<40%/red",
+    "hilite_status:hunger/always/red&bold",
+    "hilite_status:carrying-capacity/burdened/yellow/stressed/orange",
+    "hilite_status:condition/all/bold/major_troubles/red/minor_troubles/orange",
     "autoopen",
     "!cmdassist",
     "sortloot:full",
