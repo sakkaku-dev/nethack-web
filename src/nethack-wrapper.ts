@@ -1,6 +1,6 @@
 import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
 import { Item, NetHackJS, Status, NetHackUI, Tile, GameState, InventoryItem } from "./models";
-import { ATTR, MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
+import { ATTR, CONDITION, MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
 // @ts-ignore
 import nethackLib from "../lib/nethack.js";
@@ -18,6 +18,7 @@ import {
 import { listBackupFiles, loadRecords, loadSaveFiles, syncSaveFiles } from "./helper/save-files";
 import { CONTINUE_KEYS, ENTER, ESC, SPACE } from "./helper/keys";
 import { toInventoryItem } from "./helper/inventory";
+import { createConditionStatusText, createStatusText } from "./helper/visual";
 
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 
@@ -318,9 +319,14 @@ export class NetHackWrapper implements NetHackJS {
       choices = m[1];
     }
 
-    let allChoices: string | string[] = choices ?? '';
-    if (!!choices && !choices.includes('-') && !choices.includes(' or ') && !choices.includes('*')) {
-      allChoices = choices.split('');
+    let allChoices: string | string[] = choices ?? "";
+    if (
+      !!choices &&
+      !choices.includes("-") &&
+      !choices.includes(" or ") &&
+      !choices.includes("*")
+    ) {
+      allChoices = choices.split("");
     }
 
     if (Array.isArray(allChoices)) {
@@ -335,10 +341,10 @@ export class NetHackWrapper implements NetHackJS {
 
       // Default behaviour described in window.doc
       if (c === ESC) {
-        if (choices.includes('q')) {
-          c = 'q'.charCodeAt(0);
-        } else if (choices.includes('n')) {
-          c = 'n'.charCodeAt(0);
+        if (choices.includes("q")) {
+          c = "q".charCodeAt(0);
+        } else if (choices.includes("n")) {
+          c = "n".charCodeAt(0);
         } else {
           c = defaultChoice;
         }
@@ -349,7 +355,6 @@ export class NetHackWrapper implements NetHackJS {
       }
 
       // TODO: handle choice #, allows numbers
-
     } while (Array.isArray(allChoices) && !allChoices.includes(String.fromCharCode(c)));
 
     this.ui.closeDialog(-1);
@@ -368,7 +373,7 @@ export class NetHackWrapper implements NetHackJS {
         await this.waitInput(true);
         this.putStr = "";
       } else {
-        this.log('putStr has value but another window is displayed', winid);
+        this.log("putStr has value but another window is displayed", winid);
       }
     }
   }
@@ -437,8 +442,8 @@ export class NetHackWrapper implements NetHackJS {
       this.handlePrintLine(attr, str);
     } else {
       if (this.putStrWinId !== winid) {
-        this.log('putStr value changed without displaying it', str, winid);
-        this.putStr = '';
+        this.log("putStr value changed without displaying it", str, winid);
+        this.putStr = "";
       }
 
       this.putStr += str + "\n";
@@ -453,30 +458,41 @@ export class NetHackWrapper implements NetHackJS {
     this.ui.printLine(str);
   }
 
-  private async statusEnableField(type: STATUS_FIELD, name: number, format: number, enable: number) {
+  private async statusEnableField(
+    type: STATUS_FIELD,
+    name: number,
+    format: number,
+    enable: number
+  ) {
     if (!enable) {
       statusMap[type](this.status, undefined);
     }
   }
 
-  private async statusUpdate(type: STATUS_FIELD, ptr: number) {
+  private async statusUpdate(
+    type: STATUS_FIELD,
+    ptr: number,
+    chg: number,
+    percentage: number,
+    color: number,
+    colormasks: number
+  ) {
     if (type === STATUS_FIELD.BL_FLUSH) {
-      console.log(this.status);
       this.ui.updateStatus(this.status);
       return;
     }
 
     const mapper = statusMap[type];
     if (mapper) {
-      let value;
       if (type == STATUS_FIELD.BL_CONDITION) {
-        value = this.global.helpers.getPointerValue('status', ptr, Type.INT);
+        const conditionBits: number = this.global.helpers.getPointerValue("status", ptr, Type.INT);
+        this.status.condition = createConditionStatusText(conditionBits, colormasks);
+        console.log(STATUS_FIELD[type], conditionBits, this.status.condition);
       } else {
-        value = this.global.helpers.getPointerValue('status', ptr, Type.STRING);
+        const text = this.global.helpers.getPointerValue("status", ptr, Type.STRING);
+        mapper(this.status, createStatusText(text, color));
+        console.log(STATUS_FIELD[type], text);
       }
-
-      mapper(this.status, value);
-      console.log(STATUS_FIELD[type], value);
     } else {
       this.log("Unhandled status type", STATUS_FIELD[type]);
     }

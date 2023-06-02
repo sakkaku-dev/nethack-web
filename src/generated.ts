@@ -37,8 +37,9 @@ export enum STATUS_FIELD {
 
 export enum ATTR {
     ATR_NONE = 0,
-    ATR_ULINE = 4,
     ATR_BOLD = 1,
+    ATR_DIM = 2,
+    ATR_ULINE = 4,
     ATR_BLINK = 5,
     ATR_INVERSE = 7,
 }

@@ -1,3 +1,5 @@
+import { StyledText } from "./helper/visual";
+
 export interface NetHackJS {
   sendInput: (key: number) => void;
   sendLine: (line: string) => void;
@@ -64,9 +66,9 @@ export interface Item {
 }
 
 export enum BUCState {
-  BLESSED = 'blessed',
-  UNCURSED = 'uncursed',
-  CURSED = 'cursed',
+  BLESSED = "blessed",
+  UNCURSED = "uncursed",
+  CURSED = "cursed",
 }
 
 export interface InventoryItem extends Item {
@@ -100,10 +102,10 @@ interface StatusAll {
   carryCap: string;
   hunger: string;
   dungeonLvl: string;
-  condition?: string;
+  // condition?: string;
 
   time?: number;
   hd?: number;
 }
 
-export type Status = Partial<StatusAll>;
+export type Status = Partial<Record<keyof StatusAll, StyledText>> & { condition?: StyledText[] };

@@ -1,4 +1,5 @@
 import { CONDITION, STATUS_FIELD } from "./generated";
+import { StyledText } from "./helper/visual";
 import { Status } from "./models";
 
 export enum Command {
@@ -46,36 +47,44 @@ export enum ItemFlag {
   SKIPINVERT = 2,
 }
 
-export const statusMap: Record<STATUS_FIELD, (s: Status, v?: string) => void> = {
-  [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v?.trim()),
+export const statusMap: Record<STATUS_FIELD, (s: Status, v?: StyledText) => void> = {
+  [STATUS_FIELD.BL_TITLE]: (s, v) => (s.title = v),
   [STATUS_FIELD.BL_STR]: (s, v) => (s.str = v),
-  [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_CO]: (s, v) => (s.con = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_IN]: (s, v) => (s.int = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = parseNumberOrUndefined(v)),
+  [STATUS_FIELD.BL_DX]: (s, v) => (s.dex = v),
+  [STATUS_FIELD.BL_CO]: (s, v) => (s.con = v),
+  [STATUS_FIELD.BL_IN]: (s, v) => (s.int = v),
+  [STATUS_FIELD.BL_WI]: (s, v) => (s.wis = v),
+  [STATUS_FIELD.BL_CH]: (s, v) => (s.cha = v),
   [STATUS_FIELD.BL_ALIGN]: (s, v) => (s.align = v),
   [STATUS_FIELD.BL_SCORE]: (s, v) => (s.score = v),
   [STATUS_FIELD.BL_CAP]: (s, v) => (s.carryCap = v),
-  [STATUS_FIELD.BL_GOLD]: (s, v) => (s.gold = parseNumberOrUndefined(v?.split(":")[1])),
-  [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_EXP]: (s, v) => (s.exp = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = v?.trim()),
-  [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v?.trim()),
-  [STATUS_FIELD.BL_XP]: (s, v) => (s.expLvl = parseNumberOrUndefined(v)),
-  [STATUS_FIELD.BL_CONDITION]: (s, v) =>
-    (s.condition = conditionMap[parseNumberOrUndefined(v) as CONDITION] ?? undefined),
+  [STATUS_FIELD.BL_GOLD]: (s, v) => {
+    if (v) {
+      v.text = v.text.split(':')[1];
+    }
+    s.gold = v;
+  },
+  [STATUS_FIELD.BL_ENE]: (s, v) => (s.power = v),
+  [STATUS_FIELD.BL_ENEMAX]: (s, v) => (s.powerMax = v),
+  [STATUS_FIELD.BL_EXP]: (s, v) => (s.exp = v),
+  [STATUS_FIELD.BL_AC]: (s, v) => (s.armor = v),
+  [STATUS_FIELD.BL_HUNGER]: (s, v) => (s.hunger = v),
+  [STATUS_FIELD.BL_HP]: (s, v) => (s.hp = v),
+  [STATUS_FIELD.BL_HPMAX]: (s, v) => (s.hpMax = v),
+  [STATUS_FIELD.BL_LEVELDESC]: (s, v) => (s.dungeonLvl = v),
+  [STATUS_FIELD.BL_XP]: (s, v) => (s.expLvl = v),
+  [STATUS_FIELD.BL_CONDITION]: (s, v) => {
+    // if (v) {
+    //   const cond = parseNumberOrUndefined(v.text);
+    //   v.text = conditionMap[cond as CONDITION] ?? v.text;
+    // }
+    // s.condition = v;
+  },
   // [STATUS_FIELD.BL_CHARACTERISTICS]: () => {},
   // [STATUS_FIELD.BL_RESET]: () => {},
   [STATUS_FIELD.BL_FLUSH]: () => {},
-  [STATUS_FIELD.BL_HD]: (s, v) => s.hd = parseNumberOrUndefined(v),
-  [STATUS_FIELD.BL_TIME]: (s, v) => {
-    s.time = parseNumberOrUndefined(v);
-  },
+  [STATUS_FIELD.BL_HD]: (s, v) => s.hd = v,
+  [STATUS_FIELD.BL_TIME]: (s, v) => s.time = v,
   // [STATUS_FIELD.MAXBLSTATS]: () => {},
 };
 
