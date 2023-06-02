@@ -1,6 +1,6 @@
 import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from "rxjs";
 import { Item, NetHackJS, Status, NetHackUI, Tile, GameState, InventoryItem } from "./models";
-import { ATTR, CONDITION, MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
+import { ATTR, MENU_SELECT, STATUS_FIELD, WIN_TYPE } from "./generated";
 
 // @ts-ignore
 import nethackLib from "../lib/nethack.js";
@@ -20,6 +20,7 @@ import { CONTINUE_KEYS, ENTER, ESC, SPACE } from "./helper/keys";
 import { toInventoryItem } from "./helper/inventory";
 import { createConditionStatusText, createStatusText } from "./helper/visual";
 
+const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 
 export class NetHackWrapper implements NetHackJS {
@@ -242,10 +243,14 @@ export class NetHackWrapper implements NetHackJS {
 
   // Waiting for input from user
 
-  private async waitInput(filterContinue = false) {
+  private async waitInput(filterContinue = false, onlyAscii = false) {
     this.awaitingInput$.next(true);
     return await firstValueFrom(
-      this.input$.pipe(filter((c) => !filterContinue || CONTINUE_KEYS.includes(c)))
+      this.input$.pipe(
+        filter(
+          (c) => (!filterContinue || CONTINUE_KEYS.includes(c)) && (!onlyAscii || c <= ASCII_MAX)
+        )
+      )
     );
   }
 
@@ -337,7 +342,7 @@ export class NetHackWrapper implements NetHackJS {
 
     let c = 0;
     do {
-      c = await this.waitInput();
+      c = await this.waitInput(false, true);
 
       // Default behaviour described in window.doc
       if (c === ESC) {
@@ -512,7 +517,8 @@ export class NetHackWrapper implements NetHackJS {
 
     while (!CONTINUE_KEYS.includes(char)) {
       this.ui.openMenu(id, prompt, count, ...items);
-      char = await this.waitInput();
+      char = await this.waitInput(false, true);
+
       if (count !== 0) {
         toggleMenuItems(char, count, items);
 
