@@ -61,10 +61,17 @@ export class StatusLine {
     return container;
   }
 
-  private createText(text?: StyledText) {
+  private createText(text?: StyledText, pulse = false) {
     const elem = document.createElement("span");
     if (text) {
       elem.innerHTML = text.text;
+
+      if (pulse) {
+        elem.style.animationName = "pulse";
+        elem.style.animationDuration = "2s";
+        elem.style.animationIterationCount = "infinite";
+        elem.style.animationTimingFunction = "ease-in-out";
+      }
 
       if (text.color in COLOR_MAP) {
         const color = text.color as keyof typeof COLOR_MAP;
@@ -87,9 +94,10 @@ export class StatusLine {
 
     const conditions = document.createElement("div");
     horiz(conditions);
-    conditions.appendChild(this.createText(s.hunger));
-    s.condition?.forEach((c) => conditions.appendChild(this.createText(c)));
+    conditions.appendChild(this.createText(s.hunger, true));
+    s.condition?.forEach((c) => conditions.appendChild(this.createText(c, true)));
     conditions.style.flexGrow = "1";
+    conditions.style.fontSize = "1.2rem";
     firstRow.appendChild(conditions);
 
     // firstRow.appendChild(this.toggleExpandButton());

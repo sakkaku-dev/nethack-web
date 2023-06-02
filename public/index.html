@@ -39,6 +39,18 @@
     padding: 0 0.5rem; /* No vertical padding, since there is already a line height */
   }
 
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
   #sidebar {
     position: absolute;
     right: 0;
@@ -185,8 +197,8 @@
     transform: scale(var(--ggs, 1));
     width: 20px;
     height: 10px;
-    background: linear-gradient(to left, currentColor 18px, transparent 0)
-      no-repeat 2px 4px/16px 2px;
+    background: linear-gradient(to left, currentColor 18px, transparent 0) no-repeat 2px 4px/16px
+      2px;
   }
   .gg-arrows-h-alt::after,
   .gg-arrows-h-alt::before {
