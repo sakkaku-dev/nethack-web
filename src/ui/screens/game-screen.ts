@@ -76,7 +76,6 @@ export class GameScreen extends Screen {
     }
 
     public openQuestion(question: string, choices: string[], defaultChoice: string) {
-        // this.console.appendLine(`${question} ${choices.map(c => c === defaultChoice ? `<strong style="color: red">${c}</strong>` : c)}`);
         const dialog = new Question(question, choices, defaultChoice);
         this.elem.appendChild(dialog.elem);
     }

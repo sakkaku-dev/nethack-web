@@ -52,6 +52,7 @@ export class TileMap {
   private tiles: number[][] = [];
   private canvas: HTMLCanvasElement;
   private cursor: HTMLImageElement;
+  private mapSize: Vector = { x: 79, y: 21 }; // Fixed map size? Might change in other version?
 
   constructor(root: HTMLElement, private tileSet: TileSet) {
     this.canvas = document.createElement('canvas');
@@ -91,6 +92,12 @@ export class TileMap {
   private clearCanvas() {
     this.cursor.style.display = 'none';
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    const map = mult(this.mapSize, this.tileSize);
+    const localPos = this.localToCanvas({ x: 1, y: 0 });
+
+    this.context.fillStyle = '#111';
+    this.context.fillRect(localPos.x, localPos.y, map.x, map.y);
   }
 
   private rerender() {
@@ -121,11 +128,7 @@ export class TileMap {
 
     const source = this.tileSet.getCoordinateForTile(tile);
     const size = this.tileSet.tileSize;
-
-    const globalPos = this.toGlobal({ x, y });
-    const globalCenter = this.toGlobal(this.center);
-    const relPosFromCenter = sub(globalPos, globalCenter);
-    const localPos = add(this.canvasCenter, relPosFromCenter);
+    const localPos = this.localToCanvas({ x, y });
 
     this.context.drawImage(
       // Source
@@ -140,6 +143,13 @@ export class TileMap {
       size,
       size
     );
+  }
+
+  private localToCanvas(pos: Vector) {
+    const globalPos = this.toGlobal(pos);
+    const globalCenter = this.toGlobal(this.center);
+    const relPosFromCenter = sub(globalPos, globalCenter);
+    return add(this.canvasCenter, relPosFromCenter);
   }
 
   private toGlobal(vec: Vector): Vector {
