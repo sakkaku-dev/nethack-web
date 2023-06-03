@@ -164,6 +164,7 @@ class Screen {
     onCloseDialog() {
         Dialog.removeAll();
     }
+    onSettingsChange(setting) { }
 }
 
 class StartScreen extends Screen {
@@ -1227,6 +1228,10 @@ class Inventory {
     clear() {
         Array.from(this.elem.children).forEach((c) => this.elem.removeChild(c));
     }
+    setTileSet(tileset) {
+        this.tileset = tileset;
+        this.updateItems(this.items);
+    }
     toggle() {
         this.expanded = !this.expanded;
         // Update not necessary, the toggle key will automatically request a reload of the inventory
@@ -1263,7 +1268,9 @@ class Inventory {
                 const container = document.createElement("div");
                 horiz(container);
                 const img = this.createItemImage(item);
-                container.appendChild(img);
+                if (img) {
+                    container.appendChild(img);
+                }
                 if (this.expanded) {
                     const text = document.createElement("div");
                     text.innerHTML = item.str;
@@ -1274,6 +1281,8 @@ class Inventory {
         });
     }
     createItemImage(item) {
+        if (!this.tileset)
+            return null;
         const img = this.tileset.createBackgroundImage(item.tile, item.accelerator);
         if (item.count > 1) {
             const count = document.createElement("div");
@@ -1749,12 +1758,19 @@ class TileSet {
         }
         return div;
     }
+    equals(other) {
+        if (!other)
+            return false;
+        return this.image.src === other.image.src;
+    }
 }
 class TileMap {
     constructor(root, tileSet) {
         this.tileSet = tileSet;
         this.center = { x: 0, y: 0 };
         this.tiles = [];
+        this.mapSize = { x: 79, y: 21 }; // Fixed map size? Might change in other version?
+        this.mapBorder = true;
         this.canvas = document.createElement('canvas');
         this.canvas.id = 'map';
         this.cursor = document.createElement('img');
@@ -1765,6 +1781,14 @@ class TileMap {
         this.context = this.canvas.getContext("2d");
         this.updateCanvasSize();
         this.clearCanvas();
+    }
+    setMapBorder(enableMapBorder) {
+        this.mapBorder = enableMapBorder;
+        this.rerender();
+    }
+    setTileSet(tileset) {
+        this.tileSet = tileset;
+        this.rerender();
     }
     onResize() {
         this.updateCanvasSize();
@@ -1785,6 +1809,12 @@ class TileMap {
     clearCanvas() {
         this.cursor.style.display = 'none';
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this.mapBorder) {
+            const map = mult(this.mapSize, this.tileSize);
+            const localPos = this.localToCanvas({ x: 1, y: 0 });
+            this.context.fillStyle = '#111';
+            this.context.fillRect(localPos.x, localPos.y, map.x, map.y);
+        }
     }
     rerender() {
         this.clearCanvas();
@@ -1808,25 +1838,28 @@ class TileMap {
     }
     drawTile(x, y) {
         const tile = this.tiles[x][y];
-        if (tile == null)
+        if (!this.tileSet || tile == null)
             return;
         const source = this.tileSet.getCoordinateForTile(tile);
         const size = this.tileSet.tileSize;
-        const globalPos = this.toGlobal({ x, y });
-        const globalCenter = this.toGlobal(this.center);
-        const relPosFromCenter = sub(globalPos, globalCenter);
-        const localPos = add(this.canvasCenter, relPosFromCenter);
+        const localPos = this.localToCanvas({ x, y });
         this.context.drawImage(
         // Source
         this.tileSet.image, source.x, source.y, size, size, 
         // Target
         localPos.x, localPos.y, size, size);
     }
+    localToCanvas(pos) {
+        const globalPos = this.toGlobal(pos);
+        const globalCenter = this.toGlobal(this.center);
+        const relPosFromCenter = sub(globalPos, globalCenter);
+        return add(this.canvasCenter, relPosFromCenter);
+    }
     toGlobal(vec) {
         return mult(vec, this.tileSize);
     }
     get tileSize() {
-        return { x: this.tileSet.tileSize, y: this.tileSet.tileSize };
+        return { x: this.tileSet?.tileSize || 0, y: this.tileSet?.tileSize || 0 };
     }
     get canvasCenter() {
         return { x: this.canvas.width / 2, y: this.canvas.height / 2 };
@@ -1866,18 +1899,41 @@ class Gameover extends Dialog {
     }
 }
 
+var TileSetImage;
+(function (TileSetImage) {
+    TileSetImage["Nevanda"] = "Nevanda";
+    TileSetImage["Dawnhack"] = "Dawnhack";
+    TileSetImage["Default"] = "Default Nethack";
+})(TileSetImage || (TileSetImage = {}));
+
 class GameScreen extends Screen {
     constructor() {
         super();
         this.resize$ = new Subject();
-        this.tileset = new TileSet("Nevanda.png", 32, 40);
-        this.tilemap = new TileMap(this.elem, this.tileset);
+        this.tilemap = new TileMap(this.elem);
         this.console = new Console(this.elem);
         const sidebar = document.querySelector('#sidebar');
-        this.inventory = new Inventory(sidebar, this.tileset);
+        this.inventory = new Inventory(sidebar);
         this.status = new StatusLine(sidebar);
         this.elem.appendChild(sidebar);
         this.resize$.pipe(debounceTime(200)).subscribe(() => this.tilemap?.onResize());
+    }
+    createTileset(image) {
+        switch (image) {
+            case TileSetImage.Nevanda: return new TileSet('Nevanda.png', 32, 40);
+            case TileSetImage.Dawnhack: return new TileSet('dawnhack_32.bmp', 32, 40);
+            default: return new TileSet('nethack_default.png', 32, 40);
+        }
+    }
+    onSettingsChange(setting) {
+        console.log('Settings changed', setting);
+        const newTileset = this.createTileset(setting.tileSetImage);
+        if (!newTileset.equals(this.tileset)) {
+            this.tileset = newTileset;
+            this.tilemap.setTileSet(this.tileset);
+            this.inventory.setTileSet(this.tileset);
+        }
+        this.tilemap.setMapBorder(setting.enableMapBorder);
     }
     onResize() {
         this.resize$.next();
@@ -1911,7 +1967,6 @@ class GameScreen extends Screen {
         line.focus();
     }
     openQuestion(question, choices, defaultChoice) {
-        // this.console.appendLine(`${question} ${choices.map(c => c === defaultChoice ? `<strong style="color: red">${c}</strong>` : c)}`);
         const dialog = new Question(question, choices, defaultChoice);
         this.elem.appendChild(dialog.elem);
     }
@@ -1956,6 +2011,9 @@ class Game {
                     this.game.openGameover();
                     break;
             }
+        };
+        this.updateSettings = (settings) => {
+            this.current?.onSettingsChange(settings);
         };
         document.body.onresize = (e) => this.current?.onResize();
         document.body.onkeydown = (e) => {

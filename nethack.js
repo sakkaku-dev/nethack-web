@@ -1981,8 +1981,35 @@ function parseConditionAttr(condition, maskPointer) {
     return result;
 }
 
+const SETTINGS_KEY = 'sakkaku-dev-nethack-settings';
+var TileSetImage;
+(function (TileSetImage) {
+    TileSetImage["Nevanda"] = "Nevanda";
+    TileSetImage["Dawnhack"] = "Dawnhack";
+    TileSetImage["Default"] = "Default Nethack";
+})(TileSetImage || (TileSetImage = {}));
+function loadSettings() {
+    const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    return {
+        enableMapBorder: true,
+        tileSetImage: TileSetImage.Nevanda,
+        ...settings,
+    };
+}
+function updateSettings(settings, changeFn) {
+    changeFn(settings);
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
 const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
+var InputType;
+(function (InputType) {
+    InputType[InputType["ALL"] = 0] = "ALL";
+    InputType[InputType["CONTINUE"] = 1] = "CONTINUE";
+    InputType[InputType["ASCII"] = 2] = "ASCII";
+    InputType[InputType["ESCAPE"] = 3] = "ESCAPE";
+})(InputType || (InputType = {}));
 class NetHackWrapper {
     constructor(debug = false, module, util, win = window, autostart = true) {
         this.debug = debug;
@@ -2050,13 +2077,6 @@ class NetHackWrapper {
         this.inventory$
             .pipe(filter$1((x) => x.length > 0), debounceTime(100), tap((items) => this.ui.updateInventory(...items)))
             .subscribe();
-        // this.status$
-        //   .pipe(
-        //     skip(1),
-        //     debounceTime(100),
-        //     tap((s) => this.ui.updateStatus(s))
-        //   )
-        //   .subscribe();
         this.input$.subscribe(() => this.awaitingInput$.next(false));
         this.win.nethackCallback = this.handle.bind(this);
         this.win.onbeforeunload = (e) => {
@@ -2071,7 +2091,7 @@ class NetHackWrapper {
                 const unsaved = "Unfortunately the game progress could not be saved.";
                 const backup = 'Use the "Load from backup" in the main menu to restart from your latest save.';
                 this.ui.openDialog(-1, `${title}\n${unsaved}\n\n${backup}`);
-                this.waitInput(true).then(() => {
+                this.waitInput(InputType.CONTINUE).then(() => {
                     this.ui.closeDialog(-1);
                     this.gameState$.next(GameState.GAMEOVER);
                 });
@@ -2087,10 +2107,9 @@ class NetHackWrapper {
     }
     async openStartScreen() {
         while (!this.isGameRunning()) {
-            const files = listBackupFiles();
-            const records = loadRecords();
             const actions = [async () => this.startGame()];
             const startMenu = ["Start Game"];
+            const files = listBackupFiles();
             if (files.length > 0) {
                 startMenu.push("Load from backup");
                 actions.push(async () => {
@@ -2101,22 +2120,50 @@ class NetHackWrapper {
                     }
                 });
             }
+            startMenu.push('Options');
+            actions.push(() => this.options());
+            const records = loadRecords();
             if (records.length) {
                 startMenu.push("Leaderboard");
                 actions.push(async () => {
                     this.ui.openDialog(-1, records);
-                    await this.waitInput(true);
+                    await this.waitInput(InputType.CONTINUE);
                     this.ui.closeDialog(-1);
                 });
             }
             const id = await this.openCustomMenu("Welcome to NetHack", startMenu);
-            await actions[id]();
+            if (id !== -1) {
+                await actions[id]();
+            }
         }
         this.ui.closeDialog(-1);
     }
-    startGame() {
+    async options() {
+        let cancel = false;
+        do {
+            const settings = loadSettings();
+            const options = [`Enable map border - [${settings.enableMapBorder}]`, `Tileset - ${settings.tileSetImage}`];
+            const optionActions = [async () => updateSettings(settings, s => s.enableMapBorder = !s.enableMapBorder), () => this.tilesetOption(settings)];
+            const optionId = await this.openCustomMenu("Options", options);
+            if (optionId === -1) {
+                cancel = true;
+            }
+            else {
+                await optionActions[optionId]();
+            }
+        } while (!cancel);
+    }
+    async tilesetOption(settings) {
+        const images = Object.values(TileSetImage);
+        const idx = await this.openCustomMenu('Tileset Image', images);
+        if (idx !== -1) {
+            updateSettings(settings, s => s.tileSetImage = images[idx]);
+        }
+    }
+    async startGame() {
         this.gameState$.next(GameState.RUNNING);
-        nethackLib(this.module);
+        await nethackLib(this.module);
+        this.ui.updateSettings(loadSettings());
     }
     async openCustomMenu(prompt, buttons) {
         const items = buttons.map((file, i) => ({
@@ -2156,9 +2203,20 @@ class NetHackWrapper {
         }
     }
     // Waiting for input from user
-    async waitInput(filterContinue = false, onlyAscii = false) {
+    async waitInput(type = InputType.ALL) {
         this.awaitingInput$.next(true);
-        return await firstValueFrom(this.input$.pipe(filter$1((c) => (!filterContinue || CONTINUE_KEYS.includes(c)) && (!onlyAscii || c <= ASCII_MAX))));
+        return await firstValueFrom(this.input$.pipe(filter$1((c) => {
+            switch (type) {
+                case InputType.CONTINUE:
+                    return CONTINUE_KEYS.includes(c);
+                case InputType.ASCII:
+                    return c <= ASCII_MAX;
+                case InputType.ESCAPE:
+                    return c === ESC;
+                default:
+                    return true;
+            }
+        })));
     }
     async waitLine() {
         this.awaitingInput$.next(true);
@@ -2230,7 +2288,7 @@ class NetHackWrapper {
         }
         let c = 0;
         do {
-            c = await this.waitInput(false, true);
+            c = await this.waitInput(InputType.ASCII);
             // Default behaviour described in window.doc
             if (c === ESC) {
                 if (choices.includes("q")) {
@@ -2261,7 +2319,7 @@ class NetHackWrapper {
         if (this.putStr !== "") {
             if (this.putStrWinId === winid) {
                 this.ui.openDialog(winid, this.putStr);
-                await this.waitInput(true);
+                await this.waitInput(InputType.CONTINUE);
                 this.putStr = "";
             }
             else {
@@ -2365,7 +2423,7 @@ class NetHackWrapper {
         let char = 0;
         while (!CONTINUE_KEYS.includes(char)) {
             this.ui.openMenu(id, prompt, count, ...items);
-            char = await this.waitInput(false, true);
+            char = await this.waitInput(InputType.ASCII);
             if (count !== 0) {
                 toggleMenuItems(char, count, items);
                 if (count === 1 && items.some((i) => i.active)) {
