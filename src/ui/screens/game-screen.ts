@@ -10,10 +10,10 @@ import { TileSet, TileMap } from "../components/tilemap";
 import { Screen } from "./screen";
 import { Question } from "../components/question";
 import { Gameover } from "../components/gameover";
-import { Settings } from "../../helper/settings";
+import { Settings, TileSetImage } from "../../helper/settings";
 
 export class GameScreen extends Screen {
-    public tileset: TileSet;
+    public tileset?: TileSet;
     public tilemap: TileMap;
     public inventory: Inventory;
     public console: Console;
@@ -25,19 +25,34 @@ export class GameScreen extends Screen {
     constructor() {
         super();
 
-        this.tileset = new TileSet("Nevanda.png", 32, 40);
-        this.tilemap = new TileMap(this.elem, this.tileset);
+        this.tilemap = new TileMap(this.elem);
         this.console = new Console(this.elem);
 
         const sidebar = document.querySelector('#sidebar') as HTMLElement;
-        this.inventory = new Inventory(sidebar, this.tileset);
+        this.inventory = new Inventory(sidebar);
         this.status = new StatusLine(sidebar);
         this.elem.appendChild(sidebar);
 
         this.resize$.pipe(debounceTime(200)).subscribe(() => this.tilemap?.onResize());
     }
 
+    private createTileset(image: TileSetImage) {
+        switch (image) {
+            case TileSetImage.Nevanda: return new TileSet('Nevanda.png', 32, 40);
+            case TileSetImage.Dawnhack: return new TileSet('dawnhack_32.bmp', 32, 40);
+            default: return new TileSet('nethack_default.png', 32, 40);
+        }
+    }
+
     onSettingsChange(setting: Settings) {
+        console.log('Settings changed', setting);
+        const newTileset = this.createTileset(setting.tileSetImage);
+        if (!newTileset.equals(this.tileset)) {
+            this.tileset = newTileset;
+            this.tilemap.setTileSet(this.tileset);
+            this.inventory.setTileSet(this.tileset);
+        }
+
         this.tilemap.setMapBorder(setting.enableMapBorder);
     }
 

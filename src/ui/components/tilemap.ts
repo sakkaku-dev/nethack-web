@@ -44,6 +44,11 @@ export class TileSet {
 
     return div;
   }
+
+  equals(other?: TileSet) {
+    if (!other) return false;
+    return this.image.src === other.image.src;
+  }
 }
 
 export class TileMap {
@@ -55,7 +60,7 @@ export class TileMap {
   private mapSize: Vector = { x: 79, y: 21 }; // Fixed map size? Might change in other version?
   private mapBorder = true;
 
-  constructor(root: HTMLElement, private tileSet: TileSet) {
+  constructor(root: HTMLElement, private tileSet?: TileSet) {
     this.canvas = document.createElement('canvas');
     this.canvas.id = 'map';
     this.cursor = document.createElement('img');
@@ -72,6 +77,11 @@ export class TileMap {
 
   setMapBorder(enableMapBorder: boolean) {
     this.mapBorder = enableMapBorder;
+    this.rerender();
+  }
+
+  setTileSet(tileset: TileSet) {
+    this.tileSet = tileset;
     this.rerender();
   }
 
@@ -132,7 +142,7 @@ export class TileMap {
 
   private drawTile(x: number, y: number) {
     const tile = this.tiles[x][y];
-    if (tile == null) return;
+    if (!this.tileSet || tile == null) return;
 
     const source = this.tileSet.getCoordinateForTile(tile);
     const size = this.tileSet.tileSize;
@@ -165,7 +175,7 @@ export class TileMap {
   }
 
   private get tileSize() {
-    return { x: this.tileSet.tileSize, y: this.tileSet.tileSize };
+    return { x: this.tileSet?.tileSize || 0, y: this.tileSet?.tileSize || 0 };
   }
 
   private get canvasCenter(): Vector {

@@ -19,7 +19,7 @@ import { listBackupFiles, loadRecords, loadSaveFiles, syncSaveFiles } from "./he
 import { CONTINUE_KEYS, ENTER, ESC, SPACE } from "./helper/keys";
 import { toInventoryItem } from "./helper/inventory";
 import { createConditionStatusText, createStatusText } from "./helper/visual";
-import { loadSettings, updateSettings } from "./helper/settings";
+import { Settings, TileSetImage, loadSettings, updateSettings } from "./helper/settings";
 
 const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
@@ -180,20 +180,7 @@ export class NetHackWrapper implements NetHackJS {
       }
 
       startMenu.push('Options');
-      actions.push(async () => {
-        let cancel = false;
-        do {
-          const settings = loadSettings();
-          const options = [`Enable map border - [${settings.enableMapBorder}]`];
-          const optionActions = [async () => updateSettings(settings, s => s.enableMapBorder = !s.enableMapBorder)];
-          const optionId = await this.openCustomMenu("Options", options);
-          if (optionId === -1) {
-            cancel = true;
-          } else {
-            await optionActions[optionId]();
-          }
-        } while (!cancel);
-      });
+      actions.push(() => this.options());
 
       const records = loadRecords();
       if (records.length) {
@@ -206,10 +193,35 @@ export class NetHackWrapper implements NetHackJS {
       }
 
       const id = await this.openCustomMenu("Welcome to NetHack", startMenu);
-      await actions[id]();
+      if (id !== -1) {
+        await actions[id]();
+      }
     }
 
     this.ui.closeDialog(-1);
+  }
+
+  private async options() {
+    let cancel = false;
+    do {
+      const settings = loadSettings();
+      const options = [`Enable map border - [${settings.enableMapBorder}]`, `Tileset - ${settings.tileSetImage}`];
+      const optionActions = [async () => updateSettings(settings, s => s.enableMapBorder = !s.enableMapBorder), () => this.tilesetOption(settings)];
+      const optionId = await this.openCustomMenu("Options", options);
+      if (optionId === -1) {
+        cancel = true;
+      } else {
+        await optionActions[optionId]();
+      }
+    } while (!cancel);
+  }
+
+  private async tilesetOption(settings: Settings) {
+    const images = Object.values(TileSetImage);
+    const idx = await this.openCustomMenu('Tileset Image', images);
+    if (idx !== -1) {
+      updateSettings(settings, s => s.tileSetImage = images[idx]);
+    }
   }
 
   private async startGame() {

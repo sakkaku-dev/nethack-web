@@ -8,7 +8,7 @@ export class Inventory {
   private expanded = false;
   private items: InventoryItem[] = [];
 
-  constructor(root: HTMLElement, private tileset: TileSet) {
+  constructor(root: HTMLElement, private tileset?: TileSet) {
     this.elem = document.createElement("div");
     this.elem.id = "inventory";
     vert(this.elem);
@@ -17,6 +17,11 @@ export class Inventory {
 
   private clear() {
     Array.from(this.elem.children).forEach((c) => this.elem.removeChild(c));
+  }
+
+  setTileSet(tileset: TileSet) {
+    this.tileset = tileset;
+    this.updateItems(this.items);
   }
 
   toggle() {
@@ -61,7 +66,9 @@ export class Inventory {
         horiz(container);
 
         const img = this.createItemImage(item);
-        container.appendChild(img);
+        if (img) {
+          container.appendChild(img);
+        }
 
         if (this.expanded) {
           const text = document.createElement("div");
@@ -75,6 +82,8 @@ export class Inventory {
   }
 
   private createItemImage(item: InventoryItem) {
+    if (!this.tileset) return null;
+
     const img = this.tileset.createBackgroundImage(item.tile, item.accelerator);
     if (item.count > 1) {
       const count = document.createElement("div");
