@@ -3,6 +3,7 @@ import { GameScreen } from "./screens/game-screen";
 import { Screen } from "./screens/screen";
 import { GameState, InventoryItem, Item, NetHackUI, Status, Tile } from "../models";
 import { Gameover } from "./components/gameover";
+import { Settings } from "../helper/settings";
 
 const SPECIAL_KEY_MAP: Record<string, number> = {
     Enter: 13,
@@ -81,6 +82,10 @@ export class Game implements NetHackUI {
                 this.game.openGameover();
                 break;
         }
+    };
+
+    updateSettings = (settings: Settings) => {
+        this.current?.onSettingsChange(settings);
     };
 
     changeScreen(screen: Screen) {

@@ -53,6 +53,7 @@ export class TileMap {
   private canvas: HTMLCanvasElement;
   private cursor: HTMLImageElement;
   private mapSize: Vector = { x: 79, y: 21 }; // Fixed map size? Might change in other version?
+  private mapBorder = true;
 
   constructor(root: HTMLElement, private tileSet: TileSet) {
     this.canvas = document.createElement('canvas');
@@ -67,6 +68,11 @@ export class TileMap {
     this.context = this.canvas.getContext("2d")!;
     this.updateCanvasSize();
     this.clearCanvas();
+  }
+
+  setMapBorder(enableMapBorder: boolean) {
+    this.mapBorder = enableMapBorder;
+    this.rerender();
   }
 
   onResize() {
@@ -93,11 +99,13 @@ export class TileMap {
     this.cursor.style.display = 'none';
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const map = mult(this.mapSize, this.tileSize);
-    const localPos = this.localToCanvas({ x: 1, y: 0 });
+    if (this.mapBorder) {
+      const map = mult(this.mapSize, this.tileSize);
+      const localPos = this.localToCanvas({ x: 1, y: 0 });
 
-    this.context.fillStyle = '#111';
-    this.context.fillRect(localPos.x, localPos.y, map.x, map.y);
+      this.context.fillStyle = '#111';
+      this.context.fillRect(localPos.x, localPos.y, map.x, map.y);
+    }
   }
 
   private rerender() {

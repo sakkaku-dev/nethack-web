@@ -1,3 +1,4 @@
+import { Settings } from "../../helper/settings";
 import { Item } from "../../models";
 import { Dialog } from "../components/dialog";
 import { InputHandler } from "../input";
@@ -32,4 +33,6 @@ export class Screen {
     onCloseDialog() {
         Dialog.removeAll();
     }
+
+    onSettingsChange(setting: Settings) { }
 }

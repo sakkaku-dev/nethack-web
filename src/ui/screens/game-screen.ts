@@ -10,6 +10,7 @@ import { TileSet, TileMap } from "../components/tilemap";
 import { Screen } from "./screen";
 import { Question } from "../components/question";
 import { Gameover } from "../components/gameover";
+import { Settings } from "../../helper/settings";
 
 export class GameScreen extends Screen {
     public tileset: TileSet;
@@ -34,6 +35,10 @@ export class GameScreen extends Screen {
         this.elem.appendChild(sidebar);
 
         this.resize$.pipe(debounceTime(200)).subscribe(() => this.tilemap?.onResize());
+    }
+
+    onSettingsChange(setting: Settings) {
+        this.tilemap.setMapBorder(setting.enableMapBorder);
     }
 
     onResize(): void {

@@ -19,9 +19,18 @@ import { listBackupFiles, loadRecords, loadSaveFiles, syncSaveFiles } from "./he
 import { CONTINUE_KEYS, ENTER, ESC, SPACE } from "./helper/keys";
 import { toInventoryItem } from "./helper/inventory";
 import { createConditionStatusText, createStatusText } from "./helper/visual";
+import { loadSettings, updateSettings } from "./helper/settings";
 
 const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
+
+enum InputType {
+  ALL,
+  CONTINUE,
+  ASCII,
+  ESCAPE,
+}
+
 
 export class NetHackWrapper implements NetHackJS {
   private commandMap: Partial<Record<Command, (...args: any[]) => Promise<any>>> = {
@@ -119,14 +128,6 @@ export class NetHackWrapper implements NetHackJS {
       )
       .subscribe();
 
-    // this.status$
-    //   .pipe(
-    //     skip(1),
-    //     debounceTime(100),
-    //     tap((s) => this.ui.updateStatus(s))
-    //   )
-    //   .subscribe();
-
     this.input$.subscribe(() => this.awaitingInput$.next(false));
 
     this.win.nethackCallback = this.handle.bind(this);
@@ -144,7 +145,7 @@ export class NetHackWrapper implements NetHackJS {
         const backup =
           'Use the "Load from backup" in the main menu to restart from your latest save.';
         this.ui.openDialog(-1, `${title}\n${unsaved}\n\n${backup}`);
-        this.waitInput(true).then(() => {
+        this.waitInput(InputType.CONTINUE).then(() => {
           this.ui.closeDialog(-1);
           this.gameState$.next(GameState.GAMEOVER);
         });
@@ -163,12 +164,10 @@ export class NetHackWrapper implements NetHackJS {
 
   private async openStartScreen() {
     while (!this.isGameRunning()) {
-      const files = listBackupFiles();
-      const records = loadRecords();
-
       const actions = [async () => this.startGame()];
       const startMenu = ["Start Game"];
 
+      const files = listBackupFiles();
       if (files.length > 0) {
         startMenu.push("Load from backup");
         actions.push(async () => {
@@ -180,11 +179,28 @@ export class NetHackWrapper implements NetHackJS {
         });
       }
 
+      startMenu.push('Options');
+      actions.push(async () => {
+        let cancel = false;
+        do {
+          const settings = loadSettings();
+          const options = [`Enable map border - [${settings.enableMapBorder}]`];
+          const optionActions = [async () => updateSettings(settings, s => s.enableMapBorder = !s.enableMapBorder)];
+          const optionId = await this.openCustomMenu("Options", options);
+          if (optionId === -1) {
+            cancel = true;
+          } else {
+            await optionActions[optionId]();
+          }
+        } while (!cancel);
+      });
+
+      const records = loadRecords();
       if (records.length) {
         startMenu.push("Leaderboard");
         actions.push(async () => {
           this.ui.openDialog(-1, records);
-          await this.waitInput(true);
+          await this.waitInput(InputType.CONTINUE);
           this.ui.closeDialog(-1);
         });
       }
@@ -196,9 +212,10 @@ export class NetHackWrapper implements NetHackJS {
     this.ui.closeDialog(-1);
   }
 
-  private startGame() {
+  private async startGame() {
     this.gameState$.next(GameState.RUNNING);
-    nethackLib(this.module);
+    await nethackLib(this.module);
+    this.ui.updateSettings(loadSettings());
   }
 
   private async openCustomMenu(prompt: string, buttons: string[]) {
@@ -246,12 +263,23 @@ export class NetHackWrapper implements NetHackJS {
 
   // Waiting for input from user
 
-  private async waitInput(filterContinue = false, onlyAscii = false) {
+  private async waitInput(type = InputType.ALL) {
     this.awaitingInput$.next(true);
     return await firstValueFrom(
       this.input$.pipe(
         filter(
-          (c) => (!filterContinue || CONTINUE_KEYS.includes(c)) && (!onlyAscii || c <= ASCII_MAX)
+          (c) => {
+            switch (type) {
+              case InputType.CONTINUE:
+                return CONTINUE_KEYS.includes(c);
+              case InputType.ASCII:
+                return c <= ASCII_MAX;
+              case InputType.ESCAPE:
+                return c === ESC;
+              default:
+                return true;
+            }
+          }
         )
       )
     );
@@ -345,7 +373,7 @@ export class NetHackWrapper implements NetHackJS {
 
     let c = 0;
     do {
-      c = await this.waitInput(false, true);
+      c = await this.waitInput(InputType.ASCII);
 
       // Default behaviour described in window.doc
       if (c === ESC) {
@@ -378,7 +406,7 @@ export class NetHackWrapper implements NetHackJS {
     if (this.putStr !== "") {
       if (this.putStrWinId === winid) {
         this.ui.openDialog(winid, this.putStr);
-        await this.waitInput(true);
+        await this.waitInput(InputType.CONTINUE);
         this.putStr = "";
       } else {
         this.log("putStr has value but another window is displayed", winid);
@@ -520,7 +548,7 @@ export class NetHackWrapper implements NetHackJS {
 
     while (!CONTINUE_KEYS.includes(char)) {
       this.ui.openMenu(id, prompt, count, ...items);
-      char = await this.waitInput(false, true);
+      char = await this.waitInput(InputType.ASCII);
 
       if (count !== 0) {
         toggleMenuItems(char, count, items);

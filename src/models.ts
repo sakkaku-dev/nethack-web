@@ -1,3 +1,4 @@
+import { Settings } from "./helper/settings";
 import { StyledText } from "./helper/visual";
 
 export interface NetHackJS {
@@ -23,6 +24,8 @@ export interface NetHackUI {
   updateInventory: (...items: InventoryItem[]) => void;
   toggleInventory: () => void;
   updateState: (state: GameState) => void;
+
+  updateSettings: (settings: Settings) => void;
 }
 
 export enum GameState {
