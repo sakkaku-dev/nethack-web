@@ -1,4 +1,4 @@
-export function Sprite(file: string, size: number, frames: number, durationInSec: number = 1) {
+export function Sprite(file: string, size: number, frames: number, durationInSec: number = 1, loop = true) {
     const sprite = document.createElement("div");
     sprite.style.backgroundImage = `url(${file})`;
     sprite.style.backgroundSize = `${size * frames}px`;
@@ -12,7 +12,7 @@ export function Sprite(file: string, size: number, frames: number, durationInSec
         positions.push(-i * size);
     }
 
-    const anim = sprite.animate({ backgroundPositionX: positions }, { duration: 1000 * durationInSec, iterations: Infinity, easing: `steps(${frames})` });
+    const anim = sprite.animate({ backgroundPositionX: positions }, { duration: 1000 * durationInSec, iterations: loop ? Infinity : 1, easing: `steps(${frames})` });
     anim.cancel();
     return { sprite, anim };
 }

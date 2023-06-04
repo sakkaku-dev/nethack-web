@@ -37,7 +37,9 @@ export class StatusLine {
     this.heartAnim = hp.anim;
 
     this.manaIcon = Sprite("UI_Mana.png", 32, 1).sprite;
-    this.armorIcon = Sprite("UI_Armor.png", 32, 1).sprite;
+
+    const armor = Sprite("UI_Armor.png", 32, 2, 1, false);
+    this.armorIcon = armor.sprite;
 
     // Enable this after we have settings to disable it
     // this.pulseBorder = document.createElement('div');
@@ -61,10 +63,13 @@ export class StatusLine {
     return container;
   }
 
-  private createText(text?: StyledText, pulse = false) {
+  private createText(text?: StyledText, pulse = false, abs = false) {
     const elem = document.createElement("span");
     if (text) {
-      elem.innerHTML = text.text;
+      // For AC
+      const num = parseInt(text.text || '0');
+      const txt = abs ? `${Math.abs(num)}` : text.text;
+      elem.innerHTML = txt;
 
       if (pulse) {
         elem.style.animationName = "pulse";
@@ -108,7 +113,15 @@ export class StatusLine {
     );
 
     const lastRow = this.createRow();
-    lastRow.appendChild(this.createIconText(this.armorIcon, s.armor));
+    const acIcon = this.createIconText(this.armorIcon, s.armor, true);
+    lastRow.appendChild(acIcon);
+    if (s.armor) {
+      const ac = parseInt(s.armor.text);
+      acIcon.style.color = ac < 0 ? 'yellow' : 'white';
+
+      // Didn't find a way to do it via Animation
+      this.armorIcon.style.backgroundPosition = ac < 0 ? '-32px' : '-64px';
+    }
 
     const lvl = document.createElement("div");
     if (s.expLvl) {
@@ -185,12 +198,14 @@ export class StatusLine {
     return row;
   }
 
-  private createIconText(icon: HTMLElement, text?: StyledText) {
+  private createIconText(icon: HTMLElement, text?: StyledText, abs = false) {
     const elem = document.createElement("div");
     elem.style.position = "relative";
 
-    const label = this.createText(text);
-    label.title = text?.text || "";
+    const actualText = text?.text;
+    const label = this.createText(text, false, abs);
+
+    label.title = actualText || "";
     fullScreen(label);
     center(label);
 
