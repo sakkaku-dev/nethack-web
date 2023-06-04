@@ -1517,7 +1517,7 @@ function Slider(value, maxValue, fg, bg) {
     return slider;
 }
 
-function Sprite(file, size, frames, durationInSec = 1) {
+function Sprite(file, size, frames, durationInSec = 1, loop = true) {
     const sprite = document.createElement("div");
     sprite.style.backgroundImage = `url(${file})`;
     sprite.style.backgroundSize = `${size * frames}px`;
@@ -1529,7 +1529,7 @@ function Sprite(file, size, frames, durationInSec = 1) {
     for (let i = 0; i < frames; i++) {
         positions.push(-i * size);
     }
-    const anim = sprite.animate({ backgroundPositionX: positions }, { duration: 1000 * durationInSec, iterations: Infinity, easing: `steps(${frames})` });
+    const anim = sprite.animate({ backgroundPositionX: positions }, { duration: 1000 * durationInSec, iterations: loop ? Infinity : 1, easing: `steps(${frames})` });
     anim.cancel();
     return { sprite, anim };
 }
@@ -1551,7 +1551,8 @@ class StatusLine {
         this.heartIcon = hp.sprite;
         this.heartAnim = hp.anim;
         this.manaIcon = Sprite("UI_Mana.png", 32, 1).sprite;
-        this.armorIcon = Sprite("UI_Armor.png", 32, 1).sprite;
+        const armor = Sprite("UI_Armor.png", 32, 2, 1, false);
+        this.armorIcon = armor.sprite;
         // Enable this after we have settings to disable it
         // this.pulseBorder = document.createElement('div');
         // this.pulseBorder.style.backgroundImage = 'url("PulseBorder.png")';
@@ -1572,10 +1573,13 @@ class StatusLine {
         };
         return container;
     }
-    createText(text, pulse = false) {
+    createText(text, pulse = false, abs = false) {
         const elem = document.createElement("span");
         if (text) {
-            elem.innerHTML = text.text;
+            // For AC
+            const num = parseInt(text.text || '0');
+            const txt = abs ? `${Math.abs(num)}` : text.text;
+            elem.innerHTML = txt;
             if (pulse) {
                 elem.style.animationName = "pulse";
                 elem.style.animationDuration = "2s";
@@ -1607,7 +1611,14 @@ class StatusLine {
         this.elem.appendChild(this.createMinMaxValue(this.heartIcon, "#D33", "#600", s.hp, s.hpMax));
         this.elem.appendChild(this.createMinMaxValue(this.manaIcon, "#33D", "#006", s.power, s.powerMax));
         const lastRow = this.createRow();
-        lastRow.appendChild(this.createIconText(this.armorIcon, s.armor));
+        const acIcon = this.createIconText(this.armorIcon, s.armor, true);
+        lastRow.appendChild(acIcon);
+        if (s.armor) {
+            const ac = parseInt(s.armor.text);
+            acIcon.style.color = ac < 0 ? 'yellow' : 'white';
+            // Didn't find a way to do it via Animation
+            this.armorIcon.style.backgroundPosition = ac < 0 ? '-32px' : '-64px';
+        }
         const lvl = document.createElement("div");
         if (s.expLvl) {
             const lvlElem = this.createText(s.expLvl);
@@ -1676,11 +1687,12 @@ class StatusLine {
         this.elem.appendChild(row);
         return row;
     }
-    createIconText(icon, text) {
+    createIconText(icon, text, abs = false) {
         const elem = document.createElement("div");
         elem.style.position = "relative";
-        const label = this.createText(text);
-        label.title = text?.text || "";
+        const actualText = text?.text;
+        const label = this.createText(text, false, abs);
+        label.title = actualText || "";
         fullScreen(label);
         center(label);
         elem.appendChild(icon);

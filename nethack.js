@@ -2273,17 +2273,19 @@ class NetHackWrapper {
             question = m[0];
             choices = m[1];
         }
-        let allChoices = choices ?? "";
+        let allChoices = choices;
         if (!!choices &&
             !choices.includes("-") &&
             !choices.includes(" or ") &&
             !choices.includes("*")) {
             allChoices = choices.split("");
         }
-        if (Array.isArray(allChoices)) {
+        if (allChoices === '' || Array.isArray(allChoices)) {
+            console.log('Array', allChoices);
             this.ui.openQuestion(question, String.fromCharCode(defaultChoice), ...allChoices);
         }
         else {
+            console.log('String', allChoices);
             this.ui.openQuestion(question, String.fromCharCode(defaultChoice), allChoices);
         }
         let c = 0;
