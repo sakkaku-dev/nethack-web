@@ -367,7 +367,7 @@ export class NetHackWrapper implements NetHackJS {
       choices = m[1];
     }
 
-    let allChoices: string | string[] = choices ?? "";
+    let allChoices: string | string[] = choices;
     if (
       !!choices &&
       !choices.includes("-") &&
@@ -377,9 +377,11 @@ export class NetHackWrapper implements NetHackJS {
       allChoices = choices.split("");
     }
 
-    if (Array.isArray(allChoices)) {
+    if (allChoices === '' || Array.isArray(allChoices)) {
+      console.log('Array', allChoices);
       this.ui.openQuestion(question, String.fromCharCode(defaultChoice), ...allChoices);
     } else {
+      console.log('String', allChoices);
       this.ui.openQuestion(question, String.fromCharCode(defaultChoice), allChoices);
     }
 
