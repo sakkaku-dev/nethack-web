@@ -378,16 +378,14 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     if (allChoices === '' || Array.isArray(allChoices)) {
-      console.log('Array', allChoices);
       this.ui.openQuestion(question, String.fromCharCode(defaultChoice), ...allChoices);
     } else {
-      console.log('String', allChoices);
       this.ui.openQuestion(question, String.fromCharCode(defaultChoice), allChoices);
     }
 
     let c = 0;
     do {
-      c = await this.waitInput(InputType.ASCII);
+      c = await this.waitInput(InputType.ALL);
 
       // Default behaviour described in window.doc
       if (c === ESC) {

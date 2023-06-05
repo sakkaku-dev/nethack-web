@@ -526,7 +526,7 @@ index 862915053..01f6506cb 100644
  # if TTY_TILES_ESCCODES
  #WINSRC += tile.c
 diff --git a/sys/unix/unixmain.c b/sys/unix/unixmain.c
-index 1e7880165..9b653c754 100644
+index 1e7880165..13b08b217 100644
 --- a/sys/unix/unixmain.c
 +++ b/sys/unix/unixmain.c
 @@ -16,6 +16,13 @@
@@ -557,7 +557,7 @@ index 1e7880165..9b653c754 100644
      init_nhwindows(&argc, argv); /* now we can set up window system */
  #ifdef _M_UNIX
      init_sco_cons();
-@@ -808,3 +822,355 @@ sys_random_seed()
+@@ -808,3 +822,356 @@ sys_random_seed()
  }
  
  /*unixmain.c*/
@@ -661,8 +661,9 @@ index 1e7880165..9b653c754 100644
 +            setValue(ptr, value, "i32");
 +            break;
 +        case "c":
-+            if(typeof value !== "number" || value < 0 || value > 128)
-+                throw new TypeError(`expected ${name} return type to be integer representing an ASCII character`);
++            // Non-ASCII like Alt-o should also be allowed
++            if(typeof value !== "number" || !Number.isInteger(value)) //value < 0 || value > 128)
++                throw new TypeError(`expected ${name} return type to be integer representing an character`);
 +            setValue(ptr, value, "i8");
 +            break;
 +        case "f":
