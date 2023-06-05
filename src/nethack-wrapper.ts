@@ -23,6 +23,7 @@ import { Settings, TileSetImage, loadSettings, updateSettings } from "./helper/s
 
 const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
+const MAX_PLAYER_NAME = 32; // defined in global.h PL_NSIZ
 
 enum InputType {
   ALL,
@@ -77,6 +78,7 @@ export class NetHackWrapper implements NetHackJS {
     [Command.YN_FUNCTION]: this.yesNoQuestion.bind(this),
     [Command.GET_LINE]: this.getLine.bind(this),
     [Command.GET_EXT_CMD]: this.getExtCmd.bind(this),
+    [Command.ASK_NAME]: this.askName.bind(this),
 
     // according to window.doc, a 50ms delay, but add more since drawing the tile takes longer
     [Command.DELAY_OUTPUT]: () => new Promise((resolve) => setTimeout(resolve, 100)),
@@ -171,10 +173,11 @@ export class NetHackWrapper implements NetHackJS {
       if (files.length > 0) {
         startMenu.push("Load from backup");
         actions.push(async () => {
-          const backupId = await this.openCustomMenu("Select backup file", files);
+          const backupId = await this.openCustomMenu("Select backup file", files.map(f => `${f.player} ${f.modified ? ' - ' + f.modified.toISOString() : ''}`));
           if (backupId !== -1) {
-            this.backupFile = files[backupId];
-            this.startGame();
+            const selected = files[backupId];
+            this.backupFile = selected.file;
+            this.startGame(selected.player);
           }
         });
       }
@@ -224,10 +227,38 @@ export class NetHackWrapper implements NetHackJS {
     }
   }
 
-  private async startGame() {
+  private async startGame(player?: string) {
     this.gameState$.next(GameState.RUNNING);
     await nethackLib(this.module);
+    if (player) {
+      this.setPlayerName(player);
+    }
     this.ui.updateSettings(loadSettings());
+  }
+
+  private async askName() {
+    const settings = loadSettings();
+
+    let name = '';
+    let prompt = 'Who are you?';
+
+    do {
+      this.ui.openGetLine(prompt, settings.playerName);
+      name = (await this.waitLine()).trim();
+      if (name.length >= MAX_PLAYER_NAME) {
+        name = '';
+        prompt = `Your name can only be ${MAX_PLAYER_NAME} characters long:`;
+      }
+      this.ui.closeDialog(-1);
+    } while (name === '');
+
+    this.setPlayerName(name);
+  }
+
+  private setPlayerName(name: string) {
+    const settings = loadSettings();
+    this.global.globals.plname = name;
+    updateSettings(settings, s => s.playerName = name);
   }
 
   private async openCustomMenu(prompt: string, buttons: string[]) {
@@ -258,14 +289,15 @@ export class NetHackWrapper implements NetHackJS {
 
   public async sendInput(...keys: (number | string)[]) {
     for (const key of keys) {
+      await this.waitForAwaitingInput();
       const k = typeof key === "string" ? key.charCodeAt(0) : key;
       this.log("Sending input", k);
       this.input$.next(k);
-      await this.waitForAwaitingInput();
     }
   }
 
-  public sendLine(line: string) {
+  public async sendLine(line: string) {
+    await this.waitForAwaitingInput();
     if (line.length >= MAX_STRING_LENGTH) {
       this.log(`Line is too long. It can only be ${MAX_STRING_LENGTH} characters long.`, line);
     } else {
@@ -302,10 +334,6 @@ export class NetHackWrapper implements NetHackJS {
     return await firstValueFrom(this.line$);
   }
 
-  private async waitForAwaitingInput() {
-    return await firstValueFrom(this.awaitingInput$.pipe(filter((x) => x)));
-  }
-
   private async waitForNextAction() {
     const code = await this.waitInput();
     if (code === "i".charCodeAt(0)) {
@@ -313,6 +341,10 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     return code;
+  }
+
+  private async waitForAwaitingInput() {
+    return await firstValueFrom(this.awaitingInput$.pipe(filter((x) => x)));
   }
 
   // Commands

@@ -80,21 +80,6 @@ export class GameScreen extends Screen {
         this.activeMenu.updateMenu(items, count);
     }
 
-    public openGetLine(question: string, autocomplete: string[]) {
-        const dialog = new Dialog();
-        const line = new Line(question, autocomplete);
-        dialog.elem.appendChild(line.elem);
-
-        line.onLineEnter = (line) => {
-            window.nethackJS.sendLine(line);
-            this.inputHandler = undefined;
-        };
-
-        this.inputHandler = line;
-        this.elem.appendChild(dialog.elem);
-        line.focus();
-    }
-
     public openQuestion(question: string, choices: string[], defaultChoice: string) {
         const dialog = new Question(question, choices, defaultChoice);
         this.elem.appendChild(dialog.elem);

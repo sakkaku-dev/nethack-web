@@ -3,6 +3,7 @@ const SETTINGS_KEY = 'sakkaku-dev-nethack-settings';
 export interface Settings {
     enableMapBorder: boolean;
     tileSetImage: TileSetImage;
+    playerName: string;
 }
 
 export enum TileSetImage {
@@ -16,6 +17,7 @@ export function loadSettings(): Settings {
     return {
         enableMapBorder: true,
         tileSetImage: TileSetImage.Nevanda,
+        playerName: 'Unnamed',
         ...settings,
     }
 }

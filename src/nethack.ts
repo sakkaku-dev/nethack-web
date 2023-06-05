@@ -31,7 +31,7 @@ Module.onRuntimeInitialized = () => {
 };
 Module.preRun = [
   () => {
-    // Module.ENV["USER"] = "web_user"; // TODO: get name
+    Module.ENV["USER"] = "player"; // Nethack only asks for a name if the default one is generic like 'player'
     Module.ENV.NETHACKOPTIONS = options.join(",");
   },
 ];

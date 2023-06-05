@@ -45,9 +45,7 @@ export class Line implements InputHandler {
                     // thus for the string "ab" we will receive two keyup events
                     // do not clear the selection
                     if (this.possibleItems.length == 1 && input.selectionStart == input.selectionEnd) {
-                        const search = input.value;
-                        input.value = this.possibleItems[0];
-                        input.setSelectionRange(search.length, this.possibleItems[0].length);
+                        this.suggestInput(this.possibleItems[0]);
                     }
                 }
             }
@@ -56,10 +54,21 @@ export class Line implements InputHandler {
         this.list = document.createElement("div");
         vert(this.list);
 
-        if (this.autocomplete.length) {
-            this.elem.appendChild(this.list);
-            this.updateList();
+        const autocompleteLen = this.autocomplete.length;
+        if (autocompleteLen) {
+            if (autocompleteLen > 1) {
+                this.elem.appendChild(this.list);
+                this.updateList();
+            } else {
+                this.suggestInput(this.autocomplete[0]);
+            }
         }
+    }
+
+    private suggestInput(value: string) {
+        const search = this.input.value;
+        this.input.value = value;
+        this.input.setSelectionRange(search.length, value.length);
     }
 
     private updatePossibleItems() {
