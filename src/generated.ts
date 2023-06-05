@@ -113,4 +113,3 @@ export enum COLOR_ATTR {
     HL_ATTCLR_BOLD = 20,
     BL_ATTCLR_MAX = 21,
 }
-

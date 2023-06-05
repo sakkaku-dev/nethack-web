@@ -19,7 +19,7 @@ export function loadSettings(): Settings {
         tileSetImage: TileSetImage.Nevanda,
         playerName: 'Unnamed',
         ...settings,
-    }
+    };
 }
 
 export function updateSettings(settings: Settings, changeFn: (s: Settings) => void) {

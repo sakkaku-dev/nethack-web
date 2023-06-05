@@ -1,4 +1,4 @@
-import { fullScreen, horiz } from "../styles";
+import { fullScreen, horiz } from '../styles';
 
 export function Slider(value: number, maxValue: number, fg: string, bg: string) {
     const slider = document.createElement('div');

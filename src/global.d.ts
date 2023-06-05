@@ -1,17 +1,17 @@
 declare interface Window {
-  nethackCallback: any;
+    nethackCallback: any;
 
-  nethackJS: NetHackJS;
-  nethackUI: NetHackGodot;
+    nethackJS: NetHackJS;
+    nethackUI: NetHackGodot;
 
-  module: any;
-  nethackGlobal: {
-    helpers: {
-      mapglyphHelper: Function;
-      getPointerValue: Function;
-      setPointerValue: Function;
-      createPointerValue: Function;
+    module: any;
+    nethackGlobal: {
+        helpers: {
+            mapglyphHelper: Function;
+            getPointerValue: Function;
+            setPointerValue: Function;
+            createPointerValue: Function;
+        };
+        globals: Record<string, any>;
     };
-    globals: Record<string, any>;
-  };
 }

@@ -1,8 +1,7 @@
-import { Dialog } from "./dialog";
-import { horiz } from "../styles";
+import { Dialog } from './dialog';
+import { horiz } from '../styles';
 
 export class Question extends Dialog {
-
     constructor(question: string, choices: string[], defaultChoice: string) {
         super(question);
         horiz(this.elem);
@@ -13,7 +12,7 @@ export class Question extends Dialog {
             choicesContainer.style.gap = '0';
             choicesContainer.innerHTML = '[';
 
-            choices.forEach(c => {
+            choices.forEach((c) => {
                 const node = document.createElement('span');
                 node.innerHTML = c;
 

@@ -1,30 +1,30 @@
-import { Settings } from "../../helper/settings";
-import { Item } from "../../models";
-import { Dialog } from "../components/dialog";
-import { Line } from "../components/line";
-import { InputHandler } from "../input";
-import { center, fullScreen } from "../styles";
+import { Settings } from '../../helper/settings';
+import { Item } from '../../models';
+import { Dialog } from '../components/dialog';
+import { Line } from '../components/line';
+import { InputHandler } from '../input';
+import { center, fullScreen } from '../styles';
 
 export class Screen {
     public elem: HTMLElement;
     public inputHandler?: InputHandler;
 
     constructor() {
-        this.elem = document.createElement("div");
+        this.elem = document.createElement('div');
         fullScreen(this.elem);
         center(this.elem);
     }
 
-    protected createButton(text: string, onClick: (e: MouseEvent) => void = () => { }) {
-        const btn = document.createElement("button");
+    protected createButton(text: string, onClick: (e: MouseEvent) => void = () => {}) {
+        const btn = document.createElement('button');
         btn.innerHTML = text;
         btn.onclick = onClick;
         return btn;
     }
 
-    onResize() { }
+    onResize() {}
 
-    onMenu(prompt: string, count: number, items: Item[]) { }
+    onMenu(prompt: string, count: number, items: Item[]) {}
 
     onDialog(text: string) {
         const dialog = new Dialog(text);
@@ -53,5 +53,5 @@ export class Screen {
         this.inputHandler = undefined;
     }
 
-    onSettingsChange(setting: Settings) { }
+    onSettingsChange(setting: Settings) {}
 }

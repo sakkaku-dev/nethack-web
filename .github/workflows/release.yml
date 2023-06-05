@@ -1,21 +1,21 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - master
+    push:
+        branches:
+            - master
 
 permissions:
-  contents: write
+    contents: write
 
 jobs:
-  publish-web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: npm i
-      - run: npm test
-      - run: npm run build:web
-      - uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: build
+    publish-web:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - run: npm i
+            - run: npm test
+            - run: npm run build:web
+            - uses: JamesIves/github-pages-deploy-action@v4
+              with:
+                  folder: build

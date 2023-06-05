@@ -1,10 +1,9 @@
-import { Item } from "../../models";
-import { Menu } from "../components/menu";
-import { title } from "../styles";
-import { Screen } from "./screen";
+import { Item } from '../../models';
+import { Menu } from '../components/menu';
+import { title } from '../styles';
+import { Screen } from './screen';
 
 export class StartScreen extends Screen {
-
     private menu: Menu;
 
     constructor() {
@@ -21,5 +20,4 @@ export class StartScreen extends Screen {
         this.menu.label.innerHTML = prompt;
         this.menu.updateMenu(items, count);
     }
-
 }

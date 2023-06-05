@@ -1,5 +1,5 @@
 export class Console {
-    private elem: HTMLElement
+    private elem: HTMLElement;
 
     constructor(root: HTMLElement) {
         this.elem = document.createElement('pre');
@@ -11,5 +11,4 @@ export class Console {
         this.elem.innerHTML += line + '\n';
         this.elem.scrollTo(0, this.elem.scrollHeight);
     }
-
 }

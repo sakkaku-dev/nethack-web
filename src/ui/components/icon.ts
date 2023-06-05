@@ -1,4 +1,4 @@
-import { center } from "../styles";
+import { center } from '../styles';
 
 export function Icon(name: string) {
     const icon = document.createElement('i');

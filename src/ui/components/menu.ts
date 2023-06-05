@@ -1,7 +1,7 @@
-import { Item } from "../../models";
-import { TileSet } from "./tilemap";
-import { vert } from "../styles";
-import { MenuButton } from "./accel-btn";
+import { Item } from '../../models';
+import { TileSet } from './tilemap';
+import { vert } from '../styles';
+import { MenuButton } from './accel-btn';
 
 export class Menu {
     public elem: HTMLElement;
@@ -10,7 +10,7 @@ export class Menu {
     private menuContainer?: HTMLElement;
 
     constructor(private prompt: string, private tileset?: TileSet) {
-        this.elem = document.createElement("div");
+        this.elem = document.createElement('div');
         vert(this.elem);
 
         this.label = this.createLabel();
@@ -23,13 +23,13 @@ export class Menu {
         }
         this.menuContainer = document.createElement('div');
         vert(this.menuContainer);
-        this.createMenu(items, this.menuContainer)
+        this.createMenu(items, this.menuContainer);
 
         this.elem.appendChild(this.menuContainer);
     }
 
     private createLabel() {
-        const label = document.createElement("div");
+        const label = document.createElement('div');
         label.innerHTML = this.prompt;
         return label;
     }
@@ -38,7 +38,7 @@ export class Menu {
         items.forEach((i) => {
             if (i.identifier !== 0) {
                 container.appendChild(MenuButton(i, true, this.tileset));
-            } else if (i.str !== "") {
+            } else if (i.str !== '') {
                 container.appendChild(MenuButton(i, false, this.tileset));
             }
         });

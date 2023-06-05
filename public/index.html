@@ -1,230 +1,229 @@
 <style>
-  :root {
-    --bg-color: black;
-    --text-color: white;
-    --shadow: 0px 0px 5px #fff9;
+    :root {
+        --bg-color: black;
+        --text-color: white;
+        --shadow: 0px 0px 5px #fff9;
 
-    --accel-bg-color: #6669;
-  }
-
-  * {
-    margin: 0;
-    padding: 0;
-    font-family: monospace;
-  }
-
-  body {
-    background: var(--bg-color);
-    color: var(--text-color);
-  }
-
-  button {
-    padding: 0.5rem;
-    background: none;
-    color: white;
-    border: 0;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-weight: normal;
-  }
-
-  button:hover:not(:disabled),
-  button.active:not(:disabled) {
-    box-shadow: var(--shadow);
-  }
-
-  .accel {
-    background: var(--accel-bg-color);
-    border-radius: 100%;
-    padding: 0 0.5rem; /* No vertical padding, since there is already a line height */
-  }
-
-  @keyframes pulse {
-    0% {
-      transform: scale(1);
+        --accel-bg-color: #6669;
     }
-    50% {
-      transform: scale(1.1);
+
+    * {
+        margin: 0;
+        padding: 0;
+        font-family: monospace;
     }
-    100% {
-      transform: scale(1);
+
+    body {
+        background: var(--bg-color);
+        color: var(--text-color);
     }
-  }
 
-  #sidebar {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: end;
-  }
+    button {
+        padding: 0.5rem;
+        background: none;
+        color: white;
+        border: 0;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-weight: normal;
+    }
 
-  #inventory {
-    overflow-y: auto;
-    padding: 0.5rem;
-    margin: 0;
-    background: var(--bg-color);
-    opacity: 0.8;
-    flex-grow: 1;
-  }
-  #inventory .active {
-    border: 1px solid red;
-  }
-  #inventory .item .count {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    line-height: 1;
-  }
+    button:hover:not(:disabled),
+    button.active:not(:disabled) {
+        box-shadow: var(--shadow);
+    }
 
-  #status {
-    background: var(--bg-color);
-    opacity: 0.8;
-    padding: 0.5rem;
-    min-width: 30rem;
-  }
+    .accel {
+        background: var(--accel-bg-color);
+        border-radius: 100%;
+        padding: 0 0.5rem; /* No vertical padding, since there is already a line height */
+    }
 
-  #output {
-    overflow-y: auto;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 8rem;
-    padding: 0.5rem;
-    background: var(--bg-color);
-    opacity: 0.8;
-  }
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
 
-  #map {
-    width: 100%;
-    height: 100%;
-  }
-  #cursor {
-    z-index: 1;
-    top: 50%;
-    left: 50%;
-    position: absolute;
-  }
+    #sidebar {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: end;
+    }
 
-  .dialog {
-    position: absolute;
-    top: 2rem;
-    margin-top: -100%;
-    transform: translate(-50%, 0);
-    left: 50%;
-    overflow-y: auto;
-    background: var(--bg-color);
-    transition: 0.3s all ease;
-    padding: 1rem;
-    z-index: 10;
-    max-height: 90%;
-    border-radius: 0.5rem;
-    border: 1px solid var(--text-color);
-  }
-  .dialog.open {
-    margin-top: 0;
-  }
+    #inventory {
+        overflow-y: auto;
+        padding: 0.5rem;
+        margin: 0;
+        background: var(--bg-color);
+        opacity: 0.8;
+        flex-grow: 1;
+    }
+    #inventory .active {
+        border: 1px solid red;
+    }
+    #inventory .item .count {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        line-height: 1;
+    }
 
-  .pixel {
-    image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: crisp-edges;
-  }
+    #status {
+        background: var(--bg-color);
+        opacity: 0.8;
+        padding: 0.5rem;
+        min-width: 30rem;
+    }
 
-  /* Icons: https://css.gg/app */
+    #output {
+        overflow-y: auto;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 8rem;
+        padding: 0.5rem;
+        background: var(--bg-color);
+        opacity: 0.8;
+    }
 
-  .gg-minimize-alt {
-    box-sizing: border-box;
-    position: relative;
-    display: block;
-    transform: rotate(-45deg) scale(var(--ggs, 1));
-    width: 26px;
-    height: 2px;
-    border-left: 10px solid;
-    border-right: 10px solid;
-  }
-  .gg-minimize-alt::after,
-  .gg-minimize-alt::before {
-    content: "";
-    display: block;
-    box-sizing: border-box;
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    border-top: 2px solid;
-    top: -2px;
-  }
-  .gg-minimize-alt::before {
-    border-right: 2px solid;
-    left: -5px;
-    transform: rotate(45deg);
-  }
-  .gg-minimize-alt::after {
-    border-left: 2px solid;
-    right: -5px;
-    transform: rotate(-45deg);
-  }
-  .gg-arrows-expand-right {
-    box-sizing: border-box;
-    position: relative;
-    display: block;
-    transform: scale(var(--ggs, 1));
-    width: 14px;
-    height: 14px;
-    margin: 2px;
-    box-shadow: -6px 6px 0 -4px, 6px -6px 0 -4px;
-  }
-  .gg-arrows-expand-right::before {
-    content: "";
-    display: block;
-    box-sizing: border-box;
-    position: absolute;
-    width: 2px;
-    height: 22px;
-    top: -4px;
-    left: 6px;
-    transform: rotate(45deg);
-    border-top: 9px solid;
-    border-bottom: 9px solid;
-  }
-  .gg-arrows-h-alt {
-    box-sizing: border-box;
-    position: relative;
-    display: block;
-    transform: scale(var(--ggs, 1));
-    width: 20px;
-    height: 10px;
-    background: linear-gradient(to left, currentColor 18px, transparent 0) no-repeat 2px 4px/16px
-      2px;
-  }
-  .gg-arrows-h-alt::after,
-  .gg-arrows-h-alt::before {
-    content: "";
-    display: block;
-    box-sizing: border-box;
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    transform: rotate(45deg);
-    top: 2px;
-  }
-  .gg-arrows-h-alt::after {
-    border-bottom: 2px solid;
-    border-left: 2px solid;
-    left: 1px;
-  }
-  .gg-arrows-h-alt::before {
-    border-top: 2px solid;
-    border-right: 2px solid;
-    right: 1px;
-  }
+    #map {
+        width: 100%;
+        height: 100%;
+    }
+    #cursor {
+        z-index: 1;
+        top: 50%;
+        left: 50%;
+        position: absolute;
+    }
+
+    .dialog {
+        position: absolute;
+        top: 2rem;
+        margin-top: -100%;
+        transform: translate(-50%, 0);
+        left: 50%;
+        overflow-y: auto;
+        background: var(--bg-color);
+        transition: 0.3s all ease;
+        padding: 1rem;
+        z-index: 10;
+        max-height: 90%;
+        border-radius: 0.5rem;
+        border: 1px solid var(--text-color);
+    }
+    .dialog.open {
+        margin-top: 0;
+    }
+
+    .pixel {
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+    }
+
+    /* Icons: https://css.gg/app */
+
+    .gg-minimize-alt {
+        box-sizing: border-box;
+        position: relative;
+        display: block;
+        transform: rotate(-45deg) scale(var(--ggs, 1));
+        width: 26px;
+        height: 2px;
+        border-left: 10px solid;
+        border-right: 10px solid;
+    }
+    .gg-minimize-alt::after,
+    .gg-minimize-alt::before {
+        content: '';
+        display: block;
+        box-sizing: border-box;
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-top: 2px solid;
+        top: -2px;
+    }
+    .gg-minimize-alt::before {
+        border-right: 2px solid;
+        left: -5px;
+        transform: rotate(45deg);
+    }
+    .gg-minimize-alt::after {
+        border-left: 2px solid;
+        right: -5px;
+        transform: rotate(-45deg);
+    }
+    .gg-arrows-expand-right {
+        box-sizing: border-box;
+        position: relative;
+        display: block;
+        transform: scale(var(--ggs, 1));
+        width: 14px;
+        height: 14px;
+        margin: 2px;
+        box-shadow: -6px 6px 0 -4px, 6px -6px 0 -4px;
+    }
+    .gg-arrows-expand-right::before {
+        content: '';
+        display: block;
+        box-sizing: border-box;
+        position: absolute;
+        width: 2px;
+        height: 22px;
+        top: -4px;
+        left: 6px;
+        transform: rotate(45deg);
+        border-top: 9px solid;
+        border-bottom: 9px solid;
+    }
+    .gg-arrows-h-alt {
+        box-sizing: border-box;
+        position: relative;
+        display: block;
+        transform: scale(var(--ggs, 1));
+        width: 20px;
+        height: 10px;
+        background: linear-gradient(to left, currentColor 18px, transparent 0) no-repeat 2px 4px/16px 2px;
+    }
+    .gg-arrows-h-alt::after,
+    .gg-arrows-h-alt::before {
+        content: '';
+        display: block;
+        box-sizing: border-box;
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        transform: rotate(45deg);
+        top: 2px;
+    }
+    .gg-arrows-h-alt::after {
+        border-bottom: 2px solid;
+        border-left: 2px solid;
+        left: 1px;
+    }
+    .gg-arrows-h-alt::before {
+        border-top: 2px solid;
+        border-right: 2px solid;
+        right: 1px;
+    }
 </style>
 
 <body>
-  <div id="sidebar"></div>
+    <div id="sidebar"></div>
 </body>
 
 <script src="./nethack-ui.js"></script>

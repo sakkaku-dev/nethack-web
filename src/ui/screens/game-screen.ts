@@ -1,16 +1,16 @@
-import { Subject, debounceTime } from "rxjs";
-import { Item } from "../../models";
-import { Console } from "../components/console";
-import { Dialog } from "../components/dialog";
-import { Inventory } from "../components/inventory";
-import { Line } from "../components/line";
-import { Menu } from "../components/menu";
-import { StatusLine } from "../components/status";
-import { TileSet, TileMap } from "../components/tilemap";
-import { Screen } from "./screen";
-import { Question } from "../components/question";
-import { Gameover } from "../components/gameover";
-import { Settings, TileSetImage } from "../../helper/settings";
+import { Subject, debounceTime } from 'rxjs';
+import { Item } from '../../models';
+import { Console } from '../components/console';
+import { Dialog } from '../components/dialog';
+import { Inventory } from '../components/inventory';
+import { Line } from '../components/line';
+import { Menu } from '../components/menu';
+import { StatusLine } from '../components/status';
+import { TileSet, TileMap } from '../components/tilemap';
+import { Screen } from './screen';
+import { Question } from '../components/question';
+import { Gameover } from '../components/gameover';
+import { Settings, TileSetImage } from '../../helper/settings';
 
 export class GameScreen extends Screen {
     public tileset?: TileSet;
@@ -38,9 +38,12 @@ export class GameScreen extends Screen {
 
     private createTileset(image: TileSetImage) {
         switch (image) {
-            case TileSetImage.Nevanda: return new TileSet('Nevanda.png', 32, 40);
-            case TileSetImage.Dawnhack: return new TileSet('dawnhack_32.bmp', 32, 40);
-            default: return new TileSet('nethack_default.png', 32, 40);
+            case TileSetImage.Nevanda:
+                return new TileSet('Nevanda.png', 32, 40);
+            case TileSetImage.Dawnhack:
+                return new TileSet('dawnhack_32.bmp', 32, 40);
+            default:
+                return new TileSet('nethack_default.png', 32, 40);
         }
     }
 

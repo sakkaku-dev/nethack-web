@@ -1,29 +1,31 @@
 {
-  "name": "nethack-godot",
-  "version": "1.0.0",
-  "description": "Nethack for the web using godot as the UI.",
-  "type": "module",
-  "scripts": {
-    "build:nethack:tiles": "cd NetHack/win/share && gcc tilemap.c -I ../../include -o ../tilemap.o && cd ../ && ./tilemap.o",
-    "build:js": "rollup -c rollup.config.js && cp lib/nethack.wasm lib/nethack.data build",
-    "build:web": "npm run build:js && cp public/* build",
-    "build:watch": "rollup -c rollup.config.js --watch",
-    "test": "jest"
-  },
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "^24.1.0",
-    "@rollup/plugin-esm-shim": "^0.1.0",
-    "@rollup/plugin-node-resolve": "^15.0.2",
-    "@rollup/plugin-typescript": "^11.1.0",
-    "@types/jest": "^29.5.1",
-    "jest": "^29.5.0",
-    "jest-mock-extended": "^3.0.4",
-    "rollup": "^3.21.0",
-    "rollup-plugin-node-polyfills": "^0.2.1",
-    "ts-jest": "^29.1.0",
-    "ts-node": "^10.9.1"
-  },
-  "dependencies": {
-    "rxjs": "^7.8.0"
-  }
+    "name": "nethack-godot",
+    "version": "1.0.0",
+    "description": "Nethack for the web using godot as the UI.",
+    "type": "module",
+    "scripts": {
+        "build:nethack:tiles": "cd NetHack/win/share && gcc tilemap.c -I ../../include -o ../tilemap.o && cd ../ && ./tilemap.o",
+        "build:js": "rollup -c rollup.config.js && cp lib/nethack.wasm lib/nethack.data build",
+        "build:web": "npm run build:js && cp public/* build",
+        "build:watch": "rollup -c rollup.config.js --watch",
+        "format:write": "prettier --write .",
+        "test": "jest"
+    },
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^24.1.0",
+        "@rollup/plugin-esm-shim": "^0.1.0",
+        "@rollup/plugin-node-resolve": "^15.0.2",
+        "@rollup/plugin-typescript": "^11.1.0",
+        "@types/jest": "^29.5.1",
+        "jest": "^29.5.0",
+        "jest-mock-extended": "^3.0.4",
+        "prettier": "2.8.8",
+        "rollup": "^3.21.0",
+        "rollup-plugin-node-polyfills": "^0.2.1",
+        "ts-jest": "^29.1.0",
+        "ts-node": "^10.9.1"
+    },
+    "dependencies": {
+        "rxjs": "^7.8.0"
+    }
 }
