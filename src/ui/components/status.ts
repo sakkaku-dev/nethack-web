@@ -101,6 +101,10 @@ export class StatusLine {
     horiz(conditions);
     conditions.appendChild(this.createText(s.hunger, true));
     s.condition?.forEach((c) => conditions.appendChild(this.createText(c, true)));
+    if (s.carryCap) {
+      conditions.appendChild(this.createText(s.carryCap, true));
+    }
+
     conditions.style.flexGrow = "1";
     conditions.style.fontSize = "1.2rem";
     firstRow.appendChild(conditions);
@@ -124,9 +128,10 @@ export class StatusLine {
     }
 
     const lvl = document.createElement("div");
+    horiz(lvl);
+
     if (s.expLvl) {
       const lvlElem = this.createText(s.expLvl);
-      horiz(lvl);
       lvl.style.gap = "0";
 
       lvl.appendChild(document.createTextNode("LV"));
@@ -140,6 +145,7 @@ export class StatusLine {
 
       lvl.title = s.title?.text || "Untitled";
     } else if (s.hd) {
+      lvl.appendChild(document.createTextNode("HD"));
       lvl.appendChild(this.createText(s.hd));
     }
     lastRow.appendChild(lvl);
