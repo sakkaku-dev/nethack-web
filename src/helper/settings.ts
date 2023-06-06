@@ -10,6 +10,7 @@ export enum TileSetImage {
     Nevanda = 'Nevanda',
     Dawnhack = 'Dawnhack',
     Default = 'Default Nethack',
+    Chozo = 'Chozo',
 }
 
 export function loadSettings(): Settings {

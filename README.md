@@ -42,9 +42,10 @@ Header set Cross-Origin-Embedder-Policy "require-corp"
 
 ## Assets
 
--   `Nevanda_32.png`
-    -   By Nevanda
-    -   https://nethackwiki.com/mediawiki/images/2/26/Nevanda.png
+-   `nethack_default.png` - https://nethackwiki.com/wiki/File:3.6.1tiles32.png
+-   `Nevanda.png` -  https://nethackwiki.com/mediawiki/images/2/26/Nevanda.png
+-   `dawnhack_32.bmp` - https://www.deviantart.com/dragondeplatino/art/DawnHack-NetHack-3-6-1-UnNetHack-5-1-0-416312313
+-   `Chozo32-360.png` -  https://nethackwiki.com/wiki/File:Chozo32-360.png
 
 ## References
 
