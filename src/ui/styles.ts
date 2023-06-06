@@ -58,3 +58,7 @@ export function grid(elem: HTMLElement, col: number) {
     elem.style.gap = '0.5rem';
     elem.style.gridTemplateColumns = `repeat(${col}, minmax(0, 1fr))`;
 }
+
+export function pointer(elem: HTMLElement) {
+    elem.style.cursor = 'pointer';
+}

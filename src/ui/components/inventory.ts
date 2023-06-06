@@ -1,6 +1,6 @@
-import { InventoryItem, Item } from '../../models';
-import { horiz, vert } from '../styles';
-import { Icon, IconButton } from './icon';
+import { InventoryItem } from '../../models';
+import { horiz, pointer, vert } from '../styles';
+import { IconButton } from './icon';
 import { TileSet } from './tilemap';
 
 export class Inventory {
@@ -24,9 +24,12 @@ export class Inventory {
         this.updateItems(this.items);
     }
 
-    toggle() {
+    toggle(update = false) {
         this.expanded = !this.expanded;
-        // Update not necessary, the toggle key will automatically request a reload of the inventory
+        // Update not always necessary, the toggle key (i) will automatically request a reload of the inventory
+        if (update) {
+            this.updateItems(this.items);
+        }
     }
 
     open() {
@@ -37,14 +40,8 @@ export class Inventory {
     updateItems(items: InventoryItem[]) {
         this.items = items;
         this.clear();
-
-        const container = IconButton('arrows-h-alt');
-        container.onclick = () => {
-            this.toggle();
-            this.updateItems(this.items);
-        };
-        this.elem.appendChild(container);
-
+        this.elem.onclick = () => this.toggle(true);
+        pointer(this.elem);
         this.createInventoryRows(items);
     }
 
