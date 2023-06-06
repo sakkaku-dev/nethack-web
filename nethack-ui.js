@@ -39,6 +39,9 @@ function title(elem) {
     elem.style.fontWeight = 'bold';
     elem.style.padding = '0.5rem 1rem';
 }
+function pointer(elem) {
+    elem.style.cursor = 'pointer';
+}
 
 const createAccel = (accel) => {
     const accelElem = document.createElement('div');
@@ -1316,21 +1319,6 @@ class Console {
     }
 }
 
-function Icon(name) {
-    const icon = document.createElement('i');
-    icon.classList.add(`gg-${name}`);
-    return icon;
-}
-function IconButton(name) {
-    const container = document.createElement('div');
-    center(container);
-    container.style.justifyContent = 'end';
-    container.appendChild(Icon(name));
-    container.style.height = '16px';
-    container.style.cursor = 'pointer';
-    return container;
-}
-
 class Inventory {
     constructor(root, tileset) {
         this.tileset = tileset;
@@ -1348,9 +1336,12 @@ class Inventory {
         this.tileset = tileset;
         this.updateItems(this.items);
     }
-    toggle() {
+    toggle(update = false) {
         this.expanded = !this.expanded;
-        // Update not necessary, the toggle key will automatically request a reload of the inventory
+        // Update not always necessary, the toggle key (i) will automatically request a reload of the inventory
+        if (update) {
+            this.updateItems(this.items);
+        }
     }
     open() {
         this.expanded = true;
@@ -1359,12 +1350,8 @@ class Inventory {
     updateItems(items) {
         this.items = items;
         this.clear();
-        const container = IconButton('arrows-h-alt');
-        container.onclick = () => {
-            this.toggle();
-            this.updateItems(this.items);
-        };
-        this.elem.appendChild(container);
+        this.elem.onclick = () => this.toggle(true);
+        pointer(this.elem);
         this.createInventoryRows(items);
     }
     createInventoryRows(items) {
@@ -1530,6 +1517,21 @@ var COLOR_ATTR;
     COLOR_ATTR[COLOR_ATTR["HL_ATTCLR_BOLD"] = 20] = "HL_ATTCLR_BOLD";
     COLOR_ATTR[COLOR_ATTR["BL_ATTCLR_MAX"] = 21] = "BL_ATTCLR_MAX";
 })(COLOR_ATTR || (COLOR_ATTR = {}));
+
+function Icon(name) {
+    const icon = document.createElement('i');
+    icon.classList.add(`gg-${name}`);
+    return icon;
+}
+function IconButton(name) {
+    const container = document.createElement('div');
+    center(container);
+    container.style.justifyContent = 'end';
+    container.appendChild(Icon(name));
+    container.style.height = '16px';
+    container.style.cursor = 'pointer';
+    return container;
+}
 
 function Slider(value, maxValue, fg, bg) {
     const slider = document.createElement('div');
