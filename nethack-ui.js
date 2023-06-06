@@ -1955,6 +1955,7 @@ var TileSetImage;
     TileSetImage["Nevanda"] = "Nevanda";
     TileSetImage["Dawnhack"] = "Dawnhack";
     TileSetImage["Default"] = "Default Nethack";
+    TileSetImage["Chozo"] = "Chozo";
 })(TileSetImage || (TileSetImage = {}));
 
 class GameScreen extends Screen {
@@ -1975,6 +1976,8 @@ class GameScreen extends Screen {
                 return new TileSet('Nevanda.png', 32, 40);
             case TileSetImage.Dawnhack:
                 return new TileSet('dawnhack_32.bmp', 32, 40);
+            case TileSetImage.Chozo:
+                return new TileSet('Chozo32-360.png', 32, 40);
             default:
                 return new TileSet('nethack_default.png', 32, 40);
         }

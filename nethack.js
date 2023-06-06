@@ -2004,6 +2004,7 @@ var TileSetImage;
     TileSetImage["Nevanda"] = "Nevanda";
     TileSetImage["Dawnhack"] = "Dawnhack";
     TileSetImage["Default"] = "Default Nethack";
+    TileSetImage["Chozo"] = "Chozo";
 })(TileSetImage || (TileSetImage = {}));
 function loadSettings() {
     const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
