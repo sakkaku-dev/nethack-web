@@ -2236,14 +2236,14 @@ class NetHackWrapper {
     // Getting input from user
     async sendInput(...keys) {
         for (const key of keys) {
-            await this.waitForAwaitingInput();
+            // await this.waitForAwaitingInput();
             const k = typeof key === 'string' ? key.charCodeAt(0) : key;
             this.log('Sending input', k);
             this.input$.next(k);
         }
     }
     async sendLine(line) {
-        await this.waitForAwaitingInput();
+        // await this.waitForAwaitingInput();
         if (line.length >= MAX_STRING_LENGTH) {
             this.log(`Line is too long. It can only be ${MAX_STRING_LENGTH} characters long.`, line);
         }
