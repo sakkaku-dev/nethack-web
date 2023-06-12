@@ -95,6 +95,8 @@ export class NetHackWrapper implements NetHackJS {
     private awaitingInput$ = new BehaviorSubject(false);
     private gameState$ = new BehaviorSubject(GameState.START);
 
+    public shouldWaitForInput = true;
+
     constructor(
         private debug = false,
         private module: any,
@@ -121,8 +123,6 @@ export class NetHackWrapper implements NetHackJS {
                 tap((items) => this.ui.updateInventory(...items))
             )
             .subscribe();
-
-        this.input$.subscribe(() => this.awaitingInput$.next(false));
 
         this.win.nethackCallback = this.handle.bind(this);
         this.win.onbeforeunload = (e) => {
@@ -286,7 +286,7 @@ export class NetHackWrapper implements NetHackJS {
 
     public async sendInput(...keys: (number | string)[]) {
         for (const key of keys) {
-            // await this.waitForAwaitingInput();
+            await this.waitForAwaitingInput();
             const k = typeof key === 'string' ? key.charCodeAt(0) : key;
             this.log('Sending input', k);
             this.input$.next(k);
@@ -294,7 +294,8 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     public async sendLine(line: string) {
-        // await this.waitForAwaitingInput();
+        await this.waitForAwaitingInput();
+
         if (line.length >= MAX_STRING_LENGTH) {
             this.log(`Line is too long. It can only be ${MAX_STRING_LENGTH} characters long.`, line);
         } else {
@@ -306,7 +307,7 @@ export class NetHackWrapper implements NetHackJS {
 
     private async waitInput(type = InputType.ALL) {
         this.awaitingInput$.next(true);
-        return await firstValueFrom(
+        const value = await firstValueFrom(
             this.input$.pipe(
                 filter((c) => {
                     switch (type) {
@@ -322,11 +323,15 @@ export class NetHackWrapper implements NetHackJS {
                 })
             )
         );
+        this.awaitingInput$.next(false);
+        return value;
     }
 
     private async waitLine() {
         this.awaitingInput$.next(true);
-        return await firstValueFrom(this.line$);
+        const value = await firstValueFrom(this.line$);
+        this.awaitingInput$.next(false);
+        return value;
     }
 
     private async waitForNextAction() {
@@ -339,7 +344,11 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     private async waitForAwaitingInput() {
-        return await firstValueFrom(this.awaitingInput$.pipe(filter((x) => x)));
+        if (!this.shouldWaitForInput) { // In case this causes problems again
+            return;
+        }
+
+        await firstValueFrom(this.awaitingInput$.pipe(filter((x) => x)));
     }
 
     // Commands

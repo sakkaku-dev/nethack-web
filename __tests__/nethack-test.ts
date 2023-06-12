@@ -1,11 +1,9 @@
-import { firstValueFrom } from 'rxjs';
 import { NetHackWrapper } from '../src/nethack-wrapper';
 import { Command } from '../src/nethack-models';
 import { mock } from 'jest-mock-extended';
 import { Item, NetHackUI } from '../src/models';
-import { Status } from '../src/models';
 import { NethackUtil } from '../src/helper/nethack-util';
-import { MENU_SELECT } from '../src/generated';
+import { ATTR, MENU_SELECT } from '../src/generated';
 import { EMPTY_ITEM } from '../src/helper/menu-select';
 import { ENTER, ESC, SPACE } from '../src/helper/keys';
 
@@ -43,10 +41,6 @@ describe('Nethack', () => {
     };
 
     const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-    const parseStatus = async (line: string) => {
-        await wrapper.handle(Command.PUTSTR, WIN_STATUS, 0, line);
-        await wait(200);
-    };
 
     let wrapper: NetHackWrapper;
     let ui: NetHackUI;
@@ -261,5 +255,14 @@ describe('Nethack', () => {
             send(ENTER);
             await expect(p).resolves.toEqual(code('y'));
         });
+    });
+
+    // Test Bug #76
+    it('should display dialog and dismiss', async () => {
+        wrapper.handle(Command.PUTSTR, WIN_ANY, ATTR.ATR_NONE, 'Hello World');
+        const display = wrapper.handle(Command.DISPLAY_WINDOW, WIN_ANY);
+
+        wrapper.sendInput('k', 'l', ' ');
+        await expect(display).resolves.not.toThrow();
     });
 });
