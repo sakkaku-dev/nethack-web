@@ -2091,6 +2091,7 @@ class NetHackWrapper {
         this.tiles$ = new BehaviorSubject([]);
         this.awaitingInput$ = new BehaviorSubject(false);
         this.gameState$ = new BehaviorSubject(GameState.START);
+        this.shouldWaitForInput = true;
         this.gameState$.pipe(tap((s) => this.ui.updateState(s))).subscribe();
         this.tiles$
             .pipe(skip(1), filter$1((x) => x.length > 0), debounceTime(100), tap((tiles) => this.ui.updateMap(...tiles)), tap(() => this.tiles$.next([])))
@@ -2098,7 +2099,6 @@ class NetHackWrapper {
         this.inventory$
             .pipe(filter$1((x) => x.length > 0), debounceTime(100), tap((items) => this.ui.updateInventory(...items)))
             .subscribe();
-        this.input$.subscribe(() => this.awaitingInput$.next(false));
         this.win.nethackCallback = this.handle.bind(this);
         this.win.onbeforeunload = (e) => {
             if (this.isGameRunning()) {
@@ -2236,14 +2236,14 @@ class NetHackWrapper {
     // Getting input from user
     async sendInput(...keys) {
         for (const key of keys) {
-            // await this.waitForAwaitingInput();
+            await this.waitForAwaitingInput();
             const k = typeof key === 'string' ? key.charCodeAt(0) : key;
             this.log('Sending input', k);
             this.input$.next(k);
         }
     }
     async sendLine(line) {
-        // await this.waitForAwaitingInput();
+        await this.waitForAwaitingInput();
         if (line.length >= MAX_STRING_LENGTH) {
             this.log(`Line is too long. It can only be ${MAX_STRING_LENGTH} characters long.`, line);
         }
@@ -2254,7 +2254,7 @@ class NetHackWrapper {
     // Waiting for input from user
     async waitInput(type = InputType.ALL) {
         this.awaitingInput$.next(true);
-        return await firstValueFrom(this.input$.pipe(filter$1((c) => {
+        const value = await firstValueFrom(this.input$.pipe(filter$1((c) => {
             switch (type) {
                 case InputType.CONTINUE:
                     return CONTINUE_KEYS.includes(c);
@@ -2266,10 +2266,14 @@ class NetHackWrapper {
                     return true;
             }
         })));
+        this.awaitingInput$.next(false);
+        return value;
     }
     async waitLine() {
         this.awaitingInput$.next(true);
-        return await firstValueFrom(this.line$);
+        const value = await firstValueFrom(this.line$);
+        this.awaitingInput$.next(false);
+        return value;
     }
     async waitForNextAction() {
         const code = await this.waitInput();
@@ -2279,7 +2283,10 @@ class NetHackWrapper {
         return code;
     }
     async waitForAwaitingInput() {
-        return await firstValueFrom(this.awaitingInput$.pipe(filter$1((x) => x)));
+        if (!this.shouldWaitForInput) { // In case this causes problems again
+            return;
+        }
+        await firstValueFrom(this.awaitingInput$.pipe(filter$1((x) => x)));
     }
     // Commands
     async handle(cmd, ...args) {
