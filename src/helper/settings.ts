@@ -4,6 +4,7 @@ export interface Settings {
     enableMapBorder: boolean;
     tileSetImage: TileSetImage;
     playerName: string;
+    options: string;
 }
 
 export enum TileSetImage {
@@ -13,17 +14,25 @@ export enum TileSetImage {
     Chozo = 'Chozo',
 }
 
+export const defaultSetting: Settings = {
+    enableMapBorder: true,
+    tileSetImage: TileSetImage.Nevanda,
+    playerName: 'Unnamed',
+    options: '',
+}
+
 export function loadSettings(): Settings {
     const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
     return {
-        enableMapBorder: true,
-        tileSetImage: TileSetImage.Nevanda,
-        playerName: 'Unnamed',
+        ...defaultSetting,
         ...settings,
     };
 }
 
-export function updateSettings(settings: Settings, changeFn: (s: Settings) => void) {
-    changeFn(settings);
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+export function saveSettings(s: Settings) {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+
+export async function loadDefaultOptions() {
+    return fetch('nethackrc.default').then(x => x.text());
 }

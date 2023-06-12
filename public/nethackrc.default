@@ -1,0 +1,17 @@
+# Default Options
+# To make changes, then remove at least the first line containing: # Default Options
+# Changes will be applied after the game is reloaded (you can save & quit)
+# To restore this file to default, clear everything or restore the first line: # Default Options
+
+# For a list of options, read http://nethackwiki.com/wiki/Options
+# Note that not all the NetHack options are supported by NethackWeb
+
+OPTIONS=showexp,perm_invent,autoopen,time,!cmdassist,sortloot:full
+OPTIONS=autopickup,pickup_types:$,pickup_thrown,pickup_burden:S
+OPTIONS=statuscolors,statushilites:10
+
+OPTIONS=hilite_status:characteristics/down/red
+OPTIONS=hilite_status:hitpoints/<40%/red
+OPTIONS=hilite_status:hunger/always/red&bold
+OPTIONS=hilite_status:carrying-capacity/burdened/yellow/stressed/orange
+OPTIONS=hilite_status:condition/all/bold/major_troubles/red/minor_troubles/orange

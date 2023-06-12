@@ -13,7 +13,7 @@ import { listBackupFiles, loadRecords, loadSaveFiles, syncSaveFiles } from './he
 import { CONTINUE_KEYS, ENTER, ESC, SPACE } from './helper/keys';
 import { toInventoryItem } from './helper/inventory';
 import { createConditionStatusText, createStatusText } from './helper/visual';
-import { Settings, TileSetImage, loadSettings, updateSettings } from './helper/settings';
+import { Settings, TileSetImage, loadSettings, saveSettings, loadDefaultOptions, defaultSetting } from './helper/settings';
 
 const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
@@ -94,6 +94,7 @@ export class NetHackWrapper implements NetHackJS {
     private tiles$ = new BehaviorSubject<Tile[]>([]);
     private awaitingInput$ = new BehaviorSubject(false);
     private gameState$ = new BehaviorSubject(GameState.START);
+    private settings$ = new BehaviorSubject<Settings>(defaultSetting);
 
     public shouldWaitForInput = true;
 
@@ -105,6 +106,8 @@ export class NetHackWrapper implements NetHackJS {
         private autostart = true
     ) {
         this.gameState$.pipe(tap((s) => this.ui.updateState(s))).subscribe();
+
+        this.settings$.pipe(debounceTime(100), tap(s => saveSettings(s))).subscribe();
 
         this.tiles$
             .pipe(
@@ -149,13 +152,32 @@ export class NetHackWrapper implements NetHackJS {
             this.module.preRun = [];
         }
         this.module.preRun.push(() => loadSaveFiles(this.module, this.backupFile));
+        this.module.preRun.push(() => this.setupNethackOptions());
+
+        const settings = this.settings$.value;
+        if (!settings.options || settings.options.startsWith('# Default Options')) {
+            loadDefaultOptions().then(opt => this.updateSettings({ options: opt }));
+        }
 
         if (autostart) {
             this.openStartScreen();
         }
     }
 
+    private setupNethackOptions() {
+        const home = '/home/nethack_player';
+        this.module.ENV.HOME = home;
+        try {
+            this.module.FS.mkdir('/home/nethack_player');
+        } catch (e) { }
+
+        const options = this.settings$.value.options;
+        this.module.FS.writeFile(home + '/.nethackrc', options, { encoding: 'utf8' });
+    }
+
     private async openStartScreen() {
+        this.reloadSettings();
+
         while (!this.isGameRunning()) {
             const actions = [async () => this.startGame()];
             const startMenu = ['Start Game'];
@@ -198,14 +220,22 @@ export class NetHackWrapper implements NetHackJS {
         this.ui.closeDialog(-1);
     }
 
+    private reloadSettings() {
+        this.settings$.next(loadSettings());
+    }
+
+    private updateSettings(setting: Partial<Settings>) {
+        this.settings$.next({ ...this.settings$.value, ...setting });
+    }
+
     private async options() {
         let cancel = false;
         do {
-            const settings = loadSettings();
+            const settings = this.settings$.value;
             const options = [`Enable map border - [${settings.enableMapBorder}]`, `Tileset - ${settings.tileSetImage}`];
             const optionActions = [
-                async () => updateSettings(settings, (s) => (s.enableMapBorder = !s.enableMapBorder)),
-                () => this.tilesetOption(settings),
+                async () => this.updateSettings({ enableMapBorder: !settings.enableMapBorder }),
+                () => this.tilesetOption(),
             ];
             const optionId = await this.openCustomMenu('Options', options);
             if (optionId === -1) {
@@ -216,11 +246,11 @@ export class NetHackWrapper implements NetHackJS {
         } while (!cancel);
     }
 
-    private async tilesetOption(settings: Settings) {
+    private async tilesetOption() {
         const images = Object.values(TileSetImage);
         const idx = await this.openCustomMenu('Tileset Image', images);
         if (idx !== -1) {
-            updateSettings(settings, (s) => (s.tileSetImage = images[idx]));
+            this.updateSettings({ tileSetImage: images[idx] });
         }
     }
 
@@ -253,9 +283,8 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     private setPlayerName(name: string) {
-        const settings = loadSettings();
         this.global.globals.plname = name;
-        updateSettings(settings, (s) => (s.playerName = name));
+        this.updateSettings({ playerName: name });
     }
 
     private async openCustomMenu(prompt: string, buttons: string[]) {
