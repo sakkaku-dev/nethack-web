@@ -1,4 +1,12 @@
-import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from 'rxjs';
+import {
+    BehaviorSubject,
+    Subject,
+    debounceTime,
+    filter,
+    firstValueFrom,
+    skip,
+    tap,
+} from 'rxjs';
 import { Item, NetHackJS, Status, NetHackUI, Tile, GameState, InventoryItem } from './models';
 import { ATTR, MENU_SELECT, STATUS_FIELD, WIN_TYPE } from './generated';
 
@@ -13,7 +21,14 @@ import { listBackupFiles, loadRecords, loadSaveFiles, syncSaveFiles } from './he
 import { CONTINUE_KEYS, ENTER, ESC, SPACE } from './helper/keys';
 import { toInventoryItem } from './helper/inventory';
 import { createConditionStatusText, createStatusText } from './helper/visual';
-import { Settings, TileSetImage, loadSettings, saveSettings, loadDefaultOptions, defaultSetting } from './helper/settings';
+import {
+    Settings,
+    TileSetImage,
+    loadSettings,
+    saveSettings,
+    loadDefaultOptions,
+    defaultSetting,
+} from './helper/settings';
 
 const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
@@ -88,7 +103,7 @@ export class NetHackWrapper implements NetHackJS {
     private status: Status = {};
 
     private input$ = new Subject<number>();
-    private line$ = new Subject<string>();
+    private line$ = new Subject<string | null>();
 
     private inventory$ = new Subject<InventoryItem[]>();
     private tiles$ = new BehaviorSubject<Tile[]>([]);
@@ -107,7 +122,13 @@ export class NetHackWrapper implements NetHackJS {
     ) {
         this.gameState$.pipe(tap((s) => this.ui.updateState(s))).subscribe();
 
-        this.settings$.pipe(debounceTime(100), tap(s => saveSettings(s))).subscribe();
+        this.settings$
+            .pipe(
+                skip(1), // skip first default setting
+                debounceTime(100),
+                tap((s) => saveSettings(s))
+            )
+            .subscribe();
 
         this.tiles$
             .pipe(
@@ -154,11 +175,6 @@ export class NetHackWrapper implements NetHackJS {
         this.module.preRun.push(() => loadSaveFiles(this.module, this.backupFile));
         this.module.preRun.push(() => this.setupNethackOptions());
 
-        const settings = this.settings$.value;
-        if (!settings.options || settings.options.startsWith('# Default Options')) {
-            loadDefaultOptions().then(opt => this.updateSettings({ options: opt }));
-        }
-
         if (autostart) {
             this.openStartScreen();
         }
@@ -176,7 +192,7 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     private async openStartScreen() {
-        this.reloadSettings();
+        await this.reloadSettings();
 
         while (!this.isGameRunning()) {
             const actions = [async () => this.startGame()];
@@ -203,7 +219,7 @@ export class NetHackWrapper implements NetHackJS {
 
             const records = loadRecords();
             if (records.length) {
-                startMenu.push('Leaderboard');
+                startMenu.push('Highscores');
                 actions.push(async () => {
                     this.ui.openDialog(-1, records);
                     await this.waitInput(InputType.CONTINUE);
@@ -220,8 +236,10 @@ export class NetHackWrapper implements NetHackJS {
         this.ui.closeDialog(-1);
     }
 
-    private reloadSettings() {
-        this.settings$.next(loadSettings());
+    private async reloadSettings() {
+        const settings = loadSettings();
+        settings.options = await this.mapDefaultNethackOptions(settings.options);
+        this.settings$.next(settings);
     }
 
     private updateSettings(setting: Partial<Settings>) {
@@ -232,10 +250,15 @@ export class NetHackWrapper implements NetHackJS {
         let cancel = false;
         do {
             const settings = this.settings$.value;
-            const options = [`Enable map border - [${settings.enableMapBorder}]`, `Tileset - ${settings.tileSetImage}`];
+            const options = [
+                `Enable map border - [${settings.enableMapBorder}]`,
+                `Tileset - ${settings.tileSetImage}`,
+                `Nethack Options`,
+            ];
             const optionActions = [
                 async () => this.updateSettings({ enableMapBorder: !settings.enableMapBorder }),
                 () => this.tilesetOption(),
+                () => this.editNethackOption(),
             ];
             const optionId = await this.openCustomMenu('Options', options);
             if (optionId === -1) {
@@ -252,6 +275,24 @@ export class NetHackWrapper implements NetHackJS {
         if (idx !== -1) {
             this.updateSettings({ tileSetImage: images[idx] });
         }
+    }
+
+    private async editNethackOption() {
+        this.ui.openGetTextArea(this.settings$.value.options);
+        const newValue = await this.waitLine(false);
+        if (newValue != null) {
+            this.updateSettings({ options: await this.mapDefaultNethackOptions(newValue) });
+        }
+
+        this.ui.closeDialog(-1);
+    }
+
+    private async mapDefaultNethackOptions(opt: string) {
+        if (!opt || opt.startsWith('# Default Options')) {
+            return await loadDefaultOptions();
+        }
+
+        return opt;
     }
 
     private async startGame(player?: string) {
@@ -271,7 +312,7 @@ export class NetHackWrapper implements NetHackJS {
 
         do {
             this.ui.openGetLine(prompt, settings.playerName);
-            name = (await this.waitLine()).trim();
+            name = (await this.waitLine())?.trim() || '';
             if (name.length >= MAX_PLAYER_NAME) {
                 name = '';
                 prompt = `Your name can only be ${MAX_PLAYER_NAME} characters long:`;
@@ -322,14 +363,9 @@ export class NetHackWrapper implements NetHackJS {
         }
     }
 
-    public async sendLine(line: string) {
+    public async sendLine(line: string | null) {
         await this.waitForAwaitingInput();
-
-        if (line.length >= MAX_STRING_LENGTH) {
-            this.log(`Line is too long. It can only be ${MAX_STRING_LENGTH} characters long.`, line);
-        } else {
-            this.line$.next(line);
-        }
+        this.line$.next(line);
     }
 
     // Waiting for input from user
@@ -356,9 +392,11 @@ export class NetHackWrapper implements NetHackJS {
         return value;
     }
 
-    private async waitLine() {
+    private async waitLine(limitLength = true) {
         this.awaitingInput$.next(true);
-        const value = await firstValueFrom(this.line$);
+        const value = await firstValueFrom(
+            this.line$.pipe(filter((line) => !limitLength || (line?.length || 0) < MAX_STRING_LENGTH))
+        );
         this.awaitingInput$.next(false);
         return value;
     }
@@ -373,7 +411,8 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     private async waitForAwaitingInput() {
-        if (!this.shouldWaitForInput) { // In case this causes problems again
+        if (!this.shouldWaitForInput) {
+            // In case this causes problems again
             return;
         }
 
@@ -419,8 +458,10 @@ export class NetHackWrapper implements NetHackJS {
     private async getLine(question: string, searchPointer: number) {
         this.ui.openGetLine(question);
         const line = await this.waitLine();
-        const ptr = this.global.helpers.getPointerValue('nethack.getLine', searchPointer, Type.POINTER);
-        this.global.helpers.setPointerValue('nethack.getLine', ptr, Type.STRING, line);
+        if (line != null) {
+            const ptr = this.global.helpers.getPointerValue('nethack.getLine', searchPointer, Type.POINTER);
+            this.global.helpers.setPointerValue('nethack.getLine', ptr, Type.STRING, line);
+        }
         this.ui.closeDialog(-1);
     }
 
@@ -590,11 +631,11 @@ export class NetHackWrapper implements NetHackJS {
             if (type == STATUS_FIELD.BL_CONDITION) {
                 const conditionBits: number = this.global.helpers.getPointerValue('status', ptr, Type.INT);
                 this.status.condition = createConditionStatusText(conditionBits, colormasks);
-                console.log(STATUS_FIELD[type], conditionBits, this.status.condition);
+                // console.log(STATUS_FIELD[type], conditionBits, this.status.condition);
             } else {
                 const text = this.global.helpers.getPointerValue('status', ptr, Type.STRING);
                 mapper(this.status, createStatusText(text, color));
-                console.log(STATUS_FIELD[type], text);
+                // console.log(STATUS_FIELD[type], text);
             }
         } else {
             this.log('Unhandled status type', STATUS_FIELD[type]);

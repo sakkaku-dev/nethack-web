@@ -58,8 +58,11 @@ export class Game implements NetHackUI {
     openQuestion = (question: string, defaultChoice: string, ...choices: string[]) =>
         this.game.openQuestion(question, choices, defaultChoice);
     openGetLine = (question: string, ...autocomplete: string[]) => this.current?.onLine(question, autocomplete);
+    openGetTextArea = (value: string) => this.current?.onTextArea(value);
+
     openDialog = (winid: number, text: string) => this.current?.onDialog(text);
     closeDialog = (winid: number) => this.current?.onCloseDialog();
+
     printLine = (line: string) => this.game.console.appendLine(line);
     moveCursor = (x: number, y: number) => this.game.tilemap.recenter({ x, y });
     centerView = (x: number, y: number) => this.game.tilemap.recenter({ x, y });

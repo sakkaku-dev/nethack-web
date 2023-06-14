@@ -3,7 +3,7 @@ import { StyledText } from './helper/visual';
 
 export interface NetHackJS {
     sendInput: (key: number) => void;
-    sendLine: (line: string) => void;
+    sendLine: (line: string | null) => void;
 }
 
 // In Godot all parameters will be in one array, so don't nest them
@@ -12,6 +12,7 @@ export interface NetHackUI {
     openDialog: (id: number, msg: string) => void;
     openQuestion: (question: string, defaultChoice: string, ...choices: string[]) => void;
     openGetLine: (question: string, ...autocomplete: string[]) => void;
+    openGetTextArea: (value: string) => void;
 
     printLine: (msg: string) => void;
     closeDialog: (id: number) => void;

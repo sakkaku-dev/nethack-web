@@ -7,7 +7,7 @@
 # Note that not all the NetHack options are supported by NethackWeb
 
 OPTIONS=showexp,perm_invent,autoopen,time,!cmdassist,sortloot:full
-OPTIONS=autopickup,pickup_types:$,pickup_thrown,pickup_burden:S
+OPTIONS=autopickup,pickup_types:$?!,pickup_thrown,pickup_burden:S
 OPTIONS=statuscolors,statushilites:10
 
 OPTIONS=hilite_status:characteristics/down/red
