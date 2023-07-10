@@ -14,6 +14,12 @@ export function MenuButton(item: Item, prepend = true, tileset?: TileSet) {
     btn.disabled = item.accelerator === 0;
     horiz(btn);
 
+    if (item.str.toLowerCase().match(/(?<!un)cursed/)) {
+        btn.classList.add('cursed ');
+    } else if (item.str.toLowerCase().includes('blessed')) {
+        btn.classList.add('blessed');
+    }
+
     btn.onclick = () => window.nethackJS.sendInput(item.accelerator);
     if (item.active) {
         btn.classList.add('active');
