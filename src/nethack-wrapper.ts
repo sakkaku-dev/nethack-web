@@ -1,12 +1,4 @@
-import {
-    BehaviorSubject,
-    Subject,
-    debounceTime,
-    filter,
-    firstValueFrom,
-    skip,
-    tap,
-} from 'rxjs';
+import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from 'rxjs';
 import { Item, NetHackJS, Status, NetHackUI, Tile, GameState, InventoryItem } from './models';
 import { ATTR, MENU_SELECT, STATUS_FIELD, WIN_TYPE } from './generated';
 
@@ -17,7 +9,15 @@ import { Command, ItemFlag, statusMap } from './nethack-models';
 import { AccelIterator } from './helper/accel-iterator';
 import { NethackUtil, Type } from './helper/nethack-util';
 import { EMPTY_ITEM, clearMenuItems, getCountForSelect, setAccelerators, toggleMenuItems } from './helper/menu-select';
-import { listBackupFiles, loadRecords, loadSaveFiles, syncSaveFiles } from './helper/save-files';
+import {
+    SaveFile,
+    exportSaveFile,
+    importSaveFile,
+    listBackupFiles,
+    loadRecords,
+    loadSaveFiles,
+    syncSaveFiles,
+} from './helper/save-files';
 import { CONTINUE_KEYS, ENTER, ESC, SPACE } from './helper/keys';
 import { toInventoryItem } from './helper/inventory';
 import { createConditionStatusText, createStatusText } from './helper/visual';
@@ -185,7 +185,7 @@ export class NetHackWrapper implements NetHackJS {
         this.module.ENV.HOME = home;
         try {
             this.module.FS.mkdir('/home/nethack_player');
-        } catch (e) { }
+        } catch (e) {}
 
         const options = this.settings$.value.options;
         this.module.FS.writeFile(home + '/.nethackrc', options, { encoding: 'utf8' });
@@ -198,21 +198,8 @@ export class NetHackWrapper implements NetHackJS {
             const actions = [async () => this.startGame()];
             const startMenu = ['Start Game'];
 
-            const files = listBackupFiles();
-            if (files.length > 0) {
-                startMenu.push('Load from backup');
-                actions.push(async () => {
-                    const backupId = await this.openCustomMenu(
-                        'Select backup file',
-                        files.map((f) => `${f.player} ${f.modified ? ' - ' + f.modified.toISOString() : ''}`)
-                    );
-                    if (backupId !== -1) {
-                        const selected = files[backupId];
-                        this.backupFile = selected.file;
-                        this.startGame(selected.player);
-                    }
-                });
-            }
+            startMenu.push('Backups');
+            actions.push(() => this.backupOperations());
 
             startMenu.push('Options');
             actions.push(() => this.options());
@@ -236,6 +223,41 @@ export class NetHackWrapper implements NetHackJS {
         this.ui.closeDialog(-1);
     }
 
+    private async backupOperations() {
+        await this.openSubMenu(
+            'Backup Actions',
+            () => ['Load', 'Export', 'Import'],
+            () => [
+                () =>
+                    this.selectBackup(listBackupFiles(), (file) => {
+                        this.backupFile = file.file;
+                        this.startGame(file.player);
+                        return true; // close sub menu
+                    }),
+                () => this.selectBackup(listBackupFiles(), (file) => exportSaveFile(file)),
+                () => {
+                    const elem = document.querySelector('#importSaveFile') as HTMLInputElement;
+                    elem.click();
+                    if (elem.files) {
+                        const file = elem.files[0];
+                        importSaveFile(file);
+                    }
+                },
+            ]
+        );
+    }
+
+    private async selectBackup(files: SaveFile[], handler: (f: SaveFile) => void) {
+        const backupId = await this.openCustomMenu(
+            'Select backup file',
+            files.map((f) => `${f.player} ${f.modified ? ' - ' + f.modified.toISOString() : ''}`)
+        );
+        if (backupId !== -1) {
+            const selected = files[backupId];
+            return handler(selected);
+        }
+    }
+
     private async reloadSettings() {
         const settings = loadSettings();
         settings.options = await this.mapDefaultNethackOptions(settings.options);
@@ -246,25 +268,37 @@ export class NetHackWrapper implements NetHackJS {
         this.settings$.next({ ...this.settings$.value, ...setting });
     }
 
+    private get settings() {
+        return this.settings$.value;
+    }
+
     private async options() {
-        let cancel = false;
-        do {
-            const settings = this.settings$.value;
-            const options = [
-                `Enable map border - [${settings.enableMapBorder}]`,
-                `Tileset - ${settings.tileSetImage}`,
+        await this.openSubMenu(
+            'Options',
+            () => [
+                `Enable map border - [${this.settings.enableMapBorder}]`,
+                `Tileset - ${this.settings.tileSetImage}`,
                 `Nethack Options`,
-            ];
-            const optionActions = [
-                async () => this.updateSettings({ enableMapBorder: !settings.enableMapBorder }),
+            ],
+            () => [
+                async () => this.updateSettings({ enableMapBorder: !this.settings.enableMapBorder }),
                 () => this.tilesetOption(),
                 () => this.editNethackOption(),
-            ];
-            const optionId = await this.openCustomMenu('Options', options);
+            ]
+        );
+    }
+
+    private async openSubMenu(title: string, optionText: () => string[], optionActions: () => Function[]) {
+        let cancel = false;
+        do {
+            const optionId = await this.openCustomMenu(title, optionText());
             if (optionId === -1) {
                 cancel = true;
             } else {
-                await optionActions[optionId]();
+                const close = await optionActions()[optionId]();
+                if (close) {
+                    cancel = true;
+                }
             }
         } while (!cancel);
     }
