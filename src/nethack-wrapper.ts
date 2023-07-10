@@ -631,11 +631,9 @@ export class NetHackWrapper implements NetHackJS {
             if (type == STATUS_FIELD.BL_CONDITION) {
                 const conditionBits: number = this.global.helpers.getPointerValue('status', ptr, Type.INT);
                 this.status.condition = createConditionStatusText(conditionBits, colormasks);
-                // console.log(STATUS_FIELD[type], conditionBits, this.status.condition);
             } else {
                 const text = this.global.helpers.getPointerValue('status', ptr, Type.STRING);
                 mapper(this.status, createStatusText(text, color));
-                // console.log(STATUS_FIELD[type], text);
             }
         } else {
             this.log('Unhandled status type', STATUS_FIELD[type]);

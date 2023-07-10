@@ -61,7 +61,6 @@ function loadBackupSaveFile(file: string, module: any) {
 }
 
 export function syncSaveFiles(module: any) {
-    console.log('Syncing save files');
     module.FS.syncfs((err: any) => {
         if (err) {
             console.warn('Failed to sync FS. Save might not work', err);

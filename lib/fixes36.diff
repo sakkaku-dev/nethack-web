@@ -526,7 +526,7 @@ index 862915053..01f6506cb 100644
  # if TTY_TILES_ESCCODES
  #WINSRC += tile.c
 diff --git a/sys/unix/unixmain.c b/sys/unix/unixmain.c
-index 1e7880165..13b08b217 100644
+index 1e7880165..c9acb7997 100644
 --- a/sys/unix/unixmain.c
 +++ b/sys/unix/unixmain.c
 @@ -16,6 +16,13 @@
@@ -661,8 +661,8 @@ index 1e7880165..13b08b217 100644
 +            setValue(ptr, value, "i32");
 +            break;
 +        case "c":
-+            // Non-ASCII like Alt-o should also be allowed
-+            if(typeof value !== "number" || !Number.isInteger(value)) //value < 0 || value > 128)
++            // Non-ASCII like Alt-O should also be allowed
++            if(typeof value !== "number" || !Number.isInteger(value)) // || value < 0 || value > 128)
 +                throw new TypeError(`expected ${name} return type to be integer representing an character`);
 +            setValue(ptr, value, "i8");
 +            break;
@@ -984,10 +984,10 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..3fd80d092
+index 000000000..193415758
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,1137 @@
+@@ -0,0 +1,1141 @@
 +#include "hack.h"
 +#include "dlb.h"
 +#include "func_tab.h"
@@ -1125,10 +1125,11 @@ index 000000000..3fd80d092
 +DECLCB(char *,shim_getmsghistory, (BOOLEAN_P init), "si", A2P init)
 +VDECLCB(shim_putmsghistory, (const char *msg, BOOLEAN_P restoring_msghist), "vsi", P2V msg, A2P restoring_msghist)
 +VDECLCB(shim_status_init, (void), "v")
-+VDECLCB(shim_status_enablefield,
-+    (int fieldidx, const char *nm, const char *fmt, BOOLEAN_P enable),
-+    "vippi",
-+    A2P fieldidx, P2V nm, P2V fmt, A2P enable)
++// VDECLCB(shim_status_enablefield,
++//     (int fieldidx, const char *nm, const char *fmt, BOOLEAN_P enable),
++//     "vippi",
++//     A2P fieldidx, P2V nm, P2V fmt, A2P enable)
++void shim_status_enablefield(int fieldidx, const char *nm, const char *fmt, BOOLEAN_P enable);
 +/* XXX: the second argument to shim_status_update is sometimes an integer and sometimes a pointer */
 +// VDECLCB(shim_status_update,
 +//     (int fldidx, genericptr_t ptr, int chg, int percent, int color, unsigned long *colormasks),
@@ -2043,6 +2044,9 @@ index 000000000..3fd80d092
 +});
 +EM_JS(void, shim_status_update, (int fldidx, genericptr_t ptr, int chg, int percent, int color, unsigned long *colormasks), {
 +    globalThis.nethackJS.handle('shim_status_update', fldidx, ptr, chg, percent, color, colormasks);
++});
++EM_JS(void, shim_status_enablefield, (int fldidx, const char *nm, const char *fmt, BOOLEAN_P enable), {
++    globalThis.nethackJS.handle('shim_status_enablefield', fldidx, nm, fmt, enable);
 +});
 +
 +/* convert the C callback to a JavaScript callback */
