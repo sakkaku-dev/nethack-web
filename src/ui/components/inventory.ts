@@ -1,4 +1,4 @@
-import { InventoryItem } from '../../models';
+import { BUCState, InventoryItem } from '../../models';
 import { horiz, pointer, vert } from '../styles';
 import { IconButton } from './icon';
 import { TileSet } from './tilemap';
@@ -61,6 +61,11 @@ export class Inventory {
             } else {
                 const container = document.createElement('div');
                 horiz(container);
+                if (item.buc === BUCState.BLESSED) {
+                    container.classList.add('blessed');
+                } else if (item.buc === BUCState.CURSED) {
+                    container.classList.add('cursed');
+                }
 
                 const img = this.createItemImage(item);
                 if (img) {

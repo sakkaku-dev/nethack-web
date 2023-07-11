@@ -52,7 +52,7 @@ pushd NetHack
 	rm $PREFIX/nethack/recover
 	echo "Built data files in $PREFIX"
 popd
-sed -e '/"description":/a \ \ "type": "module",' -i package.json
+sed -e '/"description":/a \ \ \ \ "type": "module",' -i package.json
 }
 
 # Mostly repeating the same steps as for stage1 for generating main game
@@ -99,7 +99,7 @@ pushd NetHack/src
 	cp nethack.wasm $MYDIR/lib/nethack.wasm
 	cp nethack.data $MYDIR/lib/nethack.data
 popd
-sed -e '/"description":/a \ \ "type": "module",' -i package.json
+sed -e '/"description":/a \ \ \ \ "type": "module",' -i package.json
 }
 
 stage2

@@ -9,11 +9,26 @@ import { Command, ItemFlag, statusMap } from './nethack-models';
 import { AccelIterator } from './helper/accel-iterator';
 import { NethackUtil, Type } from './helper/nethack-util';
 import { EMPTY_ITEM, clearMenuItems, getCountForSelect, setAccelerators, toggleMenuItems } from './helper/menu-select';
-import { listBackupFiles, loadRecords, loadSaveFiles, syncSaveFiles } from './helper/save-files';
+import {
+    SaveFile,
+    exportSaveFile,
+    importSaveFile,
+    listBackupFiles,
+    loadRecords,
+    loadSaveFiles,
+    syncSaveFiles,
+} from './helper/save-files';
 import { CONTINUE_KEYS, ENTER, ESC, SPACE } from './helper/keys';
 import { toInventoryItem } from './helper/inventory';
 import { createConditionStatusText, createStatusText } from './helper/visual';
-import { Settings, TileSetImage, loadSettings, saveSettings, loadDefaultOptions, defaultSetting } from './helper/settings';
+import {
+    Settings,
+    TileSetImage,
+    loadSettings,
+    saveSettings,
+    loadDefaultOptions,
+    defaultSetting,
+} from './helper/settings';
 
 const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
@@ -40,8 +55,8 @@ export class NetHackWrapper implements NetHackJS {
         [Command.RAW_PRINT_BOLD]: async (str) => this.handlePrintLine(ATTR.ATR_BOLD, str),
 
         // Map
-        [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph) => {
-            this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph) }]);
+        [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph, isPet) => {
+            this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph), peaceful: isPet === 1 }]);
             if (bkglyph !== 0 && bkglyph !== 5991) {
                 console.log(
                     `%c Background Tile found! ${bkglyph}, ${this.util.toTile(bkglyph)}`,
@@ -75,8 +90,6 @@ export class NetHackWrapper implements NetHackJS {
         // according to window.doc, a 50ms delay, but add more since drawing the tile takes longer
         [Command.DELAY_OUTPUT]: () => new Promise((resolve) => setTimeout(resolve, 100)),
         [Command.MESSAGE_MENU]: this.messageMenu.bind(this),
-
-        // TODO: select_menu with yn_function
     };
     private idCounter = 0;
     private menuItems: Item[] = [];
@@ -88,7 +101,7 @@ export class NetHackWrapper implements NetHackJS {
     private status: Status = {};
 
     private input$ = new Subject<number>();
-    private line$ = new Subject<string>();
+    private line$ = new Subject<string | null>();
 
     private inventory$ = new Subject<InventoryItem[]>();
     private tiles$ = new BehaviorSubject<Tile[]>([]);
@@ -107,7 +120,13 @@ export class NetHackWrapper implements NetHackJS {
     ) {
         this.gameState$.pipe(tap((s) => this.ui.updateState(s))).subscribe();
 
-        this.settings$.pipe(debounceTime(100), tap(s => saveSettings(s))).subscribe();
+        this.settings$
+            .pipe(
+                skip(1), // skip first default setting
+                debounceTime(100),
+                tap((s) => saveSettings(s))
+            )
+            .subscribe();
 
         this.tiles$
             .pipe(
@@ -154,11 +173,6 @@ export class NetHackWrapper implements NetHackJS {
         this.module.preRun.push(() => loadSaveFiles(this.module, this.backupFile));
         this.module.preRun.push(() => this.setupNethackOptions());
 
-        const settings = this.settings$.value;
-        if (!settings.options || settings.options.startsWith('# Default Options')) {
-            loadDefaultOptions().then(opt => this.updateSettings({ options: opt }));
-        }
-
         if (autostart) {
             this.openStartScreen();
         }
@@ -169,41 +183,28 @@ export class NetHackWrapper implements NetHackJS {
         this.module.ENV.HOME = home;
         try {
             this.module.FS.mkdir('/home/nethack_player');
-        } catch (e) { }
+        } catch (e) {}
 
         const options = this.settings$.value.options;
         this.module.FS.writeFile(home + '/.nethackrc', options, { encoding: 'utf8' });
     }
 
     private async openStartScreen() {
-        this.reloadSettings();
+        await this.reloadSettings();
 
         while (!this.isGameRunning()) {
             const actions = [async () => this.startGame()];
             const startMenu = ['Start Game'];
 
-            const files = listBackupFiles();
-            if (files.length > 0) {
-                startMenu.push('Load from backup');
-                actions.push(async () => {
-                    const backupId = await this.openCustomMenu(
-                        'Select backup file',
-                        files.map((f) => `${f.player} ${f.modified ? ' - ' + f.modified.toISOString() : ''}`)
-                    );
-                    if (backupId !== -1) {
-                        const selected = files[backupId];
-                        this.backupFile = selected.file;
-                        this.startGame(selected.player);
-                    }
-                });
-            }
+            startMenu.push('Backups');
+            actions.push(() => this.backupOperations());
 
             startMenu.push('Options');
             actions.push(() => this.options());
 
             const records = loadRecords();
             if (records.length) {
-                startMenu.push('Leaderboard');
+                startMenu.push('Highscores');
                 actions.push(async () => {
                     this.ui.openDialog(-1, records);
                     await this.waitInput(InputType.CONTINUE);
@@ -220,28 +221,82 @@ export class NetHackWrapper implements NetHackJS {
         this.ui.closeDialog(-1);
     }
 
-    private reloadSettings() {
-        this.settings$.next(loadSettings());
+    private async backupOperations() {
+        await this.openSubMenu(
+            'Backup Actions',
+            () => ['Load', 'Export', 'Import'],
+            () => [
+                () =>
+                    this.selectBackup(listBackupFiles(), (file) => {
+                        this.backupFile = file.file;
+                        this.startGame(file.player);
+                        return true; // close sub menu
+                    }),
+                () => this.selectBackup(listBackupFiles(), (file) => exportSaveFile(file)),
+                () => {
+                    const elem = document.querySelector('#importSaveFile') as HTMLInputElement;
+                    elem.click();
+                    if (elem.files) {
+                        const file = elem.files[0];
+                        importSaveFile(file);
+                    }
+                },
+            ]
+        );
+    }
+
+    private async selectBackup(files: SaveFile[], handler: (f: SaveFile) => void) {
+        const backupId = await this.openCustomMenu(
+            'Select backup file',
+            files.map((f) => `${f.player} ${f.modified ? ' - ' + f.modified.toISOString() : ''}`)
+        );
+        if (backupId !== -1) {
+            const selected = files[backupId];
+            return handler(selected);
+        }
+    }
+
+    private async reloadSettings() {
+        const settings = loadSettings();
+        settings.options = await this.mapDefaultNethackOptions(settings.options);
+        this.settings$.next(settings);
     }
 
     private updateSettings(setting: Partial<Settings>) {
         this.settings$.next({ ...this.settings$.value, ...setting });
     }
 
+    private get settings() {
+        return this.settings$.value;
+    }
+
     private async options() {
+        await this.openSubMenu(
+            'Options',
+            () => [
+                `Enable map border - [${this.settings.enableMapBorder}]`,
+                `Tileset - ${this.settings.tileSetImage}`,
+                `Nethack Options`,
+            ],
+            () => [
+                async () => this.updateSettings({ enableMapBorder: !this.settings.enableMapBorder }),
+                () => this.tilesetOption(),
+                () => this.editNethackOption(),
+            ]
+        );
+    }
+
+    private async openSubMenu(title: string, optionText: () => string[], optionActions: () => Function[]) {
         let cancel = false;
         do {
-            const settings = this.settings$.value;
-            const options = [`Enable map border - [${settings.enableMapBorder}]`, `Tileset - ${settings.tileSetImage}`];
-            const optionActions = [
-                async () => this.updateSettings({ enableMapBorder: !settings.enableMapBorder }),
-                () => this.tilesetOption(),
-            ];
-            const optionId = await this.openCustomMenu('Options', options);
+            const optionId = await this.openCustomMenu(title, optionText());
             if (optionId === -1) {
                 cancel = true;
             } else {
-                await optionActions[optionId]();
+                const close = await optionActions()[optionId]();
+                if (close) {
+                    cancel = true;
+                }
             }
         } while (!cancel);
     }
@@ -252,6 +307,24 @@ export class NetHackWrapper implements NetHackJS {
         if (idx !== -1) {
             this.updateSettings({ tileSetImage: images[idx] });
         }
+    }
+
+    private async editNethackOption() {
+        this.ui.openGetTextArea(this.settings$.value.options);
+        const newValue = await this.waitLine(false);
+        if (newValue != null) {
+            this.updateSettings({ options: await this.mapDefaultNethackOptions(newValue) });
+        }
+
+        this.ui.closeDialog(-1);
+    }
+
+    private async mapDefaultNethackOptions(opt: string) {
+        if (!opt || opt.startsWith('# Default Options')) {
+            return await loadDefaultOptions();
+        }
+
+        return opt;
     }
 
     private async startGame(player?: string) {
@@ -271,7 +344,7 @@ export class NetHackWrapper implements NetHackJS {
 
         do {
             this.ui.openGetLine(prompt, settings.playerName);
-            name = (await this.waitLine()).trim();
+            name = (await this.waitLine())?.trim() || '';
             if (name.length >= MAX_PLAYER_NAME) {
                 name = '';
                 prompt = `Your name can only be ${MAX_PLAYER_NAME} characters long:`;
@@ -322,14 +395,9 @@ export class NetHackWrapper implements NetHackJS {
         }
     }
 
-    public async sendLine(line: string) {
+    public async sendLine(line: string | null) {
         await this.waitForAwaitingInput();
-
-        if (line.length >= MAX_STRING_LENGTH) {
-            this.log(`Line is too long. It can only be ${MAX_STRING_LENGTH} characters long.`, line);
-        } else {
-            this.line$.next(line);
-        }
+        this.line$.next(line);
     }
 
     // Waiting for input from user
@@ -356,9 +424,11 @@ export class NetHackWrapper implements NetHackJS {
         return value;
     }
 
-    private async waitLine() {
+    private async waitLine(limitLength = true) {
         this.awaitingInput$.next(true);
-        const value = await firstValueFrom(this.line$);
+        const value = await firstValueFrom(
+            this.line$.pipe(filter((line) => !limitLength || (line?.length || 0) < MAX_STRING_LENGTH))
+        );
         this.awaitingInput$.next(false);
         return value;
     }
@@ -373,7 +443,8 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     private async waitForAwaitingInput() {
-        if (!this.shouldWaitForInput) { // In case this causes problems again
+        if (!this.shouldWaitForInput) {
+            // In case this causes problems again
             return;
         }
 
@@ -419,8 +490,10 @@ export class NetHackWrapper implements NetHackJS {
     private async getLine(question: string, searchPointer: number) {
         this.ui.openGetLine(question);
         const line = await this.waitLine();
-        const ptr = this.global.helpers.getPointerValue('nethack.getLine', searchPointer, Type.POINTER);
-        this.global.helpers.setPointerValue('nethack.getLine', ptr, Type.STRING, line);
+        if (line != null) {
+            const ptr = this.global.helpers.getPointerValue('nethack.getLine', searchPointer, Type.POINTER);
+            this.global.helpers.setPointerValue('nethack.getLine', ptr, Type.STRING, line);
+        }
         this.ui.closeDialog(-1);
     }
 
@@ -590,11 +663,9 @@ export class NetHackWrapper implements NetHackJS {
             if (type == STATUS_FIELD.BL_CONDITION) {
                 const conditionBits: number = this.global.helpers.getPointerValue('status', ptr, Type.INT);
                 this.status.condition = createConditionStatusText(conditionBits, colormasks);
-                console.log(STATUS_FIELD[type], conditionBits, this.status.condition);
             } else {
                 const text = this.global.helpers.getPointerValue('status', ptr, Type.STRING);
                 mapper(this.status, createStatusText(text, color));
-                console.log(STATUS_FIELD[type], text);
             }
         } else {
             this.log('Unhandled status type', STATUS_FIELD[type]);

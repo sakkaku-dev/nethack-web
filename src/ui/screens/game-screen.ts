@@ -50,7 +50,6 @@ export class GameScreen extends Screen {
     }
 
     onSettingsChange(setting: Settings) {
-        console.log('Settings changed', setting);
         const newTileset = this.createTileset(setting.tileSetImage);
         if (!newTileset.equals(this.tileset)) {
             this.tileset = newTileset;

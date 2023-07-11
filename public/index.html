@@ -70,7 +70,13 @@
         flex-grow: 1;
     }
     #inventory .active {
-        border: 1px solid red;
+        border: 1px solid white;
+    }
+    .cursed {
+        color: red;
+    }
+    .blessed {
+        color: #0f0;
     }
     #inventory .item .count {
         position: absolute;
@@ -140,6 +146,7 @@
 </style>
 
 <body>
+    <input type="file" style="display: none" id="importSaveFile" />
     <div id="sidebar"></div>
 </body>
 
