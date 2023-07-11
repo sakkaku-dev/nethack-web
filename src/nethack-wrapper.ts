@@ -55,8 +55,8 @@ export class NetHackWrapper implements NetHackJS {
         [Command.RAW_PRINT_BOLD]: async (str) => this.handlePrintLine(ATTR.ATR_BOLD, str),
 
         // Map
-        [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph) => {
-            this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph) }]);
+        [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph, isPet) => {
+            this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph), peaceful: isPet === 1 }]);
             if (bkglyph !== 0 && bkglyph !== 5991) {
                 console.log(
                     `%c Background Tile found! ${bkglyph}, ${this.util.toTile(bkglyph)}`,
@@ -90,8 +90,6 @@ export class NetHackWrapper implements NetHackJS {
         // according to window.doc, a 50ms delay, but add more since drawing the tile takes longer
         [Command.DELAY_OUTPUT]: () => new Promise((resolve) => setTimeout(resolve, 100)),
         [Command.MESSAGE_MENU]: this.messageMenu.bind(this),
-
-        // TODO: select_menu with yn_function
     };
     private idCounter = 0;
     private menuItems: Item[] = [];

@@ -57,6 +57,7 @@ export interface Tile {
     x: number;
     y: number;
     tile: number;
+    peaceful: boolean;
 }
 
 export interface Item {

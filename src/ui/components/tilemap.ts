@@ -54,7 +54,7 @@ export class TileSet {
 export class TileMap {
     private context: CanvasRenderingContext2D;
     private center: Vector = { x: 0, y: 0 };
-    private tiles: number[][] = [];
+    private tiles: Pick<Tile, 'tile' | 'peaceful'>[][] = [];
     private canvas: HTMLCanvasElement;
     private cursor: HTMLImageElement;
     private mapSize: Vector = { x: 79, y: 21 }; // Fixed map size? Might change in other version?
@@ -135,7 +135,7 @@ export class TileMap {
     addTile(...tiles: Tile[]) {
         tiles.forEach((tile) => {
             if (!this.tiles[tile.x]) this.tiles[tile.x] = [];
-            this.tiles[tile.x][tile.y] = tile.tile;
+            this.tiles[tile.x][tile.y] = { tile: tile.tile, peaceful: tile.peaceful };
             this.drawTile(tile.x, tile.y);
         });
     }
@@ -144,7 +144,7 @@ export class TileMap {
         const tile = this.tiles[x][y];
         if (!this.tileSet || tile == null) return;
 
-        const source = this.tileSet.getCoordinateForTile(tile);
+        const source = this.tileSet.getCoordinateForTile(tile.tile);
         const size = this.tileSet.tileSize;
         const localPos = this.localToCanvas({ x, y });
 
@@ -161,6 +161,21 @@ export class TileMap {
             size,
             size
         );
+
+        if (tile.peaceful) {
+            const radius = 3;
+            const padding = 2;
+            this.context.beginPath();
+            this.context.arc(
+                localPos.x + size - radius - padding,
+                localPos.y + radius + padding,
+                radius,
+                0,
+                2 * Math.PI
+            );
+            this.context.fillStyle = '#FF99FF';
+            this.context.fill();
+        }
     }
 
     private localToCanvas(pos: Vector) {
