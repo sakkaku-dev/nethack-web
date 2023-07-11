@@ -53,6 +53,12 @@ function MenuButton(item, prepend = true, tileset) {
     const btn = document.createElement('button');
     btn.disabled = item.accelerator === 0;
     horiz(btn);
+    if (item.str.toLowerCase().match(/(?<!un)cursed/)) {
+        btn.classList.add('cursed ');
+    }
+    else if (item.str.toLowerCase().includes('blessed')) {
+        btn.classList.add('blessed');
+    }
     btn.onclick = () => window.nethackJS.sendInput(item.accelerator);
     if (item.active) {
         btn.classList.add('active');
@@ -236,6 +242,40 @@ class Line {
     }
 }
 
+class TextArea {
+    constructor(value) {
+        this.onSubmit = (value) => { };
+        this.elem = document.createElement('div');
+        this.elem.style.width = '75vw';
+        vert(this.elem);
+        this.elem.appendChild(document.createTextNode('Ctrl+Enter to confirm'));
+        this.input = document.createElement('textarea');
+        this.input.value = value;
+        this.input.rows = Math.max(value.split('\n').length, 10) + 5;
+        this.elem.appendChild(this.input);
+        this.input.onkeydown = (e) => {
+            if (e.key === 'Tab') {
+                //prevent losing focus
+                e.preventDefault();
+            }
+        };
+        this.input.onkeyup = (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                this.onSubmit(this.input.value);
+            }
+        };
+    }
+    onInput(e) {
+        if (CANCEL_KEY.includes(e.key)) {
+            this.onSubmit(null);
+        }
+    }
+    focus() {
+        this.input.focus();
+    }
+}
+
 class Screen {
     constructor() {
         this.elem = document.createElement('div');
@@ -255,16 +295,29 @@ class Screen {
         this.elem.appendChild(dialog.elem);
     }
     onLine(question, autocomplete) {
-        const dialog = new Dialog();
         const line = new Line(question, autocomplete);
-        dialog.elem.appendChild(line.elem);
+        this.createDialog(line.elem);
         line.onLineEnter = (line) => {
             window.nethackJS.sendLine(line);
             this.inputHandler = undefined;
         };
         this.inputHandler = line;
-        this.elem.appendChild(dialog.elem);
         line.focus();
+    }
+    onTextArea(value) {
+        const textarea = new TextArea(value);
+        this.createDialog(textarea.elem);
+        textarea.onSubmit = (value) => {
+            window.nethackJS.sendLine(value);
+            this.inputHandler = undefined;
+        };
+        this.inputHandler = textarea;
+        textarea.focus();
+    }
+    createDialog(elem) {
+        const dialog = new Dialog();
+        dialog.elem.appendChild(elem);
+        this.elem.appendChild(dialog.elem);
     }
     onCloseDialog() {
         Dialog.removeAll();
@@ -1319,6 +1372,29 @@ class Console {
     }
 }
 
+var GameState;
+(function (GameState) {
+    GameState[GameState["START"] = 0] = "START";
+    GameState[GameState["RUNNING"] = 1] = "RUNNING";
+    GameState[GameState["DIED"] = 2] = "DIED";
+    GameState[GameState["GAMEOVER"] = 3] = "GAMEOVER";
+})(GameState || (GameState = {}));
+function add(v1, v2) {
+    return { x: v1.x + v2.x, y: v1.y + v2.y };
+}
+function sub(v1, v2) {
+    return { x: v1.x - v2.x, y: v1.y - v2.y };
+}
+function mult(v1, v2) {
+    return { x: v1.x * v2.x, y: v1.y * v2.y };
+}
+var BUCState;
+(function (BUCState) {
+    BUCState["BLESSED"] = "blessed";
+    BUCState["UNCURSED"] = "uncursed";
+    BUCState["CURSED"] = "cursed";
+})(BUCState || (BUCState = {}));
+
 class Inventory {
     constructor(root, tileset) {
         this.tileset = tileset;
@@ -1370,6 +1446,12 @@ class Inventory {
             else {
                 const container = document.createElement('div');
                 horiz(container);
+                if (item.buc === BUCState.BLESSED) {
+                    container.classList.add('blessed');
+                }
+                else if (item.buc === BUCState.CURSED) {
+                    container.classList.add('cursed');
+                }
                 const img = this.createItemImage(item);
                 if (img) {
                     container.appendChild(img);
@@ -1752,29 +1834,6 @@ class StatusLine {
     }
 }
 
-var GameState;
-(function (GameState) {
-    GameState[GameState["START"] = 0] = "START";
-    GameState[GameState["RUNNING"] = 1] = "RUNNING";
-    GameState[GameState["DIED"] = 2] = "DIED";
-    GameState[GameState["GAMEOVER"] = 3] = "GAMEOVER";
-})(GameState || (GameState = {}));
-function add(v1, v2) {
-    return { x: v1.x + v2.x, y: v1.y + v2.y };
-}
-function sub(v1, v2) {
-    return { x: v1.x - v2.x, y: v1.y - v2.y };
-}
-function mult(v1, v2) {
-    return { x: v1.x * v2.x, y: v1.y * v2.y };
-}
-var BUCState;
-(function (BUCState) {
-    BUCState["BLESSED"] = "blessed";
-    BUCState["UNCURSED"] = "uncursed";
-    BUCState["CURSED"] = "cursed";
-})(BUCState || (BUCState = {}));
-
 class TileSet {
     constructor(file, tileSize, tileCol) {
         this.file = file;
@@ -1885,7 +1944,7 @@ class TileMap {
         tiles.forEach((tile) => {
             if (!this.tiles[tile.x])
                 this.tiles[tile.x] = [];
-            this.tiles[tile.x][tile.y] = tile.tile;
+            this.tiles[tile.x][tile.y] = { tile: tile.tile, peaceful: tile.peaceful };
             this.drawTile(tile.x, tile.y);
         });
     }
@@ -1893,7 +1952,7 @@ class TileMap {
         const tile = this.tiles[x][y];
         if (!this.tileSet || tile == null)
             return;
-        const source = this.tileSet.getCoordinateForTile(tile);
+        const source = this.tileSet.getCoordinateForTile(tile.tile);
         const size = this.tileSet.tileSize;
         const localPos = this.localToCanvas({ x, y });
         this.context.drawImage(
@@ -1901,6 +1960,14 @@ class TileMap {
         this.tileSet.image, source.x, source.y, size, size, 
         // Target
         localPos.x, localPos.y, size, size);
+        if (tile.peaceful) {
+            const radius = 3;
+            const padding = 2;
+            this.context.beginPath();
+            this.context.arc(localPos.x + size - radius - padding, localPos.y + radius + padding, radius, 0, 2 * Math.PI);
+            this.context.fillStyle = '#FF99FF';
+            this.context.fill();
+        }
     }
     localToCanvas(pos) {
         const globalPos = this.toGlobal(pos);
@@ -1959,6 +2026,12 @@ var TileSetImage;
     TileSetImage["Default"] = "Default Nethack";
     TileSetImage["Chozo"] = "Chozo";
 })(TileSetImage || (TileSetImage = {}));
+({
+    enableMapBorder: true,
+    tileSetImage: TileSetImage.Nevanda,
+    playerName: 'Unnamed',
+    options: '',
+});
 
 class GameScreen extends Screen {
     constructor() {
@@ -1985,7 +2058,6 @@ class GameScreen extends Screen {
         }
     }
     onSettingsChange(setting) {
-        console.log('Settings changed', setting);
         const newTileset = this.createTileset(setting.tileSetImage);
         if (!newTileset.equals(this.tileset)) {
             this.tileset = newTileset;
@@ -2033,6 +2105,7 @@ class Game {
         this.openMenu = (winid, prompt, count, ...items) => this.current?.onMenu(prompt, count, items);
         this.openQuestion = (question, defaultChoice, ...choices) => this.game.openQuestion(question, choices, defaultChoice);
         this.openGetLine = (question, ...autocomplete) => this.current?.onLine(question, autocomplete);
+        this.openGetTextArea = (value) => this.current?.onTextArea(value);
         this.openDialog = (winid, text) => this.current?.onDialog(text);
         this.closeDialog = (winid) => this.current?.onCloseDialog();
         this.printLine = (line) => this.game.console.appendLine(line);
