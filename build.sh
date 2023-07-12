@@ -102,4 +102,7 @@ popd
 sed -e '/"description":/a \ \ \ \ "type": "module",' -i package.json
 }
 
+
+# Change which stage to run
+# stage1
 stage2
