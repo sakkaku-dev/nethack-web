@@ -15,7 +15,7 @@ export function MenuButton(item: Item, prepend = true, tileset?: TileSet) {
     horiz(btn);
 
     if (item.str.toLowerCase().match(/(?<!un)cursed/)) {
-        btn.classList.add('cursed ');
+        btn.classList.add('cursed');
     } else if (item.str.toLowerCase().includes('blessed')) {
         btn.classList.add('blessed');
     }
