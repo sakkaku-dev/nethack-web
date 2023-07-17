@@ -62,3 +62,11 @@ export function grid(elem: HTMLElement, col: number) {
 export function pointer(elem: HTMLElement) {
     elem.style.cursor = 'pointer';
 }
+
+export function bucState(elem: HTMLElement, text: string) {
+    if (text.toLowerCase().match(/(?<!un)cursed/)) {
+        elem.classList.add('cursed');
+    } else if (text.toLowerCase().includes('blessed')) {
+        elem.classList.add('blessed');
+    }
+}
