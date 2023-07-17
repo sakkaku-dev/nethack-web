@@ -1,5 +1,5 @@
 import { Item } from '../../models';
-import { horiz } from '../styles';
+import { bucState, horiz } from '../styles';
 import { TileSet } from './tilemap';
 
 const createAccel = (accel: number) => {
@@ -13,12 +13,7 @@ export function MenuButton(item: Item, prepend = true, tileset?: TileSet) {
     const btn = document.createElement('button');
     btn.disabled = item.accelerator === 0;
     horiz(btn);
-
-    if (item.str.toLowerCase().match(/(?<!un)cursed/)) {
-        btn.classList.add('cursed');
-    } else if (item.str.toLowerCase().includes('blessed')) {
-        btn.classList.add('blessed');
-    }
+    bucState(btn, item.str);
 
     btn.onclick = () => window.nethackJS.sendInput(item.accelerator);
     if (item.active) {
