@@ -134,7 +134,7 @@ export function loadRecords() {
 export function exportSaveFile(file: SaveFile) {
     const data = getStoragedSaveFileData(file.file);
     if (data) {
-        const blob = new Blob([decodeData(data)]);
+        const blob = new Blob([decodeData(data)], { type: 'application/octet-stream' });
         const url = window.URL.createObjectURL(blob);
         downloadURL(url, file.file.substring(SAVE_FOLDER.length));
         setTimeout(function () {

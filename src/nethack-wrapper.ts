@@ -35,10 +35,10 @@ const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 const MAX_PLAYER_NAME = 32; // defined in global.h PL_NSIZ
 
 enum InputType {
-    ALL,
-    CONTINUE,
-    ASCII,
-    ESCAPE,
+    ALL = 'All',
+    CONTINUE = 'Continue',
+    ASCII = 'Ascii',
+    ESCAPE = 'Esc',
 }
 
 export class NetHackWrapper implements NetHackJS {
@@ -236,10 +236,12 @@ export class NetHackWrapper implements NetHackJS {
                 () => {
                     const elem = document.querySelector('#importSaveFile') as HTMLInputElement;
                     elem.click();
-                    if (elem.files) {
-                        const file = elem.files[0];
-                        importSaveFile(file);
-                    }
+                    elem.onchange = () => {
+                        if (elem.files) {
+                            const file = elem.files[0];
+                            importSaveFile(file);
+                        }
+                    };
                 },
             ]
         );
@@ -404,6 +406,7 @@ export class NetHackWrapper implements NetHackJS {
 
     private async waitInput(type = InputType.ALL) {
         this.awaitingInput$.next(true);
+        console.log('Awaiting input', type);
         const value = await firstValueFrom(
             this.input$.pipe(
                 filter((c) => {
