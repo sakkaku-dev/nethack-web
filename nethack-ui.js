@@ -42,6 +42,14 @@ function title(elem) {
 function pointer(elem) {
     elem.style.cursor = 'pointer';
 }
+function bucState(elem, text) {
+    if (text.toLowerCase().match(/(?<!un)cursed/)) {
+        elem.classList.add('cursed');
+    }
+    else if (text.toLowerCase().includes('blessed')) {
+        elem.classList.add('blessed');
+    }
+}
 
 const createAccel = (accel) => {
     const accelElem = document.createElement('div');
@@ -53,12 +61,7 @@ function MenuButton(item, prepend = true, tileset) {
     const btn = document.createElement('button');
     btn.disabled = item.accelerator === 0;
     horiz(btn);
-    if (item.str.toLowerCase().match(/(?<!un)cursed/)) {
-        btn.classList.add('cursed');
-    }
-    else if (item.str.toLowerCase().includes('blessed')) {
-        btn.classList.add('blessed');
-    }
+    bucState(btn, item.str);
     btn.onclick = () => window.nethackJS.sendInput(item.accelerator);
     if (item.active) {
         btn.classList.add('active');
@@ -1372,29 +1375,6 @@ class Console {
     }
 }
 
-var GameState;
-(function (GameState) {
-    GameState[GameState["START"] = 0] = "START";
-    GameState[GameState["RUNNING"] = 1] = "RUNNING";
-    GameState[GameState["DIED"] = 2] = "DIED";
-    GameState[GameState["GAMEOVER"] = 3] = "GAMEOVER";
-})(GameState || (GameState = {}));
-function add(v1, v2) {
-    return { x: v1.x + v2.x, y: v1.y + v2.y };
-}
-function sub(v1, v2) {
-    return { x: v1.x - v2.x, y: v1.y - v2.y };
-}
-function mult(v1, v2) {
-    return { x: v1.x * v2.x, y: v1.y * v2.y };
-}
-var BUCState;
-(function (BUCState) {
-    BUCState["BLESSED"] = "blessed";
-    BUCState["UNCURSED"] = "uncursed";
-    BUCState["CURSED"] = "cursed";
-})(BUCState || (BUCState = {}));
-
 class Inventory {
     constructor(root, tileset) {
         this.tileset = tileset;
@@ -1446,12 +1426,13 @@ class Inventory {
             else {
                 const container = document.createElement('div');
                 horiz(container);
-                if (item.buc === BUCState.BLESSED) {
-                    container.classList.add('blessed');
-                }
-                else if (item.buc === BUCState.CURSED) {
-                    container.classList.add('cursed');
-                }
+                // Using text allowed naming items with 'C'
+                bucState(container, item.str);
+                // if (item.buc === BUCState.BLESSED) {
+                //     container.classList.add('blessed');
+                // } else if (item.buc === BUCState.CURSED) {
+                //     container.classList.add('cursed');
+                // }
                 const img = this.createItemImage(item);
                 if (img) {
                     container.appendChild(img);
@@ -1833,6 +1814,29 @@ class StatusLine {
         return elem;
     }
 }
+
+var GameState;
+(function (GameState) {
+    GameState[GameState["START"] = 0] = "START";
+    GameState[GameState["RUNNING"] = 1] = "RUNNING";
+    GameState[GameState["DIED"] = 2] = "DIED";
+    GameState[GameState["GAMEOVER"] = 3] = "GAMEOVER";
+})(GameState || (GameState = {}));
+function add(v1, v2) {
+    return { x: v1.x + v2.x, y: v1.y + v2.y };
+}
+function sub(v1, v2) {
+    return { x: v1.x - v2.x, y: v1.y - v2.y };
+}
+function mult(v1, v2) {
+    return { x: v1.x * v2.x, y: v1.y * v2.y };
+}
+var BUCState;
+(function (BUCState) {
+    BUCState["BLESSED"] = "blessed";
+    BUCState["UNCURSED"] = "uncursed";
+    BUCState["CURSED"] = "cursed";
+})(BUCState || (BUCState = {}));
 
 class TileSet {
     constructor(file, tileSize, tileCol) {

@@ -1920,7 +1920,7 @@ function loadRecords() {
 function exportSaveFile(file) {
     const data = getStoragedSaveFileData(file.file);
     if (data) {
-        const blob = new Blob([decodeData(data)]);
+        const blob = new Blob([decodeData(data)], { type: 'application/octet-stream' });
         const url = window.URL.createObjectURL(blob);
         downloadURL(url, file.file.substring(SAVE_FOLDER.length));
         setTimeout(function () {
@@ -2066,10 +2066,10 @@ const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 const MAX_PLAYER_NAME = 32; // defined in global.h PL_NSIZ
 var InputType;
 (function (InputType) {
-    InputType[InputType["ALL"] = 0] = "ALL";
-    InputType[InputType["CONTINUE"] = 1] = "CONTINUE";
-    InputType[InputType["ASCII"] = 2] = "ASCII";
-    InputType[InputType["ESCAPE"] = 3] = "ESCAPE";
+    InputType["ALL"] = "All";
+    InputType["CONTINUE"] = "Continue";
+    InputType["ASCII"] = "Ascii";
+    InputType["ESCAPE"] = "Esc";
 })(InputType || (InputType = {}));
 class NetHackWrapper {
     constructor(debug = false, module, util, win = window, autostart = true) {
@@ -2218,10 +2218,12 @@ class NetHackWrapper {
             () => {
                 const elem = document.querySelector('#importSaveFile');
                 elem.click();
-                if (elem.files) {
-                    const file = elem.files[0];
-                    importSaveFile(file);
-                }
+                elem.onchange = () => {
+                    if (elem.files) {
+                        const file = elem.files[0];
+                        importSaveFile(file);
+                    }
+                };
             },
         ]);
     }
@@ -2353,6 +2355,7 @@ class NetHackWrapper {
     // Waiting for input from user
     async waitInput(type = InputType.ALL) {
         this.awaitingInput$.next(true);
+        console.log('Awaiting input', type);
         const value = await firstValueFrom(this.input$.pipe(filter$1((c) => {
             switch (type) {
                 case InputType.CONTINUE:
