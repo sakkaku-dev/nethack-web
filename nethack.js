@@ -12,16 +12,18 @@ const TYPE_SIZES = {
     [Type.POINTER]: 4,
     [Type.STRING]: 4, // TODO
 };
-function selectItems(itemIds, selectedPointer) {
+const MAX_LONG = 2147483647;
+function selectItems(items, selectedPointer) {
     const int_size = TYPE_SIZES[Type.INT];
     const size = int_size * 2; // selected object has 3 fields, in 3.6 only 2
-    const total_size = size * itemIds.length;
+    const total_size = size * items.length;
     const start_ptr = window.module._malloc(total_size);
     // write selected items to memory
     let ptr = start_ptr;
-    itemIds.forEach((id) => {
-        window.nethackGlobal.helpers.setPointerValue('nethack.menu.selected', ptr, Type.INT, id);
-        window.nethackGlobal.helpers.setPointerValue('nethack.menu.selected', ptr + int_size, Type.INT, -1);
+    items.forEach((item) => {
+        window.nethackGlobal.helpers.setPointerValue('nethack.menu.selected', ptr, Type.INT, item.identifier);
+        window.nethackGlobal.helpers.setPointerValue('nethack.menu.selected', ptr + int_size, Type.INT, item.count == null || isNaN(item.count) ? -1 : Math.min(item.count, MAX_LONG) // Limit count to prevent dungeon collapse
+        );
         // this.global.helpers.setPointerValue("nethack.menu.selected", ptr + int_size * 2, Type.INT, 0); // Only 2 properties in 3.6
         ptr += size;
     });
@@ -1770,17 +1772,22 @@ function clearMenuItems(items) {
 const SELECT_ALL = '.'.charCodeAt(0);
 const DESELECT_ALL = '-'.charCodeAt(0);
 const TOGGLE_ALL = '@'.charCodeAt(0);
-function toggleMenuItems(accel, count, items) {
+function toggleMenuItems(accel, count, menuSelect, items) {
     const selectable = items.filter((i) => i.identifier !== 0 && i.accelerator !== 0);
     const selected = selectable.findIndex((i) => i.accelerator === accel);
     if (selected !== -1) {
-        if (count === 1) {
+        if (menuSelect === MENU_SELECT.PICK_ONE) {
             clearMenuItems(selectable);
         }
         const item = selectable[selected];
+        let c = count;
+        if (count === 0 || isNaN(count)) {
+            c = undefined;
+        }
         item.active = !item.active;
+        item.count = c;
     }
-    else if (count === -1) {
+    else if (menuSelect === MENU_SELECT.PICK_ANY) {
         const groups = selectable.filter((i) => i.groupAcc !== 0 && i.groupAcc === accel);
         const enable = groups.some((i) => !i.active);
         groups.forEach((i) => (i.active = enable));
@@ -2061,6 +2068,8 @@ async function loadDefaultOptions() {
     return fetch('nethackrc.default').then(x => x.text());
 }
 
+const VERSION = 'e79b47b13e94df6cebdf23ca41effa14377ef8f7';
+
 const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
 const MAX_PLAYER_NAME = 32; // defined in global.h PL_NSIZ
@@ -2155,7 +2164,7 @@ class NetHackWrapper {
             if (this.isGameRunning()) {
                 const title = 'An unexpected error occurred.';
                 const unsaved = 'Unfortunately the game progress could not be saved.';
-                const backup = 'Use the "Load from backup" in the main menu to restart from your latest save.';
+                const backup = 'Use the Backup option in the main menu to restart from your latest save.';
                 this.ui.openDialog(-1, `${title}\n${unsaved}\n\n${backup}`);
                 this.waitInput(InputType.CONTINUE).then(() => {
                     this.ui.closeDialog(-1);
@@ -2169,6 +2178,7 @@ class NetHackWrapper {
         this.module.preRun.push(() => loadSaveFiles(this.module, this.backupFile));
         this.module.preRun.push(() => this.setupNethackOptions());
         if (autostart) {
+            console.log('Running version', VERSION);
             this.openStartScreen();
         }
     }
@@ -2325,9 +2335,9 @@ class NetHackWrapper {
             str: file,
             identifier: i + 1,
         }));
-        const ids = await this.startUserMenuSelect(-1, prompt, MENU_SELECT.PICK_ONE, items);
-        if (ids.length) {
-            return ids[0] - 1;
+        const selectedItems = await this.startUserMenuSelect(-1, prompt, MENU_SELECT.PICK_ONE, items);
+        if (selectedItems.length) {
+            return selectedItems[0].identifier - 1;
         }
         return -1;
     }
@@ -2516,13 +2526,13 @@ class NetHackWrapper {
         if (this.menuItems.length === 0) {
             return 0;
         }
-        const itemIds = await this.startUserMenuSelect(winid, this.menuPrompt, select, this.menuItems);
+        const items = await this.startUserMenuSelect(winid, this.menuPrompt, select, this.menuItems);
         this.ui.closeDialog(winid); // sometimes it's not closed
-        if (itemIds.length === 0) {
+        if (items.length === 0) {
             return -1;
         }
-        this.util.selectItems(itemIds, selected);
-        return itemIds.length;
+        this.util.selectItems(items, selected);
+        return items.length;
     }
     async handlePutStr(winid, attr, str) {
         // if (winid === this.global.globals.WIN_STATUS) {
@@ -2575,14 +2585,20 @@ class NetHackWrapper {
     // Utils
     async startUserMenuSelect(id, prompt, select, items) {
         setAccelerators(items, this.accel);
-        const count = getCountForSelect(select);
+        const selectCount = getCountForSelect(select);
         let char = 0;
+        let count = '';
         while (!CONTINUE_KEYS.includes(char)) {
-            this.ui.openMenu(id, prompt, count, ...items);
+            this.ui.openMenu(id, prompt, selectCount, ...items);
             char = await this.waitInput(InputType.ASCII);
-            if (count !== 0) {
-                toggleMenuItems(char, count, items);
-                if (count === 1 && items.some((i) => i.active)) {
+            if (char >= 48 && char <= 57) {
+                count += String.fromCharCode(char);
+            }
+            else if (selectCount !== 0) {
+                toggleMenuItems(char, parseInt(count), select, items);
+                items.filter(i => !i.active).forEach(i => i.count = undefined);
+                count = '';
+                if (select === MENU_SELECT.PICK_ONE && items.some((i) => i.active)) {
                     break;
                 }
             }
@@ -2590,7 +2606,7 @@ class NetHackWrapper {
         if (char === ESC) {
             clearMenuItems(items);
         }
-        return items.filter((i) => i.active).map((i) => i.identifier);
+        return items.filter((i) => i.active);
     }
     getPointerValue(ptr, type) {
         const x = this.global.helpers.getPointerValue('nethack.pointerValue', ptr, Type.POINTER);

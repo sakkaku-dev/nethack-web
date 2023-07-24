@@ -60,6 +60,7 @@ const createAccel = (accel) => {
 function MenuButton(item, prepend = true, tileset) {
     const btn = document.createElement('button');
     btn.disabled = item.accelerator === 0;
+    btn.style.position = 'relative';
     horiz(btn);
     bucState(btn, item.str);
     btn.onclick = () => window.nethackJS.sendInput(item.accelerator);
@@ -68,6 +69,18 @@ function MenuButton(item, prepend = true, tileset) {
     }
     const label = document.createElement('span');
     label.innerHTML = item.str;
+    if ((item.count || 0) > 0) {
+        const count = document.createElement('span');
+        count.innerHTML += ` x${item.count}`;
+        topRight(count);
+        count.style.top = '-5px';
+        count.style.background = '#333';
+        count.style.borderRadius = '100%';
+        // Make it fit and rounder
+        count.style.padding = '0.25rem 0';
+        count.style.paddingRight = '0.5rem';
+        btn.appendChild(count);
+    }
     if (prepend) {
         btn.appendChild(createAccel(item.accelerator));
     }
