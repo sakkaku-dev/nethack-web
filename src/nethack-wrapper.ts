@@ -183,7 +183,7 @@ export class NetHackWrapper implements NetHackJS {
         this.module.ENV.HOME = home;
         try {
             this.module.FS.mkdir('/home/nethack_player');
-        } catch (e) {}
+        } catch (e) { }
 
         const options = this.settings$.value.options;
         this.module.FS.writeFile(home + '/.nethackrc', options, { encoding: 'utf8' });
@@ -368,9 +368,9 @@ export class NetHackWrapper implements NetHackJS {
             str: file,
             identifier: i + 1,
         }));
-        const ids = await this.startUserMenuSelect(-1, prompt, MENU_SELECT.PICK_ONE, items);
-        if (ids.length) {
-            return ids[0] - 1;
+        const selectedItems = await this.startUserMenuSelect(-1, prompt, MENU_SELECT.PICK_ONE, items);
+        if (selectedItems.length) {
+            return selectedItems[0].identifier - 1;
         }
 
         return -1;
@@ -607,14 +607,14 @@ export class NetHackWrapper implements NetHackJS {
             return 0;
         }
 
-        const itemIds = await this.startUserMenuSelect(winid, this.menuPrompt, select, this.menuItems);
+        const items = await this.startUserMenuSelect(winid, this.menuPrompt, select, this.menuItems);
         this.ui.closeDialog(winid); // sometimes it's not closed
-        if (itemIds.length === 0) {
+        if (items.length === 0) {
             return -1;
         }
 
-        this.util.selectItems(itemIds, selected);
-        return itemIds.length;
+        this.util.selectItems(items, selected);
+        return items.length;
     }
 
     private async handlePutStr(winid: number, attr: any, str: string) {
@@ -679,17 +679,23 @@ export class NetHackWrapper implements NetHackJS {
     private async startUserMenuSelect(id: number, prompt: string, select: MENU_SELECT, items: Item[]) {
         setAccelerators(items, this.accel);
 
-        const count = getCountForSelect(select);
+        const selectCount = getCountForSelect(select);
+
         let char = 0;
+        let count = '';
 
         while (!CONTINUE_KEYS.includes(char)) {
-            this.ui.openMenu(id, prompt, count, ...items);
+            this.ui.openMenu(id, prompt, selectCount, ...items);
             char = await this.waitInput(InputType.ASCII);
 
-            if (count !== 0) {
-                toggleMenuItems(char, count, items);
+            if (char >= 48 && char <= 57) {
+                count += String.fromCharCode(char);
+            } else if (selectCount !== 0) {
+                toggleMenuItems(char, parseInt(count), select, items);
+                items.filter(i => !i.active).forEach(i => i.count = undefined);
 
-                if (count === 1 && items.some((i) => i.active)) {
+                count = '';
+                if (select === MENU_SELECT.PICK_ONE && items.some((i) => i.active)) {
                     break;
                 }
             }
@@ -699,7 +705,7 @@ export class NetHackWrapper implements NetHackJS {
             clearMenuItems(items);
         }
 
-        return items.filter((i) => i.active).map((i) => i.identifier);
+        return items.filter((i) => i.active);
     }
 
     private getPointerValue(ptr: number, type: string) {

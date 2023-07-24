@@ -39,17 +39,23 @@ const SELECT_ALL = '.'.charCodeAt(0);
 const DESELECT_ALL = '-'.charCodeAt(0);
 const TOGGLE_ALL = '@'.charCodeAt(0);
 
-export function toggleMenuItems(accel: number, count: number, items: Item[]) {
+export function toggleMenuItems(accel: number, count: number, menuSelect: MENU_SELECT, items: Item[]) {
     const selectable = items.filter((i) => i.identifier !== 0 && i.accelerator !== 0);
     const selected = selectable.findIndex((i) => i.accelerator === accel);
     if (selected !== -1) {
-        if (count === 1) {
+        if (menuSelect === MENU_SELECT.PICK_ONE) {
             clearMenuItems(selectable);
         }
 
         const item = selectable[selected];
+
+        if (count === 0) {
+            count = -1;
+        }
+
         item.active = !item.active;
-    } else if (count === -1) {
+        item.count = count
+    } else if (menuSelect === MENU_SELECT.PICK_ANY) {
         const groups = selectable.filter((i) => i.groupAcc !== 0 && i.groupAcc === accel);
         const enable = groups.some((i) => !i.active);
         groups.forEach((i) => (i.active = enable));

@@ -68,6 +68,7 @@ export interface Item {
     str: string;
     identifier: number;
     active: boolean;
+    count?: number;
 }
 
 export enum BUCState {
