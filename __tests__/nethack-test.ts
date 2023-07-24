@@ -108,7 +108,7 @@ describe('Nethack', () => {
                 item2
             );
 
-            expect(util.selectItems).toBeCalledWith([1], ANY_POINTER);
+            expect(util.selectItems).toBeCalledWith([expect.objectContaining({ identifier: 1 })], ANY_POINTER);
         });
 
         it('should pick many menu', async () => {
@@ -150,7 +150,7 @@ describe('Nethack', () => {
             );
 
             await send(' ');
-            expect(util.selectItems).toBeCalledWith([1, 2], ANY_POINTER);
+            expect(util.selectItems).toBeCalledWith([expect.objectContaining({ identifier: 1 }), expect.objectContaining({ identifier: 2 })], ANY_POINTER);
         });
 
         it('should cancel menu', async () => {

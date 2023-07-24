@@ -49,12 +49,13 @@ export function toggleMenuItems(accel: number, count: number, menuSelect: MENU_S
 
         const item = selectable[selected];
 
-        if (count === 0) {
-            count = -1;
+        let c: number | undefined = count;
+        if (count === 0 || isNaN(count)) {
+            c = undefined;
         }
 
         item.active = !item.active;
-        item.count = count
+        item.count = c
     } else if (menuSelect === MENU_SELECT.PICK_ANY) {
         const groups = selectable.filter((i) => i.groupAcc !== 0 && i.groupAcc === accel);
         const enable = groups.some((i) => !i.active);
