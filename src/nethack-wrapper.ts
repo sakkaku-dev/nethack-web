@@ -29,6 +29,7 @@ import {
     loadDefaultOptions,
     defaultSetting,
 } from './helper/settings';
+import { VERSION } from './version';
 
 const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
@@ -158,7 +159,7 @@ export class NetHackWrapper implements NetHackJS {
             if (this.isGameRunning()) {
                 const title = 'An unexpected error occurred.';
                 const unsaved = 'Unfortunately the game progress could not be saved.';
-                const backup = 'Use the "Load from backup" in the main menu to restart from your latest save.';
+                const backup = 'Use the Backup option in the main menu to restart from your latest save.';
                 this.ui.openDialog(-1, `${title}\n${unsaved}\n\n${backup}`);
                 this.waitInput(InputType.CONTINUE).then(() => {
                     this.ui.closeDialog(-1);
@@ -174,6 +175,7 @@ export class NetHackWrapper implements NetHackJS {
         this.module.preRun.push(() => this.setupNethackOptions());
 
         if (autostart) {
+            console.log('Running version', VERSION);
             this.openStartScreen();
         }
     }
