@@ -2068,7 +2068,7 @@ async function loadDefaultOptions() {
     return fetch('nethackrc.default').then(x => x.text());
 }
 
-const VERSION = 'e79b47b13e94df6cebdf23ca41effa14377ef8f7';
+const VERSION = 'f36fcbdab0926305ce617db26dda176de7f5e6f6';
 
 const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ

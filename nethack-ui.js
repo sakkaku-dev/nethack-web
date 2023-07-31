@@ -43,10 +43,11 @@ function pointer(elem) {
     elem.style.cursor = 'pointer';
 }
 function bucState(elem, text) {
-    if (text.toLowerCase().match(/(?<!un)cursed/)) {
+    const str = text.toLowerCase();
+    if (str.match(/(?<!un)cursed/) || str.includes('unholy')) {
         elem.classList.add('cursed');
     }
-    else if (text.toLowerCase().includes('blessed')) {
+    else if (str.includes('blessed')) {
         elem.classList.add('blessed');
     }
 }
