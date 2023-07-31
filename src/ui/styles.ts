@@ -64,9 +64,10 @@ export function pointer(elem: HTMLElement) {
 }
 
 export function bucState(elem: HTMLElement, text: string) {
-    if (text.toLowerCase().match(/(?<!un)cursed/)) {
+    const str = text.toLowerCase();
+    if (str.match(/(?<!un)cursed/) || str.includes('unholy')) {
         elem.classList.add('cursed');
-    } else if (text.toLowerCase().includes('blessed')) {
+    } else if (str.includes('blessed')) {
         elem.classList.add('blessed');
     }
 }
