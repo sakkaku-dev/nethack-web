@@ -688,7 +688,7 @@ export class NetHackWrapper implements NetHackJS {
 
         while (!CONTINUE_KEYS.includes(char)) {
             this.ui.openMenu(id, prompt, selectCount, ...items);
-            char = await this.waitInput(InputType.ASCII);
+            char = await this.waitInput(InputType.ALL);
 
             if (char >= 48 && char <= 57) {
                 count += String.fromCharCode(char);

@@ -20,15 +20,15 @@ describe('AccelIterator', () => {
         expect(c.nextChar()).toEqual('C');
     });
 
-    it('should continue sequence with numbers', () => {
+    it('should stop sequence after letters', () => {
         const c = new AccelIterator();
 
         let x = '';
         while ((x = c.nextChar()) != 'Z') {}
 
-        expect(c.nextChar()).toEqual('0');
-        expect(c.nextChar()).toEqual('1');
-        expect(c.nextChar()).toEqual('2');
+        expect(c.nextChar()).toEqual('');
+        expect(c.nextChar()).toEqual('');
+        expect(c.nextChar()).toEqual('');
     });
 
     it('should reset accel sequence', () => {

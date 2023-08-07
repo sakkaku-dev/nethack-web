@@ -4,19 +4,21 @@ import { TileSet } from './tilemap';
 
 const createAccel = (accel: number) => {
     const accelElem = document.createElement('div');
-    accelElem.classList.add('accel');
-    accelElem.innerHTML = String.fromCharCode(accel);
+    if (accel > 0) {
+        accelElem.classList.add('accel');
+        accelElem.innerHTML = String.fromCharCode(accel);
+    }
     return accelElem;
 };
 
 export function MenuButton(item: Item, prepend = true, tileset?: TileSet) {
     const btn = document.createElement('button');
-    btn.disabled = item.accelerator === 0;
+    btn.disabled = item.identifier === 0;
     btn.style.position = 'relative';
     horiz(btn);
     bucState(btn, item.str);
 
-    btn.onclick = () => window.nethackJS.sendInput(item.accelerator);
+    btn.onclick = () => window.nethackJS.sendInput(item.accelerator || item.identifier);
     if (item.active) {
         btn.classList.add('active');
     }

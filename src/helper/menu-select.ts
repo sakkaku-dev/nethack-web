@@ -39,9 +39,14 @@ const SELECT_ALL = '.'.charCodeAt(0);
 const DESELECT_ALL = '-'.charCodeAt(0);
 const TOGGLE_ALL = '@'.charCodeAt(0);
 
-export function toggleMenuItems(accel: number, count: number, menuSelect: MENU_SELECT, items: Item[]) {
-    const selectable = items.filter((i) => i.identifier !== 0 && i.accelerator !== 0);
-    const selected = selectable.findIndex((i) => i.accelerator === accel);
+export function toggleMenuItems(accelOrId: number, count: number, menuSelect: MENU_SELECT, items: Item[]) {
+    const selectable = items.filter((i) => i.identifier !== 0);
+
+    let selected = selectable.findIndex((i) => i.identifier === accelOrId);
+    if (selected === -1) {
+        selected = selectable.findIndex((i) => i.accelerator === accelOrId);
+    }
+
     if (selected !== -1) {
         if (menuSelect === MENU_SELECT.PICK_ONE) {
             clearMenuItems(selectable);
@@ -57,12 +62,12 @@ export function toggleMenuItems(accel: number, count: number, menuSelect: MENU_S
         item.active = !item.active;
         item.count = c
     } else if (menuSelect === MENU_SELECT.PICK_ANY) {
-        const groups = selectable.filter((i) => i.groupAcc !== 0 && i.groupAcc === accel);
+        const groups = selectable.filter((i) => i.groupAcc !== 0 && i.groupAcc === accelOrId);
         const enable = groups.some((i) => !i.active);
         groups.forEach((i) => (i.active = enable));
 
         if (groups.length === 0) {
-            switch (accel) {
+            switch (accelOrId) {
                 case SELECT_ALL:
                     selectable.forEach((i) => (i.active = true));
                     break;

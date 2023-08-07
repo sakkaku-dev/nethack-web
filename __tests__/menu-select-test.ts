@@ -86,4 +86,13 @@ describe('MenuSelect', () => {
         toggleMenuItems(code('@'), -1, MENU_SELECT.PICK_ANY, items);
         expect(items.map((i) => i.active)).toEqual([false, false]);
     });
+
+    it('should select by identifier', () => {
+        const items = [
+            { ...EMPTY_ITEM, identifier: 12345, accelerator: code('a'), active: false },
+            { ...EMPTY_ITEM, identifier: 10000, accelerator: code('b'), active: false },
+        ];
+        toggleMenuItems(10000, -1, 1, items);
+        expect(items.map((i) => i.active)).toEqual([false, true]);
+    });
 });
