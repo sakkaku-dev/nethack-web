@@ -76,7 +76,7 @@ index 4df88cecb..12a073bab 100644
  #else
  #define nethack_exit exit
 diff --git a/src/files.c b/src/files.c
-index 60d9aa56a..0a18744b0 100644
+index 60d9aa56a..ef6f0b0ac 100644
 --- a/src/files.c
 +++ b/src/files.c
 @@ -5,6 +5,10 @@
@@ -101,6 +101,18 @@ index 60d9aa56a..0a18744b0 100644
      return 0; /* for restore_saved_game() (ex-xxxmain.c) test */
  }
  
+@@ -1068,6 +1076,11 @@ restore_saved_game()
+     const char *fq_save;
+     int fd;
+ 
++#ifdef WEB_GRAPHICS
++    /* need manual sync for emscripten */
++    EM_ASM( FS.syncfs(function (err) { if(err) console.log('Cannot sync FS, savegame may not work!'); }););
++#endif
++
+     reset_restpref();
+     set_savefile_name(TRUE);
+ #ifdef MFLOPPY
 diff --git a/src/save.c b/src/save.c
 index e0af4b8d2..27d056c46 100644
 --- a/src/save.c
@@ -984,10 +996,10 @@ index 000000000..cfdd94d72
 +};
 diff --git a/win/web/web.c b/win/web/web.c
 new file mode 100644
-index 000000000..193415758
+index 000000000..9a5ce4445
 --- /dev/null
 +++ b/win/web/web.c
-@@ -0,0 +1,1141 @@
+@@ -0,0 +1,1145 @@
 +#include "hack.h"
 +#include "dlb.h"
 +#include "func_tab.h"
@@ -1101,7 +1113,11 @@ index 000000000..193415758
 +VDECLCB(shim_wait_synch,(void), "v")
 +VDECLCB(shim_update_positionbar,(char *posbar), "vp", P2V posbar)
 +
-+void shim_print_glyph(winid w, int x, int y, int glyph, int bkglyph);
++// Use extra function so we can call a method, but still sending the same command name
++void shim_print_tile(winid w, int x, int y, int glyph, int bkglyph, BOOLEAN_P is_pet);
++void shim_print_glyph(winid w, int x, int y, int glyph, int bkglyph) {
++    shim_print_tile(w, x, y, glyph, bkglyph, (glyph_is_pet(glyph) && iflags.wc_hilite_pet));
++}
 +
 +VDECLCB(shim_raw_print,(const char *str), "vs", P2V str)
 +VDECLCB(shim_raw_print_bold,(const char *str), "vs", P2V str)
@@ -2027,8 +2043,8 @@ index 000000000..193415758
 +
 +
 +// Implement separately to improve performance
-+EM_JS(void, shim_print_glyph, (winid w, int x, int y, int glyph, int bkglyph), {
-+    globalThis.nethackJS.handle('shim_print_glyph', w, x, y, glyph, bkglyph);
++EM_JS(void, shim_print_tile, (winid w, int x, int y, int glyph, int bkglyph, BOOLEAN_P is_pet), {
++    globalThis.nethackJS.handle('shim_print_glyph', w, x, y, glyph, bkglyph, is_pet);
 +})
 +EM_JS(void, shim_putstr, (winid w, int attr, const char *str), {
 +    globalThis.nethackJS.handle('shim_putstr', w, attr, UTF8ToString(str));

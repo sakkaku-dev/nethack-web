@@ -65,18 +65,19 @@ function decodeData(data: StoragedSaveData) {
     return array;
 }
 
-export function syncSaveFiles(module: any) {
+export function syncSaveFiles(module: any, player?: string) {
     module.FS.syncfs((err: any) => {
         if (err) {
             console.warn('Failed to sync FS. Save might not work', err);
         }
     });
 
-    saveBackupFiles(module);
+    saveBackupFiles(module, player);
 }
 
-function saveBackupFiles(module: any) {
+function saveBackupFiles(module: any, player?: string) {
     try {
+        console.log('Saving backup file for player ', player);
         const savefiles = module.FS.readdir('/nethack/save');
         for (let i = 0; i < savefiles.length; ++i) {
             let file = savefiles[i];
@@ -88,15 +89,21 @@ function saveBackupFiles(module: any) {
                 localStorage.setItem(RECORD_FILE_STORAGE_KEY, data);
             } else {
                 file = SAVE_FOLDER + file;
-                try {
-                    const data = readFile(module, file);
-                    saveFileData(file, data);
-                } catch (e) {
-                    console.warn('Failed to sync save file', file);
+                var name = parsePlayerName(file);
+                if (!player || name === player) {
+                    try {
+                        const data = readFile(module, file);
+                        saveFileData(file, data);
+                        console.log('Saved save file ', file);
+                    } catch (e) {
+                        console.warn('Failed to save save file', file);
+                    }
                 }
             }
         }
-    } catch (e) {}
+    } catch (e) {
+        console.warn('Failed to save backup file', e);
+    }
 }
 
 function saveFileData(file: string, data: string) {

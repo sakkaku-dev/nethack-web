@@ -364,6 +364,10 @@ export class NetHackWrapper implements NetHackJS {
         this.updateSettings({ playerName: name });
     }
 
+    private getPlayerName() {
+        return this.global.globals.plname;
+    }
+
     private async openCustomMenu(prompt: string, buttons: string[]) {
         const items = buttons.map((file, i) => ({
             ...EMPTY_ITEM,
@@ -573,7 +577,7 @@ export class NetHackWrapper implements NetHackJS {
 
     private async gameEnd(status: number) {
         this.log('Ended game with status', status);
-        syncSaveFiles(this.module);
+        syncSaveFiles(this.module, this.getPlayerName());
         this.gameState$.next(GameState.GAMEOVER);
     }
 
