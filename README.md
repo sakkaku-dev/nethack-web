@@ -1,6 +1,6 @@
 # Nethack port for Web
 
-Nethack for the web using godot as the UI. (maybe in the future, Godot 4 Web support is not good right now)
+Nethack for the web
 
 ## Build
 
@@ -27,26 +27,16 @@ For NetHack 3.6: (might need to uncomment `make spotless`, if you want a clean i
 
 ### Fixes 3.6
 
-Required changes to make Nethack 3.6
+Required changes to make Nethack 3.6 (will be applied with `lib/fixes36.diff`)
 
 -   Changes all util programs to `.js` and use node to run it
 -   Mount files to util programs with `mount_nodefs.js` since it's required to run them (see `UTIL_CFLAGS`)
 -   Added new win type `WEB_GRAPHICS` for `win/web` + some config changes?
+-   Enable wizard mode in `unixmain.c#authorize_wizard_mode`
 
 ## Generate
 
 To run `tools/generate.js`, remove `type: module` from `package.json`. To lazy to find a solution for it.
-
-## Deploy (for godot version, not necessary right now)
-
-Godot needs specific headers from the web server
-
-Apache:
-
-```
-Header set Cross-Origin-Opener-Policy "same-origin"
-Header set Cross-Origin-Embedder-Policy "require-corp"
-```
 
 ## Assets
 

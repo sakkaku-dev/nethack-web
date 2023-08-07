@@ -70,7 +70,7 @@ pushd NetHack/src
 	popd
 	echo "Setup Makefile for unix"
 
-	# make spotless
+	make spotless
 	pushd ../util
 		make PREFIX=""
 		# Needed for tilemap compilation
