@@ -34,7 +34,6 @@ jobs:
             - name: Build Nethack Binary
               run: |
                 cd NetHack
-                git checkout NetHack-3.6.7_Released
                 git apply ../lib/fixes36.diff
                 cd ../
                 ./build.sh data
