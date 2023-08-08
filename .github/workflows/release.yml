@@ -42,7 +42,7 @@ jobs:
                 ./build.sh
 
             - name: Set build version
-              run: ./tools/build-version.sh
+              run: ./tools/build-version.sh $GITHUB_REF_NAME
 
             - name: Build Nethack Web
               run: npm run build:web
