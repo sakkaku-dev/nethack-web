@@ -28,8 +28,9 @@ jobs:
                 version: 2.0.34
                 actions-cache-folder: 'emsdk-cache'
 
-            - name: Install dependencies
-              run: sudo apt-get update && sudo apt-get install bison flex -y
+            # Already installed?
+            # - name: Install dependencies
+            #   run: sudo apt-get update && sudo apt-get install bison flex -y
 
             - name: Build Nethack Binary
               run: |
