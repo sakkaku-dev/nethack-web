@@ -4,6 +4,8 @@ Nethack for the web
 
 ## Build
 
+See [release.yml](./.github/workflows/release.yml) workflow for exact steps.
+
 Current build is from `NetHack-3.6.7_Released (ed600d9f0)`
 
 Install Emscripten `v2.0.34 (0d24418f0eac4828f096ee070dae8472d427edaa)` and activate
@@ -17,17 +19,9 @@ git pull
 source ./emsdk_env.sh
 ```
  
-For NetHack 3.6: (might need to uncomment `make spotless`, if you want a clean install)
-
--   apply changes of `lib/fixes36.diff` in the `NetHack` submodule.
--   run `build.sh` stage1: it should create the folder `build/nethack` with some files in it. These are the required data files for the actual build.
--   run `build.sh` stage2: actual build of the game. It will update `lib/nethack.*`
--   build the UI with `npm run build:web`
--   copy content of `build` to a web server
-
 ### Fixes 3.6
 
-Required changes to make Nethack 3.6 (will be applied with `lib/fixes36.diff`)
+Summary of the changes in `lib/fixes36.diff` to make Nethack 3.6 (most will not be needed anymore for 3.7 release)
 
 -   Changes all util programs to `.js` and use node to run it
 -   Mount files to util programs with `mount_nodefs.js` since it's required to run them (see `UTIL_CFLAGS`)

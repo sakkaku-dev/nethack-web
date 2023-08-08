@@ -3,7 +3,7 @@
 # TODO: Activate emscripten 2.0.34
 
 # Following most steps from BrowserHack build.sh
-MYDIR="$(pwd)"
+MYDIR="$(pwd)/NetHack"
 PREFIX="$MYDIR/build"
 
 # These workarounds should not be needed once we upgrade to 3.7
@@ -95,14 +95,17 @@ pushd NetHack/src
 
 	make PREFIX="" DATA_DIR="$PREFIX"
 
-	cp nethack $MYDIR/lib/nethack.js
-	cp nethack.wasm $MYDIR/lib/nethack.wasm
-	cp nethack.data $MYDIR/lib/nethack.data
+	cp nethack $MYDIR/../lib/nethack.js
+	cp nethack.wasm $MYDIR/../lib/nethack.wasm
+	cp nethack.data $MYDIR/../lib/nethack.data
 popd
 sed -e '/"description":/a \ \ \ \ "type": "module",' -i package.json
 }
 
 
 # Change which stage to run
-# stage1
-stage2
+if [ -z $1 ]; then
+	stage2
+else
+	stage1
+fi

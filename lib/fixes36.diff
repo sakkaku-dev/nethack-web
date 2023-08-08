@@ -197,43 +197,43 @@ index 00f604396..085edef11 100644
 -data:	data.base ../util/makedefs
 -	../util/makedefs -d
 +data:	data.base ../util/makedefs.js
-+	node ../util/makedefs.js -d
++	${EMSDK_NODE} ../util/makedefs.js -d
  
 -rumors:	rumors.tru rumors.fal ../util/makedefs
 -	../util/makedefs -r
 +rumors:	rumors.tru rumors.fal ../util/makedefs.js
-+	node ../util/makedefs.js -r
++	${EMSDK_NODE} ../util/makedefs.js -r
  
 -quest.dat:	quest.txt ../util/makedefs
 -	../util/makedefs -q
 +quest.dat:	quest.txt ../util/makedefs.js
-+	node ../util/makedefs.js -q
++	${EMSDK_NODE} ../util/makedefs.js -q
  
 -oracles:	oracles.txt ../util/makedefs
 -	../util/makedefs -h
 +oracles:	oracles.txt ../util/makedefs.js
-+	node ../util/makedefs.js -h
++	${EMSDK_NODE} ../util/makedefs.js -h
  
 -engrave:	engrave.txt ../util/makedefs
 -	../util/makedefs -s
 +engrave:	engrave.txt ../util/makedefs.js
-+	node ../util/makedefs.js -s
++	${EMSDK_NODE} ../util/makedefs.js -s
  
 -epitaph:	epitaph.txt ../util/makedefs
 -	../util/makedefs -s
 +epitaph:	epitaph.txt ../util/makedefs.js
-+	node ../util/makedefs.js -s
++	${EMSDK_NODE} ../util/makedefs.js -s
  
 -bogusmon:	bogusmon.txt ../util/makedefs
 -	../util/makedefs -s
 +bogusmon:	bogusmon.txt ../util/makedefs.js
-+	node ../util/makedefs.js -s
++	${EMSDK_NODE} ../util/makedefs.js -s
  
  # note: 'options' should have already been made when include/date.h was created
 -options:	../util/makedefs
 -	../util/makedefs -v
 +options:	../util/makedefs.js
-+	node ../util/makedefs.js -v
++	${EMSDK_NODE} ../util/makedefs.js -v
  
  
 -spec_levs: ../util/lev_comp \
@@ -251,17 +251,17 @@ index 00f604396..085edef11 100644
 -	../util/lev_comp sokoban.des
 -	../util/lev_comp tower.des
 -	../util/lev_comp yendor.des
-+	node ../util/lev_comp.js bigroom.des
-+	node ../util/lev_comp.js castle.des
-+	node ../util/lev_comp.js endgame.des
-+	node ../util/lev_comp.js gehennom.des
-+	node ../util/lev_comp.js knox.des
-+	node ../util/lev_comp.js medusa.des
-+	node ../util/lev_comp.js mines.des
-+	node ../util/lev_comp.js oracle.des
-+	node ../util/lev_comp.js sokoban.des
-+	node ../util/lev_comp.js tower.des
-+	node ../util/lev_comp.js yendor.des
++	${EMSDK_NODE} ../util/lev_comp.js bigroom.des
++	${EMSDK_NODE} ../util/lev_comp.js castle.des
++	${EMSDK_NODE} ../util/lev_comp.js endgame.des
++	${EMSDK_NODE} ../util/lev_comp.js gehennom.des
++	${EMSDK_NODE} ../util/lev_comp.js knox.des
++	${EMSDK_NODE} ../util/lev_comp.js medusa.des
++	${EMSDK_NODE} ../util/lev_comp.js mines.des
++	${EMSDK_NODE} ../util/lev_comp.js oracle.des
++	${EMSDK_NODE} ../util/lev_comp.js sokoban.des
++	${EMSDK_NODE} ../util/lev_comp.js tower.des
++	${EMSDK_NODE} ../util/lev_comp.js yendor.des
  	touch spec_levs
  
 -quest_levs: ../util/lev_comp \
@@ -282,27 +282,27 @@ index 00f604396..085edef11 100644
 -	../util/lev_comp Tourist.des
 -	../util/lev_comp Valkyrie.des
 -	../util/lev_comp Wizard.des
-+	node ../util/lev_comp.js Arch.des
-+	node ../util/lev_comp.js Barb.des
-+	node ../util/lev_comp.js Caveman.des
-+	node ../util/lev_comp.js Healer.des
-+	node ../util/lev_comp.js Knight.des
-+	node ../util/lev_comp.js Monk.des
-+	node ../util/lev_comp.js Priest.des
-+	node ../util/lev_comp.js Ranger.des
-+	node ../util/lev_comp.js Rogue.des
-+	node ../util/lev_comp.js Samurai.des
-+	node ../util/lev_comp.js Tourist.des
-+	node ../util/lev_comp.js Valkyrie.des
-+	node ../util/lev_comp.js Wizard.des
++	${EMSDK_NODE} ../util/lev_comp.js Arch.des
++	${EMSDK_NODE} ../util/lev_comp.js Barb.des
++	${EMSDK_NODE} ../util/lev_comp.js Caveman.des
++	${EMSDK_NODE} ../util/lev_comp.js Healer.des
++	${EMSDK_NODE} ../util/lev_comp.js Knight.des
++	${EMSDK_NODE} ../util/lev_comp.js Monk.des
++	${EMSDK_NODE} ../util/lev_comp.js Priest.des
++	${EMSDK_NODE} ../util/lev_comp.js Ranger.des
++	${EMSDK_NODE} ../util/lev_comp.js Rogue.des
++	${EMSDK_NODE} ../util/lev_comp.js Samurai.des
++	${EMSDK_NODE} ../util/lev_comp.js Tourist.des
++	${EMSDK_NODE} ../util/lev_comp.js Valkyrie.des
++	${EMSDK_NODE} ../util/lev_comp.js Wizard.des
  	touch quest_levs
  
 -dungeon: dungeon.def ../util/makedefs ../util/dgn_comp
 -	../util/makedefs -e
 -	../util/dgn_comp dungeon.pdf
 +dungeon: dungeon.def ../util/makedefs.js ../util/dgn_comp.js
-+	node ../util/makedefs.js -e
-+	node ../util/dgn_comp.js dungeon.pdf
++	${EMSDK_NODE} ../util/makedefs.js -e
++	${EMSDK_NODE} ../util/dgn_comp.js dungeon.pdf
  
  # gitinfo.txt is optionally made by src/Makefile when creating date.h
  clean:
@@ -335,7 +335,7 @@ index eeb30b9a0..c4435facb 100644
  ../include/date.h:	$(VERSOURCES) $(HACK_H)
  	-$(SHELL) ../sys/unix/gitinfo.sh $(GITINFO) #before 'makedefs -v'
 -	../util/makedefs -v
-+	node ../util/makedefs.js -v
++	${EMSDK_NODE} ../util/makedefs.js -v
  
  
  lint:
@@ -355,7 +355,7 @@ index ad7607cd9..c9124e17f 100644
 -	( cd dat ; LC_ALL=C ; ../util/dlb cf nhdat $(DATDLB) )
 +dlb.js:
 +	( cd util ; $(MAKE) dlb.js )
-+	( cd dat ; LC_ALL=C ; node ../util/dlb.js cf nhdat $(DATDLB) )
++	( cd dat ; LC_ALL=C ; ${EMSDK_NODE} ../util/dlb.js cf nhdat $(DATDLB) )
  
  # recover can be used when INSURANCE is defined in include/config.h
  # and the checkpoint option is true
@@ -394,11 +394,11 @@ index 78e9d725f..b94b1d7f9 100644
 -../include/vis_tab.h: makedefs
 -	./makedefs -z
 +../include/onames.h: makedefs.js
-+	node ./makedefs.js -o
++	${EMSDK_NODE} ./makedefs.js -o
 +../include/pm.h: makedefs.js
-+	node ./makedefs.js -p
++	${EMSDK_NODE} ./makedefs.js -p
 +../include/vis_tab.h: makedefs.js
-+	node ./makedefs.js -z
++	${EMSDK_NODE} ./makedefs.js -z
  # makedefs -z makes both vis_tab.h and vis_tab.c, but writes the .h first
  ../src/vis_tab.c: ../include/vis_tab.h
  
@@ -455,7 +455,7 @@ index 78e9d725f..b94b1d7f9 100644
 +tilemap.js: tilemap.o
 +	$(CC) $(LFLAGS) $(UTIL_CFLAGS) -o tilemap.js tilemap.o $(LIBS)
 +../src/tile.c: tilemap.js
-+	node ./tilemap.js
++	${EMSDK_NODE} ./tilemap.js
  
  ../include/tile.h: ../win/share/tile.h
  	cp ../win/share/tile.h ../include/tile.h

@@ -13,10 +13,40 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
+              with:
+                submodules: true
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '16.x'
+
             - run: npm i
             - run: npm test
-            - run: ./tools/build-version.sh
-            - run: npm run build:web
+
+            - name: Setup emsdk
+              uses: mymindstorm/setup-emsdk@v11
+              with:
+                version: 2.0.34
+                actions-cache-folder: 'emsdk-cache'
+
+            - name: Install dependencies
+              run: sudo apt-get update && sudo apt-get install bison flex -y
+
+            - name: Build Nethack Binary
+              run: |
+                cd NetHack
+                git checkout NetHack-3.6.7_Released
+                git apply ../lib/fixes36.diff
+                cd ../
+                ./build.sh data
+                ./build.sh
+
+            - name: Set build version
+              run: ./tools/build-version.sh
+
+            - name: Build Nethack Web
+              run: npm run build:web
+
             - uses: JamesIves/github-pages-deploy-action@v4
               with:
                   folder: build
+
