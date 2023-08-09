@@ -91,12 +91,13 @@ function saveBackupFiles(module: any, player?: string) {
                 file = SAVE_FOLDER + file;
                 var name = parsePlayerName(file);
                 if (!player || name === player) {
+                    console.log('Saving file', file)
                     try {
                         const data = readFile(module, file);
                         saveFileData(file, data);
-                        console.log('Saved save file ', file);
+                        console.log("Save successful");
                     } catch (e) {
-                        console.warn('Failed to save save file', file);
+                        console.warn('Failed to save save file', e);
                     }
                 }
             }
