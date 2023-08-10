@@ -18,7 +18,7 @@ export function MenuButton(item: Item, prepend = true, tileset?: TileSet) {
     horiz(btn);
     bucState(btn, item.str);
 
-    btn.onclick = () => window.nethackJS.sendInput(item.accelerator || item.identifier);
+    btn.onclick = () => window.nethackJS.sendInput(item.accelerator || `${item.identifier}`);
     if (item.active) {
         btn.classList.add('active');
     }

@@ -101,7 +101,7 @@ export class NetHackWrapper implements NetHackJS {
     private accel = new AccelIterator();
     private status: Status = {};
 
-    private input$ = new Subject<number>();
+    private input$ = new Subject<number | string>();
     private line$ = new Subject<string | null>();
 
     private inventory$ = new Subject<InventoryItem[]>();
@@ -397,9 +397,8 @@ export class NetHackWrapper implements NetHackJS {
     public async sendInput(...keys: (number | string)[]) {
         for (const key of keys) {
             await this.waitForAwaitingInput();
-            const k = typeof key === 'string' ? key.charCodeAt(0) : key;
-            this.log('Sending input', k);
-            this.input$.next(k);
+            this.log('Sending input', key);
+            this.input$.next(key);
         }
     }
 
@@ -418,11 +417,11 @@ export class NetHackWrapper implements NetHackJS {
                 filter((c) => {
                     switch (type) {
                         case InputType.CONTINUE:
-                            return CONTINUE_KEYS.includes(c);
+                            return CONTINUE_KEYS.includes(this.toNumber(c));
                         case InputType.ASCII:
-                            return c <= ASCII_MAX;
+                            return this.toNumber(c) <= ASCII_MAX;
                         case InputType.ESCAPE:
-                            return c === ESC;
+                            return this.toNumber(c) === ESC;
                         default:
                             return true;
                     }
@@ -431,6 +430,10 @@ export class NetHackWrapper implements NetHackJS {
         );
         this.awaitingInput$.next(false);
         return value;
+    }
+
+    private toNumber(c: string | number) {
+        return typeof c === 'string' ? c.charCodeAt(0) : c;
     }
 
     private async waitLine(limitLength = true) {
@@ -527,7 +530,7 @@ export class NetHackWrapper implements NetHackJS {
 
         let c = 0;
         do {
-            c = await this.waitInput(InputType.ALL);
+            c = (await this.waitInput(InputType.ALL)) as number;
 
             // Default behaviour described in window.doc
             if (c === ESC) {
@@ -687,14 +690,14 @@ export class NetHackWrapper implements NetHackJS {
 
         const selectCount = getCountForSelect(select);
 
-        let char = 0;
+        let char: string | number = 0;
         let count = '';
 
-        while (!CONTINUE_KEYS.includes(char)) {
+        while (typeof char === 'string' || !CONTINUE_KEYS.includes(char)) {
             this.ui.openMenu(id, prompt, selectCount, ...items);
             char = await this.waitInput(InputType.ALL);
 
-            if (char >= 48 && char <= 57) {
+            if (typeof char === 'number' && char >= 48 && char <= 57) {
                 count += String.fromCharCode(char);
             } else if (selectCount !== 0) {
                 toggleMenuItems(char, parseInt(count), select, items);
@@ -707,7 +710,7 @@ export class NetHackWrapper implements NetHackJS {
             }
         }
 
-        if (char === ESC) {
+        if (this.toNumber(char) === ESC) {
             clearMenuItems(items);
         }
 

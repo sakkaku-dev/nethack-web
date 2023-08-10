@@ -39,10 +39,10 @@ const SELECT_ALL = '.'.charCodeAt(0);
 const DESELECT_ALL = '-'.charCodeAt(0);
 const TOGGLE_ALL = '@'.charCodeAt(0);
 
-export function toggleMenuItems(accelOrId: number, count: number, menuSelect: MENU_SELECT, items: Item[]) {
+export function toggleMenuItems(accelOrId: number | string, count: number, menuSelect: MENU_SELECT, items: Item[]) {
     const selectable = items.filter((i) => i.identifier !== 0);
 
-    let selected = selectable.findIndex((i) => i.identifier === accelOrId);
+    let selected = selectable.findIndex((i) => typeof accelOrId === 'string' && i.identifier == parseInt(accelOrId));
     if (selected === -1) {
         selected = selectable.findIndex((i) => i.accelerator === accelOrId);
     }

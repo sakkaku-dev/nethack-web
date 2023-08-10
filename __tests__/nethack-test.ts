@@ -72,7 +72,7 @@ describe('Nethack', () => {
     };
 
     const send = async (...chars: (string | number)[]) => {
-        wrapper.sendInput(...chars);
+        wrapper.sendInput(...chars.map(x => typeof x === 'string' ? x.charCodeAt(0) : x));
         await wait(10);
     };
 

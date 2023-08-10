@@ -89,10 +89,10 @@ describe('MenuSelect', () => {
 
     it('should select by identifier', () => {
         const items = [
-            { ...EMPTY_ITEM, identifier: 12345, accelerator: code('a'), active: false },
-            { ...EMPTY_ITEM, identifier: 10000, accelerator: code('b'), active: false },
+            { ...EMPTY_ITEM, identifier: 5, accelerator: code('a'), active: false },
+            { ...EMPTY_ITEM, identifier: 10, accelerator: code('b'), active: false },
         ];
-        toggleMenuItems(10000, -1, 1, items);
+        toggleMenuItems('10', -1, 1, items);
         expect(items.map((i) => i.active)).toEqual([false, true]);
     });
 });
