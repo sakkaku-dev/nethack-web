@@ -91,11 +91,11 @@ function saveBackupFiles(module: any, player?: string) {
                 file = SAVE_FOLDER + file;
                 var name = parsePlayerName(file);
                 if (!player || name === player) {
-                    console.log('Saving file', file)
+                    console.log('Saving file', file);
                     try {
                         const data = readFile(module, file);
                         saveFileData(file, data);
-                        console.log("Save successful");
+                        console.log('Save successful');
                     } catch (e) {
                         console.warn('Failed to save save file', e);
                     }
@@ -168,4 +168,118 @@ function downloadURL(data: any, fileName: string) {
     a.style.display = 'none';
     a.click();
     a.remove();
+}
+
+export function formatRecords(records: string) {
+    const header = ['No', 'Score', 'Dungeon', 'Player', 'HP', 'Start', 'End', 'Death'].map(x => `<th>${x}</th>`);
+    const lines = records
+        .split('\n')
+        .filter(line => line.length > 0)
+        .map((line) => {
+            const col = line.split(' ');
+            const last = [];
+            for(let i = 15; i < col.length; i++) {
+                last.push(col[i]);
+            }
+
+            const nameDeath = last.join(' ').split(',');
+
+            return {
+                version: col[0],
+                score: parseInt(col[1]),
+                dungeon: mapToDungeon(col[2]),
+                dungeonLvl: parseInt(col[3]),
+                maxLvl: parseInt(col[4]),
+                hp: parseInt(col[5]),
+                maxHp: parseInt(col[6]),
+                numOfDeath: parseInt(col[7]),
+                endDate: parseDate(col[8]),
+                startDate: parseDate(col[9]),
+                role: col[11],
+                race: col[12],
+                gender: col[13],
+                align: col[14],
+                name: nameDeath[0],
+                deathReason: nameDeath[1],
+            } as Record;
+        })
+        .map((r, i) => [
+            i+1,
+            `${r.score}`,
+            `${r.dungeon} ${r.dungeonLvl}/${r.maxLvl}`,
+            `${r.name}, ${r.role}-${r.race}-${r.gender}-${r.align}`,
+            `${r.hp}/${r.maxHp}`,
+            r.startDate,
+            r.endDate,
+            r.deathReason,
+        ])
+        .map(cols => `<tr>${cols.map(c => `<td>${c}</td>`).join('')}</tr>`);
+    
+    return `<table id="records"><tr>${header.join('')}</tr>${lines.join('')}</table>`;
+}
+
+function parseDate(str: string): string {
+    if (str.length !== 8) {
+        return str;
+    }
+    const year = str.substring(0, 4);
+    const month = str.substring(4, 6);
+    const day = str.substring(6, 8);
+
+    return `${year}-${month}-${day}`;
+    // return new Date(`${year}-${month}-${day}`);
+}
+
+function mapToDungeon(value: string) {
+    const num = parseInt(value);
+    switch (num) {
+        case 0:
+            return Dungeon.DOOM;
+        case 1:
+            return Dungeon.GEHENNOM;
+        case 2:
+            return Dungeon.MINES;
+        case 3:
+            return Dungeon.QUEST;
+        case 4:
+            return Dungeon.SOKOBAN;
+        case 5:
+            return Dungeon.FORT;
+        case 6:
+            return Dungeon.VLAD;
+        case 7:
+            return Dungeon.PLANES;
+    }
+
+    return Dungeon.DOOM;
+}
+
+interface Record {
+    version: string;
+    score: number;
+    dungeon: Dungeon;
+    dungeonLvl: number;
+    maxLvl: number;
+    hp: number;
+    maxHp: number;
+    numOfDeath: number;
+    endDate: string;
+    startDate: string;
+    role: string;
+    race: string;
+    gender: string;
+    align: string;
+    name: string;
+    deathReason: string;
+}
+
+enum Dungeon {
+    DOOM = 'The Dungeons of Doom',
+    GEHENNOM = 'Gehennom',
+    MINES = 'The Gnomish Mines',
+    QUEST = 'The Quest',
+    SOKOBAN = 'Sokoban',
+    FORT = 'Fort Ludios',
+    VLAD = "Vlad's Tower",
+    PLANES = 'Elemental Planes',
 }

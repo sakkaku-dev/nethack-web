@@ -16,6 +16,10 @@ export class StartScreen extends Screen {
         this.elem.appendChild(this.menu.elem);
     }
 
+    onDialog(text: string) {
+        super.onDialog(text, false);
+    }
+
     onMenu(prompt: string, count: number, items: Item[]): void {
         this.menu.label.innerHTML = prompt;
         this.menu.updateMenu(items, count);

@@ -27,8 +27,8 @@ export class Screen {
 
     onMenu(prompt: string, count: number, items: Item[]) {}
 
-    onDialog(text: string) {
-        const dialog = new Dialog(text);
+    onDialog(text: string, escape = true) {
+        const dialog = new Dialog(text, escape);
         this.elem.appendChild(dialog.elem);
     }
 

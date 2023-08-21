@@ -12,6 +12,7 @@ import { EMPTY_ITEM, clearMenuItems, getCountForSelect, setAccelerators, toggleM
 import {
     SaveFile,
     exportSaveFile,
+    formatRecords,
     importSaveFile,
     listBackupFiles,
     loadRecords,
@@ -208,7 +209,7 @@ export class NetHackWrapper implements NetHackJS {
             if (records.length) {
                 startMenu.push('Highscores');
                 actions.push(async () => {
-                    this.ui.openDialog(-1, records);
+                    this.ui.openDialog(-1, formatRecords(records));
                     await this.waitInput(InputType.CONTINUE);
                     this.ui.closeDialog(-1);
                 });
