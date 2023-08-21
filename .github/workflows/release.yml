@@ -1,7 +1,6 @@
 name: Release
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - "v*.*.*"
@@ -49,5 +48,14 @@ jobs:
 
             - uses: JamesIves/github-pages-deploy-action@v4
               with:
-                  folder: build
+                   folder: build
+            
+            - run: npm run changelog
+            - name: Release
+              uses: softprops/action-gh-release@v1
+              with:
+                body_path: CHANGELOG.md
+                prerelease: false
+                files: |
+                  **/lib/nethack.*
 
