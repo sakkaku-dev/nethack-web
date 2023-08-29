@@ -166,7 +166,7 @@ index 94ac40f3e..9b00748e2 100644
      { &tty_procs, win_tty_init CHAINR(0) },
  #endif
 diff --git a/sys/unix/Makefile.dat b/sys/unix/Makefile.dat
-index 00f604396..085edef11 100644
+index 00f604396..697e26f42 100644
 --- a/sys/unix/Makefile.dat
 +++ b/sys/unix/Makefile.dat
 @@ -13,14 +13,14 @@ VARDAT = bogusmon data engrave epitaph rumors quest.dat oracles options
@@ -307,7 +307,7 @@ index 00f604396..085edef11 100644
  # gitinfo.txt is optionally made by src/Makefile when creating date.h
  clean:
 diff --git a/sys/unix/Makefile.src b/sys/unix/Makefile.src
-index eeb30b9a0..c4435facb 100644
+index eeb30b9a0..0f4ba4ba2 100644
 --- a/sys/unix/Makefile.src
 +++ b/sys/unix/Makefile.src
 @@ -429,7 +429,7 @@ AT_V1 := @
@@ -340,7 +340,7 @@ index eeb30b9a0..c4435facb 100644
  
  lint:
 diff --git a/sys/unix/Makefile.top b/sys/unix/Makefile.top
-index ad7607cd9..c9124e17f 100644
+index ad7607cd9..72eeab525 100644
 --- a/sys/unix/Makefile.top
 +++ b/sys/unix/Makefile.top
 @@ -184,11 +184,11 @@ title.img:
@@ -360,7 +360,7 @@ index ad7607cd9..c9124e17f 100644
  # recover can be used when INSURANCE is defined in include/config.h
  # and the checkpoint option is true
 diff --git a/sys/unix/Makefile.utl b/sys/unix/Makefile.utl
-index 78e9d725f..b94b1d7f9 100644
+index 78e9d725f..fe3f27dc3 100644
 --- a/sys/unix/Makefile.utl
 +++ b/sys/unix/Makefile.utl
 @@ -102,6 +102,8 @@ NHSROOT=..
@@ -538,7 +538,7 @@ index 862915053..01f6506cb 100644
  # if TTY_TILES_ESCCODES
  #WINSRC += tile.c
 diff --git a/sys/unix/unixmain.c b/sys/unix/unixmain.c
-index 1e7880165..c9acb7997 100644
+index 1e7880165..d06c2dd4d 100644
 --- a/sys/unix/unixmain.c
 +++ b/sys/unix/unixmain.c
 @@ -16,6 +16,13 @@
@@ -569,7 +569,31 @@ index 1e7880165..c9acb7997 100644
      init_nhwindows(&argc, argv); /* now we can set up window system */
  #ifdef _M_UNIX
      init_sco_cons();
-@@ -808,3 +822,356 @@ sys_random_seed()
+@@ -610,14 +624,15 @@ port_help()
+ boolean
+ authorize_wizard_mode()
+ {
+-    struct passwd *pw = get_unix_pw();
+-
+-    if (pw && sysopt.wizards && sysopt.wizards[0]) {
+-        if (check_user_string(sysopt.wizards))
+-            return TRUE;
+-    }
+-    wiz_error_flag = TRUE; /* not being allowed into wizard mode */
+-    return FALSE;
++    return TRUE;
++    // struct passwd *pw = get_unix_pw();
++
++    // if (pw && sysopt.wizards && sysopt.wizards[0]) {
++    //     if (check_user_string(sysopt.wizards))
++    //         return TRUE;
++    // }
++    // wiz_error_flag = TRUE; /* not being allowed into wizard mode */
++    // return FALSE;
+ }
+ 
+ static void
+@@ -808,3 +823,356 @@ sys_random_seed()
  }
  
  /*unixmain.c*/
