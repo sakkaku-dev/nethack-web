@@ -1,4 +1,5 @@
 import { Item } from '../../models';
+import { VERSION } from '../../version';
 import { Menu } from '../components/menu';
 import { title } from '../styles';
 import { Screen } from './screen';
@@ -14,6 +15,11 @@ export class StartScreen extends Screen {
         title(this.menu.label);
 
         this.elem.appendChild(this.menu.elem);
+
+        const version = document.querySelector('#version') as HTMLLinkElement;
+        version.innerHTML = VERSION;
+        version.href = `https://github.com/sakkaku-dev/nethack-web/releases/tag/${VERSION}`;
+        console.log('Running version', VERSION);
     }
 
     onDialog(text: string) {

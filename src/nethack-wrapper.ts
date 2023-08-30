@@ -30,7 +30,6 @@ import {
     loadDefaultOptions,
     defaultSetting,
 } from './helper/settings';
-import { VERSION } from './version';
 
 const ASCII_MAX = 127;
 const MAX_STRING_LENGTH = 256; // defined in global.h BUFSZ
@@ -176,7 +175,6 @@ export class NetHackWrapper implements NetHackJS {
         this.module.preRun.push(() => this.setupNethackOptions());
 
         if (autostart) {
-            console.log('Running version', VERSION);
             this.openStartScreen();
         }
     }

@@ -146,15 +146,27 @@
         image-rendering: crisp-edges;
     }
 
-    #records td, #records th {
+    #records td,
+    #records th {
         padding: 0.25rem 0.5rem;
         white-space: nowrap;
+    }
+
+    #version {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        padding: 0.5rem;
+        color: white;
+        text-decoration: none;
+        z-index: 1;
     }
 
     /* Icons: https://css.gg/app */
 </style>
 
 <body>
+    <a id="version" target="_blank"></a>
     <input type="file" style="display: none" id="importSaveFile" />
     <div id="sidebar"></div>
 </body>
