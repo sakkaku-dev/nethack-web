@@ -65,6 +65,16 @@ function decodeData(data: StoragedSaveData) {
     return array;
 }
 
+function encodeData(data: Uint8Array) {
+    console.log('Encoding data of size', data.length);
+    let encoded = '';
+    for (let d of data) {
+        encoded += String.fromCharCode(d);
+    }
+
+    return btoa(encoded);
+}
+
 export function syncSaveFiles(module: any, player?: string) {
     module.FS.syncfs((err: any) => {
         if (err) {
@@ -117,20 +127,13 @@ function saveFileData(file: string, data: string) {
 function readFile(module: any, file: string) {
     console.log('Reading file', file);
     const data = module.FS.readFile(file, { encoding: 'binary' }) as Uint8Array;
-
-    console.log('Encoding data of size', data.length);
-    let encoded = '';
-    for (let d of data) {
-        encoded += String.fromCharCode(d);
-    }
-
-    return btoa(encoded);
+    return encodeData(data);
 }
 
 export function loadSaveFiles(module: any, backupFile: string) {
     try {
         module.FS.mkdir('/nethack/save');
-    } catch (e) {}
+    } catch (e) { }
     module.FS.mount(module.IDBFS, {}, '/nethack/save');
     module.FS.syncfs(true, (err: any) => {
         if (err) {
@@ -165,8 +168,9 @@ export function exportSaveFile(file: SaveFile) {
 export async function importSaveFile(file: File) {
     const buf = await file.arrayBuffer();
     const array = new Uint8Array(buf);
-    const data = btoa(String.fromCharCode.apply(null, array as any));
+    const data = encodeData(array);
     saveFileData(SAVE_FOLDER + file.name, data);
+    console.log('Imported save file ', file.name)
 }
 
 function downloadURL(data: any, fileName: string) {
