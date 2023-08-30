@@ -1,3 +1,5 @@
+const VERSION = 'v0.0.3';
+
 function fullScreen(elem) {
     elem.style.position = 'absolute';
     elem.style.top = '0';
@@ -309,8 +311,8 @@ class Screen {
     }
     onResize() { }
     onMenu(prompt, count, items) { }
-    onDialog(text) {
-        const dialog = new Dialog(text);
+    onDialog(text, escape = true) {
+        const dialog = new Dialog(text, escape);
         this.elem.appendChild(dialog.elem);
     }
     onLine(question, autocomplete) {
@@ -353,6 +355,13 @@ class StartScreen extends Screen {
         this.menu.label.style.marginBottom = '2rem';
         title(this.menu.label);
         this.elem.appendChild(this.menu.elem);
+        const version = document.querySelector('#version');
+        version.innerHTML = VERSION;
+        version.href = `https://github.com/sakkaku-dev/nethack-web/releases/tag/${VERSION}`;
+        console.log('Running version', VERSION);
+    }
+    onDialog(text) {
+        super.onDialog(text, false);
     }
     onMenu(prompt, count, items) {
         this.menu.label.innerHTML = prompt;
