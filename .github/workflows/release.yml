@@ -50,7 +50,9 @@ jobs:
               with:
                    folder: build
             
-            - run: npm run changelog
+            - run: echo "latest_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+            - run: echo "prev_tag=$(git tag | sort --version-sort | tail -n2 | head -1)" >> $GITHUB_ENV
+            - run: npm ci && npm run changelog -- -t ${{env.prev_tag}}..${{env.latest_tag}}
             - name: Release
               uses: softprops/action-gh-release@v1
               with:
