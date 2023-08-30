@@ -59,8 +59,8 @@ function loadBackupSaveFile(file: string, module: any) {
 
 function decodeData(data: StoragedSaveData) {
     const bytes = atob(data.data);
-    const buf = new ArrayBuffer(bytes.length);
-    const array = new Uint8Array(buf);
+    console.log('Decoding data of size', bytes.length);
+    const array = new Uint8Array(bytes.length);
     for (var i = 0; i < bytes.length; ++i) array[i] = bytes.charCodeAt(i);
     return array;
 }
@@ -115,7 +115,16 @@ function saveFileData(file: string, data: string) {
 }
 
 function readFile(module: any, file: string) {
-    return btoa(String.fromCharCode.apply(null, module.FS.readFile(file, { encoding: 'binary' })));
+    console.log('Reading file', file);
+    const data = module.FS.readFile(file, { encoding: 'binary' }) as Uint8Array;
+
+    console.log('Encoding data of size', data.length);
+    let encoded = '';
+    for (let d of data) {
+        encoded += String.fromCharCode(d);
+    }
+
+    return btoa(encoded);
 }
 
 export function loadSaveFiles(module: any, backupFile: string) {
@@ -171,14 +180,14 @@ function downloadURL(data: any, fileName: string) {
 }
 
 export function formatRecords(records: string) {
-    const header = ['No', 'Score', 'Dungeon', 'Player', 'HP', 'Start', 'End', 'Death'].map(x => `<th>${x}</th>`);
+    const header = ['No', 'Score', 'Dungeon', 'Player', 'HP', 'Start', 'End', 'Death'].map((x) => `<th>${x}</th>`);
     const lines = records
         .split('\n')
-        .filter(line => line.length > 0)
+        .filter((line) => line.length > 0)
         .map((line) => {
             const col = line.split(' ');
             const last = [];
-            for(let i = 15; i < col.length; i++) {
+            for (let i = 15; i < col.length; i++) {
                 last.push(col[i]);
             }
 
@@ -204,7 +213,7 @@ export function formatRecords(records: string) {
             } as Record;
         })
         .map((r, i) => [
-            i+1,
+            i + 1,
             `${r.score}`,
             `${r.dungeon} ${r.dungeonLvl}/${r.maxLvl}`,
             `${r.name}, ${r.role}-${r.race}-${r.gender}-${r.align}`,
@@ -213,8 +222,8 @@ export function formatRecords(records: string) {
             r.endDate,
             r.deathReason,
         ])
-        .map(cols => `<tr>${cols.map(c => `<td>${c}</td>`).join('')}</tr>`);
-    
+        .map((cols) => `<tr>${cols.map((c) => `<td>${c}</td>`).join('')}</tr>`);
+
     return `<table id="records"><tr>${header.join('')}</tr>${lines.join('')}</table>`;
 }
 
