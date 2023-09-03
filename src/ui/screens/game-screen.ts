@@ -62,6 +62,9 @@ export class GameScreen extends Screen {
 
     onResize(): void {
         this.resize$.next();
+
+        const version = document.querySelector('#version') as HTMLLinkElement;
+        version.style.display = 'none';
     }
 
     onMenu(prompt: string, count: number, items: Item[]): void {
