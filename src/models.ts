@@ -58,6 +58,7 @@ export interface Tile {
     y: number;
     tile: number;
     peaceful: boolean;
+    rogue: boolean;
 }
 
 export interface Item {

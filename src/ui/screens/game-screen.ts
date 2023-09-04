@@ -3,7 +3,6 @@ import { Item } from '../../models';
 import { Console } from '../components/console';
 import { Dialog } from '../components/dialog';
 import { Inventory } from '../components/inventory';
-import { Line } from '../components/line';
 import { Menu } from '../components/menu';
 import { StatusLine } from '../components/status';
 import { TileSet, TileMap } from '../components/tilemap';
@@ -13,7 +12,6 @@ import { Gameover } from '../components/gameover';
 import { Settings, TileSetImage } from '../../helper/settings';
 
 export class GameScreen extends Screen {
-    public tileset?: TileSet;
     public tilemap: TileMap;
     public inventory: Inventory;
     public console: Console;
@@ -29,7 +27,7 @@ export class GameScreen extends Screen {
         this.console = new Console(this.elem);
 
         const sidebar = document.querySelector('#sidebar') as HTMLElement;
-        this.inventory = new Inventory(sidebar);
+        this.inventory = new Inventory(sidebar, this.tilemap);
         this.status = new StatusLine(sidebar);
         this.elem.appendChild(sidebar);
 
@@ -51,10 +49,9 @@ export class GameScreen extends Screen {
 
     onSettingsChange(setting: Settings) {
         const newTileset = this.createTileset(setting.tileSetImage);
-        if (!newTileset.equals(this.tileset)) {
-            this.tileset = newTileset;
-            this.tilemap.setTileSet(this.tileset);
-            this.inventory.setTileSet(this.tileset);
+        const newRogueTileSet = this.createTileset(setting.rogueTileSetImage);
+        if (!newTileset.equals(this.tilemap.tileSet) || !newRogueTileSet.equals(this.tilemap.rogueTileSet)) {
+            this.tilemap.setTileSets(newTileset, newRogueTileSet);
         }
 
         this.tilemap.setMapBorder(setting.enableMapBorder);
@@ -79,7 +76,7 @@ export class GameScreen extends Screen {
     public openMenu(prompt: string, count: number, items: Item[]) {
         if (!this.activeMenu) {
             const dialog = new Dialog();
-            this.activeMenu = new Menu(prompt, this.tileset!);
+            this.activeMenu = new Menu(prompt, this.tilemap);
             dialog.elem.appendChild(this.activeMenu.elem);
             this.elem.appendChild(dialog.elem);
         }

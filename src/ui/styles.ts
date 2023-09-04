@@ -41,12 +41,6 @@ export function rel(elem: HTMLElement) {
     elem.style.position = 'relative';
 }
 
-export function accelStyle(elem: HTMLElement) {
-    topRight(elem);
-    elem.style.background = '#00000099';
-    elem.style.padding = '0 0.1rem';
-}
-
 export function title(elem: HTMLElement) {
     elem.style.fontSize = '1.5rem';
     elem.style.fontWeight = 'bold';

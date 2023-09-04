@@ -3,6 +3,7 @@ const SETTINGS_KEY = 'sakkaku-dev-nethack-settings';
 export interface Settings {
     enableMapBorder: boolean;
     tileSetImage: TileSetImage;
+    rogueTileSetImage: TileSetImage;
     playerName: string;
     options: string;
 }
@@ -17,9 +18,10 @@ export enum TileSetImage {
 export const defaultSetting: Settings = {
     enableMapBorder: true,
     tileSetImage: TileSetImage.Nevanda,
+    rogueTileSetImage: TileSetImage.Chozo,
     playerName: 'Unnamed',
     options: '',
-}
+};
 
 export function loadSettings(): Settings {
     const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
@@ -34,5 +36,5 @@ export function saveSettings(s: Settings) {
 }
 
 export async function loadDefaultOptions() {
-    return fetch('nethackrc.default').then(x => x.text());
+    return fetch('nethackrc.default').then((x) => x.text());
 }

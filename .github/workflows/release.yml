@@ -32,13 +32,13 @@ jobs:
             # - name: Install dependencies
             #   run: sudo apt-get update && sudo apt-get install bison flex -y
 
-            - name: Build Nethack Binary
-              run: |
-                cd NetHack
-                git apply ../lib/fixes36.diff
-                cd ../
-                ./build.sh data
-                ./build.sh
+            # - name: Build Nethack Binary
+            #   run: |
+            #     cd NetHack
+            #     git apply ../lib/fixes36.diff
+            #     cd ../
+            #     ./build.sh data
+            #     ./build.sh
 
             - name: Set build version
               run: ./tools/build-version.sh $GITHUB_REF_NAME

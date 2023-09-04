@@ -1,27 +1,23 @@
-import { BUCState, InventoryItem } from '../../models';
+import { InventoryItem } from '../../models';
 import { bucState, horiz, pointer, vert } from '../styles';
-import { IconButton } from './icon';
-import { TileSet } from './tilemap';
+import { TileMap } from './tilemap';
 
 export class Inventory {
     private elem: HTMLElement;
     private expanded = false;
     private items: InventoryItem[] = [];
 
-    constructor(root: HTMLElement, private tileset?: TileSet) {
+    constructor(root: HTMLElement, private tileMap: TileMap) {
         this.elem = document.createElement('div');
         this.elem.id = 'inventory';
         vert(this.elem);
         root.appendChild(this.elem);
+
+        tileMap.onTileSetChange$.subscribe(() => this.updateItems(this.items));
     }
 
     private clear() {
         Array.from(this.elem.children).forEach((c) => this.elem.removeChild(c));
-    }
-
-    setTileSet(tileset: TileSet) {
-        this.tileset = tileset;
-        this.updateItems(this.items);
     }
 
     toggle(update = false) {
@@ -88,10 +84,10 @@ export class Inventory {
     }
 
     private createItemImage(item: InventoryItem) {
-        if (!this.tileset) return null;
+        if (!this.tileMap.currentTileSet) return null;
 
-        const img = this.tileset.createBackgroundImage(item.tile, item.accelerator);
-        if (item.count > 1) {
+        let img = this.tileMap.currentTileSet.createBackgroundImage(this.tileMap.isRogueLevel() ? -1 : item.tile, item.accelerator);
+        if (!this.tileMap.isRogueLevel() && item.count > 1) {
             const count = document.createElement('div');
             count.classList.add('count');
             count.innerHTML = `${item.count}`;

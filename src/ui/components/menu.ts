@@ -1,5 +1,5 @@
 import { Item } from '../../models';
-import { TileSet } from './tilemap';
+import { TileMap } from './tilemap';
 import { vert } from '../styles';
 import { MenuButton } from './accel-btn';
 
@@ -9,7 +9,7 @@ export class Menu {
 
     private menuContainer?: HTMLElement;
 
-    constructor(private prompt: string, private tileset?: TileSet) {
+    constructor(private prompt: string, private tileMap?: TileMap) {
         this.elem = document.createElement('div');
         vert(this.elem);
 
@@ -37,9 +37,9 @@ export class Menu {
     private createMenu(items: Item[], container: HTMLElement) {
         items.forEach((i) => {
             if (i.identifier !== 0) {
-                container.appendChild(MenuButton(i, true, this.tileset));
+                container.appendChild(MenuButton(i, true, this.tileMap));
             } else if (i.str !== '') {
-                container.appendChild(MenuButton(i, false, this.tileset));
+                container.appendChild(MenuButton(i, false, this.tileMap));
             }
         });
 

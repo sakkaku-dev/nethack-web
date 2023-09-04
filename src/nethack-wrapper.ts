@@ -56,8 +56,8 @@ export class NetHackWrapper implements NetHackJS {
         [Command.RAW_PRINT_BOLD]: async (str) => this.handlePrintLine(ATTR.ATR_BOLD, str),
 
         // Map
-        [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph, isPet) => {
-            this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph), peaceful: isPet === 1 }]);
+        [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph, isPet, isRogue) => {
+            this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph), peaceful: isPet === 1, rogue: isRogue === 1 }]);
             if (bkglyph !== 0 && bkglyph !== 5991) {
                 console.log(
                     `%c Background Tile found! ${bkglyph}, ${this.util.toTile(bkglyph)}`,
@@ -279,11 +279,13 @@ export class NetHackWrapper implements NetHackJS {
             () => [
                 `Enable map border - [${this.settings.enableMapBorder}]`,
                 `Tileset - ${this.settings.tileSetImage}`,
+                `Rogue Level Tileset - ${this.settings.rogueTileSetImage}`,
                 `Nethack Options`,
             ],
             () => [
                 async () => this.updateSettings({ enableMapBorder: !this.settings.enableMapBorder }),
-                () => this.tilesetOption(),
+                () => this.tilesetOption((tileset) => this.updateSettings({tileSetImage: tileset})),
+                () => this.tilesetOption((tileset) => this.updateSettings({rogueTileSetImage: tileset})),
                 () => this.editNethackOption(),
             ]
         );
@@ -304,11 +306,11 @@ export class NetHackWrapper implements NetHackJS {
         } while (!cancel);
     }
 
-    private async tilesetOption() {
+    private async tilesetOption(updateFn: (x: TileSetImage) => void) {
         const images = Object.values(TileSetImage);
         const idx = await this.openCustomMenu('Tileset Image', images);
         if (idx !== -1) {
-            this.updateSettings({ tileSetImage: images[idx] });
+            updateFn(images[idx]);
         }
     }
 

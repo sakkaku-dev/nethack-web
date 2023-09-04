@@ -1,6 +1,6 @@
 import { Item } from '../../models';
 import { bucState, horiz, topRight } from '../styles';
-import { TileSet } from './tilemap';
+import { TileMap } from './tilemap';
 
 const createAccel = (accel: number) => {
     const accelElem = document.createElement('div');
@@ -11,7 +11,7 @@ const createAccel = (accel: number) => {
     return accelElem;
 };
 
-export function MenuButton(item: Item, prepend = true, tileset?: TileSet) {
+export function MenuButton(item: Item, prepend = true, tileMap?: TileMap) {
     const btn = document.createElement('button');
     btn.disabled = item.identifier === 0;
     btn.style.position = 'relative';
@@ -45,8 +45,8 @@ export function MenuButton(item: Item, prepend = true, tileset?: TileSet) {
         btn.appendChild(createAccel(item.accelerator));
     }
 
-    if (item.tile && tileset) {
-        const img = tileset.createBackgroundImage(item.tile);
+    if (item.tile && tileMap?.currentTileSet && !tileMap?.isRogueLevel()) {
+        const img = tileMap.currentTileSet.createBackgroundImage(item.tile);
         btn.appendChild(img);
     }
 

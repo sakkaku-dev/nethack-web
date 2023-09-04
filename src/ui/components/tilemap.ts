@@ -1,5 +1,6 @@
+import { Subject } from 'rxjs';
 import { Vector, Tile, mult, add, sub } from '../../models';
-import { accelStyle, rel } from '../styles';
+import { center, rel, topRight } from '../styles';
 
 export class TileSet {
     image: HTMLImageElement;
@@ -21,16 +22,23 @@ export class TileSet {
         return { x: pos.x * this.tileSize, y: pos.y * this.tileSize };
     }
 
-    createBackgroundImage(tile: number, accelerator: number = 0) {
+    createEmptyTile() {
         const div = document.createElement('div');
         div.style.width = `${this.tileSize}px`;
         div.style.height = `${this.tileSize}px`;
-        div.style.backgroundImage = `url('${this.file}')`;
-        div.style.backgroundRepeat = 'no-repeat';
+        return div;
+    }
 
-        const pos = this.getTilePosition(tile);
-        const realPos = mult(pos, { x: this.tileSize, y: this.tileSize });
-        div.style.backgroundPosition = `-${realPos.x}px -${realPos.y}px`;
+    createBackgroundImage(tile: number, accelerator: number = 0) {
+        const div = this.createEmptyTile();
+        if (tile >= 0) {
+            div.style.backgroundImage = `url('${this.file}')`;
+            div.style.backgroundRepeat = 'no-repeat';
+
+            const pos = this.getTilePosition(tile);
+            const realPos = mult(pos, { x: this.tileSize, y: this.tileSize });
+            div.style.backgroundPosition = `-${realPos.x}px -${realPos.y}px`;
+        }
 
         if (accelerator !== 0) {
             const accel = document.createElement('div');
@@ -39,7 +47,14 @@ export class TileSet {
             div.appendChild(accel);
 
             rel(div);
-            accelStyle(accel);
+            if (tile < 0) {
+                accel.style.background = '#33333399';
+                center(div);
+            } else {
+                accel.style.padding = '0 0.1rem';
+                accel.style.background = '#00000099';
+                topRight(accel);
+            }
         }
 
         return div;
@@ -59,8 +74,11 @@ export class TileMap {
     private cursor: HTMLImageElement;
     private mapSize: Vector = { x: 79, y: 21 }; // Fixed map size? Might change in other version?
     private mapBorder = true;
+    private isRogue = false;
 
-    constructor(root: HTMLElement, private tileSet?: TileSet) {
+    onTileSetChange$ = new Subject<void>();
+
+    constructor(root: HTMLElement, public tileSet?: TileSet, public rogueTileSet?: TileSet) {
         this.canvas = document.createElement('canvas');
         this.canvas.id = 'map';
         this.cursor = document.createElement('img');
@@ -75,14 +93,30 @@ export class TileMap {
         this.clearCanvas();
     }
 
+    get currentTileSet() {
+        return this.isRogue ? this.rogueTileSet : this.tileSet;
+    }
+
     setMapBorder(enableMapBorder: boolean) {
         this.mapBorder = enableMapBorder;
         this.rerender();
     }
 
-    setTileSet(tileset: TileSet) {
+    setTileSets(tileset: TileSet, rogueTileSet: TileSet) {
         this.tileSet = tileset;
+        this.rogueTileSet = rogueTileSet;
+
+        this.onTileSetChange$.next();
         this.rerender();
+    }
+
+    private setRogueLevel(isRogue: boolean) {
+        this.isRogue = isRogue;
+        this.onTileSetChange$.next();
+    }
+
+    isRogueLevel() {
+        return this.isRogue;
     }
 
     onResize() {
@@ -133,6 +167,10 @@ export class TileMap {
     }
 
     addTile(...tiles: Tile[]) {
+        if (tiles.length > 0) {
+            this.setRogueLevel(tiles[0].rogue);
+        }
+
         tiles.forEach((tile) => {
             if (!this.tiles[tile.x]) this.tiles[tile.x] = [];
             this.tiles[tile.x][tile.y] = { tile: tile.tile, peaceful: tile.peaceful };
@@ -142,15 +180,16 @@ export class TileMap {
 
     private drawTile(x: number, y: number) {
         const tile = this.tiles[x][y];
-        if (!this.tileSet || tile == null) return;
+        if (!this.currentTileSet || tile == null) return;
 
-        const source = this.tileSet.getCoordinateForTile(tile.tile);
-        const size = this.tileSet.tileSize;
+        const set = this.currentTileSet;
+        const source = set.getCoordinateForTile(tile.tile);
+        const size = set.tileSize;
         const localPos = this.localToCanvas({ x, y });
 
         this.context.drawImage(
             // Source
-            this.tileSet.image,
+            set.image,
             source.x,
             source.y,
             size,
@@ -190,7 +229,7 @@ export class TileMap {
     }
 
     private get tileSize() {
-        return { x: this.tileSet?.tileSize || 0, y: this.tileSet?.tileSize || 0 };
+        return { x: this.currentTileSet?.tileSize || 0, y: this.currentTileSet?.tileSize || 0 };
     }
 
     private get canvasCenter(): Vector {
