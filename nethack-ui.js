@@ -1,4 +1,4 @@
-const VERSION = 'v0.0.3';
+const VERSION = 'v0.0.4';
 
 function fullScreen(elem) {
     elem.style.position = 'absolute';
@@ -31,11 +31,6 @@ function horiz(elem) {
 function rel(elem) {
     elem.style.position = 'relative';
 }
-function accelStyle(elem) {
-    topRight(elem);
-    elem.style.background = '#00000099';
-    elem.style.padding = '0 0.1rem';
-}
 function title(elem) {
     elem.style.fontSize = '1.5rem';
     elem.style.fontWeight = 'bold';
@@ -62,7 +57,7 @@ const createAccel = (accel) => {
     }
     return accelElem;
 };
-function MenuButton(item, prepend = true, tileset) {
+function MenuButton(item, prepend = true, tileMap) {
     const btn = document.createElement('button');
     btn.disabled = item.identifier === 0;
     btn.style.position = 'relative';
@@ -89,8 +84,8 @@ function MenuButton(item, prepend = true, tileset) {
     if (prepend) {
         btn.appendChild(createAccel(item.accelerator));
     }
-    if (item.tile && tileset) {
-        const img = tileset.createBackgroundImage(item.tile);
+    if (item.tile && tileMap?.currentTileSet && !tileMap?.isRogueLevel()) {
+        const img = tileMap.currentTileSet.createBackgroundImage(item.tile);
         btn.appendChild(img);
     }
     btn.appendChild(label);
@@ -101,9 +96,9 @@ function MenuButton(item, prepend = true, tileset) {
 }
 
 class Menu {
-    constructor(prompt, tileset) {
+    constructor(prompt, tileMap) {
         this.prompt = prompt;
-        this.tileset = tileset;
+        this.tileMap = tileMap;
         this.elem = document.createElement('div');
         vert(this.elem);
         this.label = this.createLabel();
@@ -126,10 +121,10 @@ class Menu {
     createMenu(items, container) {
         items.forEach((i) => {
             if (i.identifier !== 0) {
-                container.appendChild(MenuButton(i, true, this.tileset));
+                container.appendChild(MenuButton(i, true, this.tileMap));
             }
             else if (i.str !== '') {
-                container.appendChild(MenuButton(i, false, this.tileset));
+                container.appendChild(MenuButton(i, false, this.tileMap));
             }
         });
         return container;
@@ -1401,21 +1396,18 @@ class Console {
 }
 
 class Inventory {
-    constructor(root, tileset) {
-        this.tileset = tileset;
+    constructor(root, tileMap) {
+        this.tileMap = tileMap;
         this.expanded = false;
         this.items = [];
         this.elem = document.createElement('div');
         this.elem.id = 'inventory';
         vert(this.elem);
         root.appendChild(this.elem);
+        tileMap.onTileSetChange$.subscribe(() => this.updateItems(this.items));
     }
     clear() {
         Array.from(this.elem.children).forEach((c) => this.elem.removeChild(c));
-    }
-    setTileSet(tileset) {
-        this.tileset = tileset;
-        this.updateItems(this.items);
     }
     toggle(update = false) {
         this.expanded = !this.expanded;
@@ -1472,10 +1464,10 @@ class Inventory {
         });
     }
     createItemImage(item) {
-        if (!this.tileset)
+        if (!this.tileMap.currentTileSet)
             return null;
-        const img = this.tileset.createBackgroundImage(item.tile, item.accelerator);
-        if (item.count > 1) {
+        let img = this.tileMap.currentTileSet.createBackgroundImage(this.tileMap.isRogueLevel() ? -1 : item.tile, item.accelerator);
+        if (!this.tileMap.isRogueLevel() && item.count > 1) {
             const count = document.createElement('div');
             count.classList.add('count');
             count.innerHTML = `${item.count}`;
@@ -1880,22 +1872,36 @@ class TileSet {
         const pos = this.getTilePosition(tile);
         return { x: pos.x * this.tileSize, y: pos.y * this.tileSize };
     }
-    createBackgroundImage(tile, accelerator = 0) {
+    createEmptyTile() {
         const div = document.createElement('div');
         div.style.width = `${this.tileSize}px`;
         div.style.height = `${this.tileSize}px`;
-        div.style.backgroundImage = `url('${this.file}')`;
-        div.style.backgroundRepeat = 'no-repeat';
-        const pos = this.getTilePosition(tile);
-        const realPos = mult(pos, { x: this.tileSize, y: this.tileSize });
-        div.style.backgroundPosition = `-${realPos.x}px -${realPos.y}px`;
+        return div;
+    }
+    createBackgroundImage(tile, accelerator = 0) {
+        const div = this.createEmptyTile();
+        if (tile >= 0) {
+            div.style.backgroundImage = `url('${this.file}')`;
+            div.style.backgroundRepeat = 'no-repeat';
+            const pos = this.getTilePosition(tile);
+            const realPos = mult(pos, { x: this.tileSize, y: this.tileSize });
+            div.style.backgroundPosition = `-${realPos.x}px -${realPos.y}px`;
+        }
         if (accelerator !== 0) {
             const accel = document.createElement('div');
             accel.innerHTML = String.fromCharCode(accelerator);
             accel.classList.add('accel');
             div.appendChild(accel);
             rel(div);
-            accelStyle(accel);
+            if (tile < 0) {
+                accel.style.background = '#33333399';
+                center(div);
+            }
+            else {
+                accel.style.padding = '0 0.1rem';
+                accel.style.background = '#00000099';
+                topRight(accel);
+            }
         }
         return div;
     }
@@ -1906,12 +1912,15 @@ class TileSet {
     }
 }
 class TileMap {
-    constructor(root, tileSet) {
+    constructor(root, tileSet, rogueTileSet) {
         this.tileSet = tileSet;
+        this.rogueTileSet = rogueTileSet;
         this.center = { x: 0, y: 0 };
         this.tiles = [];
         this.mapSize = { x: 79, y: 21 }; // Fixed map size? Might change in other version?
         this.mapBorder = true;
+        this.isRogue = false;
+        this.onTileSetChange$ = new Subject();
         this.canvas = document.createElement('canvas');
         this.canvas.id = 'map';
         this.cursor = document.createElement('img');
@@ -1923,13 +1932,25 @@ class TileMap {
         this.updateCanvasSize();
         this.clearCanvas();
     }
+    get currentTileSet() {
+        return this.isRogue ? this.rogueTileSet : this.tileSet;
+    }
     setMapBorder(enableMapBorder) {
         this.mapBorder = enableMapBorder;
         this.rerender();
     }
-    setTileSet(tileset) {
+    setTileSets(tileset, rogueTileSet) {
         this.tileSet = tileset;
+        this.rogueTileSet = rogueTileSet;
+        this.onTileSetChange$.next();
         this.rerender();
+    }
+    setRogueLevel(isRogue) {
+        this.isRogue = isRogue;
+        this.onTileSetChange$.next();
+    }
+    isRogueLevel() {
+        return this.isRogue;
     }
     onResize() {
         this.updateCanvasSize();
@@ -1970,6 +1991,9 @@ class TileMap {
         this.cursor.style.display = 'block';
     }
     addTile(...tiles) {
+        if (tiles.length > 0) {
+            this.setRogueLevel(tiles[0].rogue);
+        }
         tiles.forEach((tile) => {
             if (!this.tiles[tile.x])
                 this.tiles[tile.x] = [];
@@ -1979,14 +2003,15 @@ class TileMap {
     }
     drawTile(x, y) {
         const tile = this.tiles[x][y];
-        if (!this.tileSet || tile == null)
+        if (!this.currentTileSet || tile == null)
             return;
-        const source = this.tileSet.getCoordinateForTile(tile.tile);
-        const size = this.tileSet.tileSize;
+        const set = this.currentTileSet;
+        const source = set.getCoordinateForTile(tile.tile);
+        const size = set.tileSize;
         const localPos = this.localToCanvas({ x, y });
         this.context.drawImage(
         // Source
-        this.tileSet.image, source.x, source.y, size, size, 
+        set.image, source.x, source.y, size, size, 
         // Target
         localPos.x, localPos.y, size, size);
         if (tile.peaceful) {
@@ -2008,7 +2033,7 @@ class TileMap {
         return mult(vec, this.tileSize);
     }
     get tileSize() {
-        return { x: this.tileSet?.tileSize || 0, y: this.tileSet?.tileSize || 0 };
+        return { x: this.currentTileSet?.tileSize || 0, y: this.currentTileSet?.tileSize || 0 };
     }
     get canvasCenter() {
         return { x: this.canvas.width / 2, y: this.canvas.height / 2 };
@@ -2058,6 +2083,7 @@ var TileSetImage;
 ({
     enableMapBorder: true,
     tileSetImage: TileSetImage.Nevanda,
+    rogueTileSetImage: TileSetImage.Chozo,
     playerName: 'Unnamed',
     options: '',
 });
@@ -2069,7 +2095,7 @@ class GameScreen extends Screen {
         this.tilemap = new TileMap(this.elem);
         this.console = new Console(this.elem);
         const sidebar = document.querySelector('#sidebar');
-        this.inventory = new Inventory(sidebar);
+        this.inventory = new Inventory(sidebar, this.tilemap);
         this.status = new StatusLine(sidebar);
         this.elem.appendChild(sidebar);
         this.resize$.pipe(debounceTime(200)).subscribe(() => this.tilemap?.onResize());
@@ -2088,15 +2114,16 @@ class GameScreen extends Screen {
     }
     onSettingsChange(setting) {
         const newTileset = this.createTileset(setting.tileSetImage);
-        if (!newTileset.equals(this.tileset)) {
-            this.tileset = newTileset;
-            this.tilemap.setTileSet(this.tileset);
-            this.inventory.setTileSet(this.tileset);
+        const newRogueTileSet = this.createTileset(setting.rogueTileSetImage);
+        if (!newTileset.equals(this.tilemap.tileSet) || !newRogueTileSet.equals(this.tilemap.rogueTileSet)) {
+            this.tilemap.setTileSets(newTileset, newRogueTileSet);
         }
         this.tilemap.setMapBorder(setting.enableMapBorder);
     }
     onResize() {
         this.resize$.next();
+        const version = document.querySelector('#version');
+        version.style.display = 'none';
     }
     onMenu(prompt, count, items) {
         this.openMenu(prompt, count, items);
@@ -2108,7 +2135,7 @@ class GameScreen extends Screen {
     openMenu(prompt, count, items) {
         if (!this.activeMenu) {
             const dialog = new Dialog();
-            this.activeMenu = new Menu(prompt, this.tileset);
+            this.activeMenu = new Menu(prompt, this.tilemap);
             dialog.elem.appendChild(this.activeMenu.elem);
             this.elem.appendChild(dialog.elem);
         }
