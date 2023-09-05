@@ -4,7 +4,7 @@ Nethack for the web
 
 ## Build
 
-See [release.yml](./.github/workflows/release.yml) workflow for exact steps.
+See [build.yml](./.github/workflows/build.yml) workflow for exact steps.
 
 Current build is from `NetHack-3.6.7_Released (ed600d9f0)`
 
@@ -23,9 +23,12 @@ source ./emsdk_env.sh
 
 Summary of the changes in `lib/fixes36.diff` to make Nethack 3.6 (most will not be needed anymore for 3.7 release)
 
--   Changes all util programs to `.js` and use node to run it
--   Mount files to util programs with `mount_nodefs.js` since it's required to run them (see `UTIL_CFLAGS`)
--   Added new win type `WEB_GRAPHICS` for `win/web` + some config changes?
+-   Changes all util programs to `.js` and use node to run it (only 3.6)
+-   Mount files to util programs with `mount_nodefs.js` since it's required to run them (see `UTIL_CFLAGS`) (only 3.6)
+-   Added new win type `WEB_GRAPHICS` for `win/web` + some config changes? (mostly from NetHackJS + BrowserHack)
+	- Added player selection
+	- Added rogue level flag
+	- Separate JS callbacks for some calls to improve performance (Asyncify make calls too slow)
 -   Enable wizard mode in `unixmain.c#authorize_wizard_mode`
 
 ## Generate

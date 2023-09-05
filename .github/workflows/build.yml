@@ -1,0 +1,44 @@
+name: Build
+
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            - master
+        paths:
+            - lib/fixes36.diff
+
+permissions:
+    contents: write
+
+jobs:
+    build-nethack:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  submodules: true
+
+            - name: Setup emsdk
+              uses: mymindstorm/setup-emsdk@v11
+              with:
+                  version: 2.0.34
+                  actions-cache-folder: 'emsdk-cache'
+
+            # Already installed?
+            # - name: Install dependencies
+            #   run: sudo apt-get update && sudo apt-get install bison flex -y
+
+            - name: Apply Nethack Changes
+              run: |
+                  pushd NetHack
+                  git apply ../lib/fixes36.diff
+                  popd
+
+            - name: Build Nethack Data
+              run: ./build.sh data
+
+            - name: Build Nethack Binary
+              run: ./build.sh
+
+            - uses: stefanzweifel/git-auto-commit-action@v4

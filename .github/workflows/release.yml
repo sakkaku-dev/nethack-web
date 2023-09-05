@@ -13,32 +13,12 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
-              with:
-                submodules: true
             - uses: actions/setup-node@v3
               with:
                   node-version: '16.x'
 
             - run: npm i
             - run: npm test
-
-            - name: Setup emsdk
-              uses: mymindstorm/setup-emsdk@v11
-              with:
-                version: 2.0.34
-                actions-cache-folder: 'emsdk-cache'
-
-            # Already installed?
-            # - name: Install dependencies
-            #   run: sudo apt-get update && sudo apt-get install bison flex -y
-
-            # - name: Build Nethack Binary
-            #   run: |
-            #     cd NetHack
-            #     git apply ../lib/fixes36.diff
-            #     cd ../
-            #     ./build.sh data
-            #     ./build.sh
 
             - name: Set build version
               run: ./tools/build-version.sh $GITHUB_REF_NAME
@@ -58,6 +38,4 @@ jobs:
               with:
                 body_path: CHANGELOG.md
                 prerelease: false
-                files: |
-                  **/lib/nethack.*
 
