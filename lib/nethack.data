@@ -1,98 +1,140 @@
-                    NETHACK GENERAL PUBLIC LICENSE
-                    (Copyright 1989 M. Stephenson)
+# NetHack 3.6 sysconf $NHDT-Date: 1575245127 2019/12/02 00:05:27 $ $NHDT-Branch: NetHack-3.6 $:$NHDT-Revision: 1.32 $
+# Copyright (c) 2015 by Kenneth Lorber, Kensington, Maryland
+# NetHack may be freely redistributed.  See license for details.
+#
+# Sample sysconf file.
+# The sysconf file is only used if NetHack is compiled with SYSCF defined.
+# It can be used to augment or override certain settings compiled into the
+# program.
+#
+# This file can also be used to set local system defaults for run-time
+# options, using the same syntax as an individual user's ./nethackrc file.
 
-               (Based on the BISON general public license,
-                   copyright 1988 Richard M. Stallman)
+# Which users can use debug mode (aka wizard mode; accessed via '-D' command
+# line flag or OPTIONS=playmode:debug in the runtime options config file).
+# A value of * allows anyone to enter debugging mode.
+WIZARDS=root games
 
- Everyone is permitted to copy and distribute verbatim copies of this
- license, but changing it is not allowed.  You can also use this wording to
- make the terms for other programs.
+# Which users can use explore mode (aka discover mode; accessed via '-X'
+# command line flag or OPTIONS=playmode:explore in runtime options file or
+# via '#exploremode' command during normal play).  Same syntax as WIZARDS.
+EXPLORERS=*
 
-  The license agreements of most software companies keep you at the mercy of
-those companies.  By contrast, our general public license is intended to give
-everyone the right to share NetHack.  To make sure that you get the rights we
-want you to have, we need to make restrictions that forbid anyone to deny you
-these rights or to ask you to surrender the rights.  Hence this license
-agreement.
+# Users allowed to use the '!' (shell escape) and '^Z' (suspend process)
+# commands to temporarily leave the game and enter a shell process.
+# (To resume play, use the shell command 'exit' (for most shells) to
+# return from '!' or the shell command 'fg' to return from '^Z'.
+# For the typical multi-user system where players have access to a shell
+# prompt when logged in and run the game from their own username, a value
+# of 'SHELLERS=*' is appropriate.  However, some inexperienced players
+# occasionally get stuck outside the game by accidentally typing '!' or
+# '^Z' during play and not knowing how to go back.)
+# Uses the same syntax as the WIZARDS and EXPLORERS options above.
+#SHELLERS=
 
-  Specifically, we want to make sure that you have the right to give away
-copies of NetHack, that you receive source code or else can get it if you
-want it, that you can change NetHack or use pieces of it in new free
-programs, and that you know you can do these things.
+# If the user name is found in this list, prompt for username instead.
+# Uses the same syntax as the WIZARDS option above.
+# A public server should probably disable this.
+GENERICUSERS=play player game games nethack nethacker
 
-  To make sure that everyone has such rights, we have to forbid you to
-deprive anyone else of these rights.  For example, if you distribute copies
-of NetHack, you must give the recipients all the rights that you have.  You
-must make sure that they, too, receive or can get the source code.  And you
-must tell them their rights.
+# Use the player name for matching WIZARDS, EXPLORERS and SHELLERS,
+# instead of the user's login name.
+#CHECK_PLNAME=1
 
-  Also, for our own protection, we must make certain that everyone finds out
-that there is no warranty for NetHack.  If NetHack is modified by someone
-else and passed on, we want its recipients to know that what they have is
-not what we distributed.
+# Limit the number of simultaneous games (see also nethack.sh).
+# Valid values are 0-25.
+# Commenting this out or setting the value to 0 constructs lock files
+# with UID and playername, so each user may have one game at a time,
+# but number of different players is not limited.
+# Setting this to any other value constructs the lock files with
+# letter and "lock" (eg. alock, block, ...)
+MAXPLAYERS=10
 
-  Therefore we (Mike Stephenson and other holders of NetHack copyrights) make
-the following terms which say what you must do to be allowed to distribute or
-change NetHack.
+# If not null, added to string "To get local support, " in the support
+# information help.
+#SUPPORT=call Izchak at extension 42.
 
+# If not null, displayed at the end of a panic-save sequence.
+#RECOVER=Run the recover program.
 
-                        COPYING POLICIES
+# Uncomment the next line to disable the SEDUCE option, causing succubi and
+# incubi to use nymphs' charm behavior rather than their own seduce behavior.
+#SEDUCE=0
 
-  1. You may copy and distribute verbatim copies of NetHack source code as
-you receive it, in any medium, provided that you keep intact the notices on
-all files that refer to copyrights, to this License Agreement, and to the
-absence of any warranty; and give any other recipients of the NetHack
-program a copy of this License Agreement along with the program.
+# Uncomment the next line to enable some accessibility features such
+# as S_hero_override and S_pet_override symbols for screen readers
+# in the user config file.
+#ACCESSIBILITY=1
 
-  2. You may modify your copy or copies of NetHack or any portion of it, and
-copy and distribute such modifications under the terms of Paragraph 1 above
-(including distributing this License Agreement), provided that you also do the
-following:
+# Uncomment to disable savefile UID checking.
+#CHECK_SAVE_UID=0
 
-    a) cause the modified files to carry prominent notices stating that you
-    changed the files and the date of any change; and
+# Record (high score) file options.
+# CAUTION: changing these after people have started playing games can
+#  lead to lost high scores!
+# Maximum entries for one person.
+#PERSMAX=10
+# Maximum entries in the record file.
+#ENTRYMAX=100
+# Minimum points to get an entry.
+#POINTSMIN=1
+# Determine identity of "person" in the score file with name (0) or
+# numeric (1) user id.
+#PERS_IS_UID=1
 
-    b) cause the whole of any work that you distribute or publish, that in
-    whole or in part contains or is a derivative of NetHack or any part
-    thereof, to be licensed at no charge to all third parties on terms
-    identical to those contained in this License Agreement (except that you
-    may choose to grant more extensive warranty protection to some or all
-    third parties, at your option)
+# Maximum number of score file entries to use for random statue names
+#MAX_STATUENAME_RANK=10
 
-    c) You may charge a distribution fee for the physical act of
-    transferring a copy, and you may at your option offer warranty protection
-    in exchange for a fee.
+# Show debugging information originating from these source files.
+# Use '*' for all, or list source files separated by spaces.
+# Only available if game has been compiled with DEBUG, and can be
+# overridden via DEBUGFILES environment variable.
+#DEBUGFILES=*
 
-  3. You may copy and distribute NetHack (or a portion or derivative of it,
-under Paragraph 2) in object code or executable form under the terms of
-Paragraphs 1 and 2 above provided that you also do one of the following:
+# Save end of game dump log to this file.
+# Only available if NetHack was compiled with DUMPLOG
+# Allows following placeholders:
+#   %% literal '%'
+#   %v version (eg. "3.6.6-0")
+#   %u game UID
+#   %t game start time, UNIX timestamp format
+#   %T current time, UNIX timestamp format
+#   %d game start time, YYYYMMDDhhmmss format
+#   %D current time, YYYYMMDDhhmmss format
+#   %n player name
+#   %N first character of player name
+#DUMPLOGFILE=/tmp/nethack.%n.%d.log
 
-    a) accompany it with the complete machine-readable source code, which
-    must be distributed under the terms of Paragraphs 1 and 2 above; or,
+# Number of bones file pools.
+# The pool you belong to is determined at game start. You will
+# load and save bones only from that pool. Generally useful
+# for public servers only.
+# Changing this might make existing bones inaccessible.
+# Disabled by setting to 0, or commenting out.
+#BONES_POOLS=10
 
-    b) accompany it with full information as to how to obtain the complete
-    machine-readable source code from an appropriate archive site.  (This
-    alternative is allowed only for noncommercial distribution.)
+# Try to get more info in case of a program bug or crash.  Only used
+# if the program is built with the PANICTRACE compile-time option enabled.
+# By default PANICTRACE is enabled if (NH_DEVEL_STATUS != NH_STATUS_RELEASED),
+# otherwise disabled.
+# Using GDB can get more information and works on more systems but requires
+# 'gdb' be available; using LIBC only works if NetHack is linked with a
+# libc that supports the backtrace(3) API.  Both require certain compilation
+# options.  See src/end.c and sys/unix/hints/* for more information.
+GDBPATH=/usr/bin/gdb
+GREPPATH=/bin/grep
+# Values are priorities: 0 - do not use this method, 1 - low priority,
+# 2 - high priority.  Non-zero priority methods are tried in order.
+PANICTRACE_GDB=1
+PANICTRACE_LIBC=2
 
-For these purposes, complete source code means either the full source
-distribution as originally released over Usenet or updated copies of the
-files in this distribution used to create the object code or executable.
+# Ordinary run-time options can be set here to override the builtin-in
+# default values.  Unlike the SYSCF values above, individual users can
+# still choose their own option settings via NETHACKOPTIONS in their
+# environment or via ~/.nethackrc run-time configuration file.
+#OPTIONS=!autopickup,fruit:tomato,symset:DECgraphics
 
-  4. You may not copy, sublicense, distribute or transfer NetHack except as
-expressly provided under this License Agreement.  Any attempt otherwise to
-copy, sublicense, distribute or transfer NetHack is void and your rights to
-use the program under this License agreement shall be automatically
-terminated.  However, parties who have received computer software programs
-from you with this License Agreement will not have their licenses terminated
-so long as such parties remain in full compliance.
-
-
-Stated plainly:  You are permitted to modify NetHack, or otherwise use parts
-of NetHack, provided that you comply with the conditions specified above;
-in particular, your modified NetHack or program containing parts of NetHack
-must remain freely available as provided in this License Agreement.  In
-other words, go ahead and share NetHack, but don't try to stop anyone else
-from sharing it farther.
+#eof
   1      138     1636     3056  1259329
 nDirectory        0
 nhelp     3056
@@ -20771,6 +20813,101 @@ Xmq(gdaft!Qliy,Jqdee"fq0rjaidikjo0xmqz0bp}{{okbm0vkp`tv$`qwkjo0epe~!`hge,
 Xmq(cvchdvg`(dig$nsvqfu ][WO^][WO^][WO^][WO^][WO^][WO^][W
 Xmq(g`lp(dn"vmw`kj(cupafwuj;(0Uuk(|dtadc!clmqe"m{0`"c}urvlgerg%
 Xmq(ghnh(uoak}~ugv(q!ved|-"`ibj.$i~e"czedqkeu!avmquwvm>/,[W
+                    NETHACK GENERAL PUBLIC LICENSE
+                    (Copyright 1989 M. Stephenson)
+
+               (Based on the BISON general public license,
+                   copyright 1988 Richard M. Stallman)
+
+ Everyone is permitted to copy and distribute verbatim copies of this
+ license, but changing it is not allowed.  You can also use this wording to
+ make the terms for other programs.
+
+  The license agreements of most software companies keep you at the mercy of
+those companies.  By contrast, our general public license is intended to give
+everyone the right to share NetHack.  To make sure that you get the rights we
+want you to have, we need to make restrictions that forbid anyone to deny you
+these rights or to ask you to surrender the rights.  Hence this license
+agreement.
+
+  Specifically, we want to make sure that you have the right to give away
+copies of NetHack, that you receive source code or else can get it if you
+want it, that you can change NetHack or use pieces of it in new free
+programs, and that you know you can do these things.
+
+  To make sure that everyone has such rights, we have to forbid you to
+deprive anyone else of these rights.  For example, if you distribute copies
+of NetHack, you must give the recipients all the rights that you have.  You
+must make sure that they, too, receive or can get the source code.  And you
+must tell them their rights.
+
+  Also, for our own protection, we must make certain that everyone finds out
+that there is no warranty for NetHack.  If NetHack is modified by someone
+else and passed on, we want its recipients to know that what they have is
+not what we distributed.
+
+  Therefore we (Mike Stephenson and other holders of NetHack copyrights) make
+the following terms which say what you must do to be allowed to distribute or
+change NetHack.
+
+
+                        COPYING POLICIES
+
+  1. You may copy and distribute verbatim copies of NetHack source code as
+you receive it, in any medium, provided that you keep intact the notices on
+all files that refer to copyrights, to this License Agreement, and to the
+absence of any warranty; and give any other recipients of the NetHack
+program a copy of this License Agreement along with the program.
+
+  2. You may modify your copy or copies of NetHack or any portion of it, and
+copy and distribute such modifications under the terms of Paragraph 1 above
+(including distributing this License Agreement), provided that you also do the
+following:
+
+    a) cause the modified files to carry prominent notices stating that you
+    changed the files and the date of any change; and
+
+    b) cause the whole of any work that you distribute or publish, that in
+    whole or in part contains or is a derivative of NetHack or any part
+    thereof, to be licensed at no charge to all third parties on terms
+    identical to those contained in this License Agreement (except that you
+    may choose to grant more extensive warranty protection to some or all
+    third parties, at your option)
+
+    c) You may charge a distribution fee for the physical act of
+    transferring a copy, and you may at your option offer warranty protection
+    in exchange for a fee.
+
+  3. You may copy and distribute NetHack (or a portion or derivative of it,
+under Paragraph 2) in object code or executable form under the terms of
+Paragraphs 1 and 2 above provided that you also do one of the following:
+
+    a) accompany it with the complete machine-readable source code, which
+    must be distributed under the terms of Paragraphs 1 and 2 above; or,
+
+    b) accompany it with full information as to how to obtain the complete
+    machine-readable source code from an appropriate archive site.  (This
+    alternative is allowed only for noncommercial distribution.)
+
+For these purposes, complete source code means either the full source
+distribution as originally released over Usenet or updated copies of the
+files in this distribution used to create the object code or executable.
+
+  4. You may not copy, sublicense, distribute or transfer NetHack except as
+expressly provided under this License Agreement.  Any attempt otherwise to
+copy, sublicense, distribute or transfer NetHack is void and your rights to
+use the program under this License agreement shall be automatically
+terminated.  However, parties who have received computer software programs
+from you with this License Agreement will not have their licenses terminated
+so long as such parties remain in full compliance.
+
+
+Stated plainly:  You are permitted to modify NetHack, or otherwise use parts
+of NetHack, provided that you comply with the conditions specified above;
+in particular, your modified NetHack or program containing parts of NetHack
+must remain freely available as provided in this License Agreement.  In
+other words, go ahead and share NetHack, but don't try to stop anyone else
+from sharing it farther.
 # NetHack 3.6  symbols       $NHDT-Date: 1572892906 2019/11/04 18:41:46 $  $NHDT-Branch: NetHack-3.6 $:$NHDT-Revision: 1.21 $
 # Copyright (c) 2006 by Michael Allison
 # NetHack may be freely redistributed.  See license for details.
@@ -21407,140 +21544,3 @@ start: MACgraphics
 finish
 
 # symbols EOF
-# NetHack 3.6 sysconf $NHDT-Date: 1575245127 2019/12/02 00:05:27 $ $NHDT-Branch: NetHack-3.6 $:$NHDT-Revision: 1.32 $
-# Copyright (c) 2015 by Kenneth Lorber, Kensington, Maryland
-# NetHack may be freely redistributed.  See license for details.
-#
-# Sample sysconf file.
-# The sysconf file is only used if NetHack is compiled with SYSCF defined.
-# It can be used to augment or override certain settings compiled into the
-# program.
-#
-# This file can also be used to set local system defaults for run-time
-# options, using the same syntax as an individual user's ./nethackrc file.
-
-# Which users can use debug mode (aka wizard mode; accessed via '-D' command
-# line flag or OPTIONS=playmode:debug in the runtime options config file).
-# A value of * allows anyone to enter debugging mode.
-WIZARDS=root games
-
-# Which users can use explore mode (aka discover mode; accessed via '-X'
-# command line flag or OPTIONS=playmode:explore in runtime options file or
-# via '#exploremode' command during normal play).  Same syntax as WIZARDS.
-EXPLORERS=*
-
-# Users allowed to use the '!' (shell escape) and '^Z' (suspend process)
-# commands to temporarily leave the game and enter a shell process.
-# (To resume play, use the shell command 'exit' (for most shells) to
-# return from '!' or the shell command 'fg' to return from '^Z'.
-# For the typical multi-user system where players have access to a shell
-# prompt when logged in and run the game from their own username, a value
-# of 'SHELLERS=*' is appropriate.  However, some inexperienced players
-# occasionally get stuck outside the game by accidentally typing '!' or
-# '^Z' during play and not knowing how to go back.)
-# Uses the same syntax as the WIZARDS and EXPLORERS options above.
-#SHELLERS=
-
-# If the user name is found in this list, prompt for username instead.
-# Uses the same syntax as the WIZARDS option above.
-# A public server should probably disable this.
-GENERICUSERS=play player game games nethack nethacker
-
-# Use the player name for matching WIZARDS, EXPLORERS and SHELLERS,
-# instead of the user's login name.
-#CHECK_PLNAME=1
-
-# Limit the number of simultaneous games (see also nethack.sh).
-# Valid values are 0-25.
-# Commenting this out or setting the value to 0 constructs lock files
-# with UID and playername, so each user may have one game at a time,
-# but number of different players is not limited.
-# Setting this to any other value constructs the lock files with
-# letter and "lock" (eg. alock, block, ...)
-MAXPLAYERS=10
-
-# If not null, added to string "To get local support, " in the support
-# information help.
-#SUPPORT=call Izchak at extension 42.
-
-# If not null, displayed at the end of a panic-save sequence.
-#RECOVER=Run the recover program.
-
-# Uncomment the next line to disable the SEDUCE option, causing succubi and
-# incubi to use nymphs' charm behavior rather than their own seduce behavior.
-#SEDUCE=0
-
-# Uncomment the next line to enable some accessibility features such
-# as S_hero_override and S_pet_override symbols for screen readers
-# in the user config file.
-#ACCESSIBILITY=1
-
-# Uncomment to disable savefile UID checking.
-#CHECK_SAVE_UID=0
-
-# Record (high score) file options.
-# CAUTION: changing these after people have started playing games can
-#  lead to lost high scores!
-# Maximum entries for one person.
-#PERSMAX=10
-# Maximum entries in the record file.
-#ENTRYMAX=100
-# Minimum points to get an entry.
-#POINTSMIN=1
-# Determine identity of "person" in the score file with name (0) or
-# numeric (1) user id.
-#PERS_IS_UID=1
-
-# Maximum number of score file entries to use for random statue names
-#MAX_STATUENAME_RANK=10
-
-# Show debugging information originating from these source files.
-# Use '*' for all, or list source files separated by spaces.
-# Only available if game has been compiled with DEBUG, and can be
-# overridden via DEBUGFILES environment variable.
-#DEBUGFILES=*
-
-# Save end of game dump log to this file.
-# Only available if NetHack was compiled with DUMPLOG
-# Allows following placeholders:
-#   %% literal '%'
-#   %v version (eg. "3.6.6-0")
-#   %u game UID
-#   %t game start time, UNIX timestamp format
-#   %T current time, UNIX timestamp format
-#   %d game start time, YYYYMMDDhhmmss format
-#   %D current time, YYYYMMDDhhmmss format
-#   %n player name
-#   %N first character of player name
-#DUMPLOGFILE=/tmp/nethack.%n.%d.log
-
-# Number of bones file pools.
-# The pool you belong to is determined at game start. You will
-# load and save bones only from that pool. Generally useful
-# for public servers only.
-# Changing this might make existing bones inaccessible.
-# Disabled by setting to 0, or commenting out.
-#BONES_POOLS=10
-
-# Try to get more info in case of a program bug or crash.  Only used
-# if the program is built with the PANICTRACE compile-time option enabled.
-# By default PANICTRACE is enabled if (NH_DEVEL_STATUS != NH_STATUS_RELEASED),
-# otherwise disabled.
-# Using GDB can get more information and works on more systems but requires
-# 'gdb' be available; using LIBC only works if NetHack is linked with a
-# libc that supports the backtrace(3) API.  Both require certain compilation
-# options.  See src/end.c and sys/unix/hints/* for more information.
-GDBPATH=/usr/bin/gdb
-GREPPATH=/bin/grep
-# Values are priorities: 0 - do not use this method, 1 - low priority,
-# 2 - high priority.  Non-zero priority methods are tried in order.
-PANICTRACE_GDB=1
-PANICTRACE_LIBC=2
-
-# Ordinary run-time options can be set here to override the builtin-in
-# default values.  Unlike the SYSCF values above, individual users can
-# still choose their own option settings via NETHACKOPTIONS in their
-# environment or via ~/.nethackrc run-time configuration file.
-#OPTIONS=!autopickup,fruit:tomato,symset:DECgraphics
-
-#eof
