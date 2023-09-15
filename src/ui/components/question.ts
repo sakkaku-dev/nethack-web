@@ -1,16 +1,27 @@
-import { Dialog } from './dialog';
 import { horiz } from '../styles';
 
-export class Question extends Dialog {
+export class Question {
+
+    public elem: HTMLElement;
+    private choices: HTMLElement;
+    private text: HTMLElement;
+
     constructor(question: string, choices: string[], defaultChoice: string) {
-        super(question);
+        this.elem = document.createElement('div');
         horiz(this.elem);
 
+        this.choices = document.createElement('div');
+        horiz(this.choices);
+        this.choices.style.gap = '0';
+
+        this.text = document.createElement('div');
+        this.elem.appendChild(this.text);
+        this.elem.appendChild(this.choices);
+
+        this.text.innerHTML = question;
+
         if (choices.length > 0) {
-            const choicesContainer = document.createElement('div');
-            horiz(choicesContainer);
-            choicesContainer.style.gap = '0';
-            choicesContainer.innerHTML = '[';
+            this.choices.innerHTML = '[';
 
             choices.forEach((c) => {
                 const node = document.createElement('span');
@@ -21,11 +32,15 @@ export class Question extends Dialog {
                     node.style.color = 'red';
                 }
 
-                choicesContainer.appendChild(node);
+                this.choices.appendChild(node);
             });
 
-            choicesContainer.innerHTML += ']';
-            this.elem.appendChild(choicesContainer);
+            this.choices.innerHTML += ']';
         }
     }
+
+    answered(choice: string) {
+        this.elem.appendChild(document.createTextNode(choice))
+    }
+
 }

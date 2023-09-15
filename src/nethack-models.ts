@@ -11,6 +11,7 @@ export enum Command {
     GET_LINE = 'shim_getlin',
     GET_EXT_CMD = 'shim_get_ext_cmd_helper',
 
+    PUT_HISTORY = 'shim_putmsghistory',
     GET_HISTORY = 'shim_getmsghistory',
     MESSAGE_MENU = 'shim_message_menu',
     DELAY_OUTPUT = 'shim_delay_output',

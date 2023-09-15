@@ -47,11 +47,12 @@ export class NetHackWrapper implements NetHackJS {
         [Command.CREATE_WINDOW]: this.createWindow.bind(this),
         [Command.DESTROY_WINDOW]: async (winid: number) => this.ui.closeDialog(winid),
         [Command.CLEAR_WINDOW]: this.clearWindow.bind(this),
-        // [Command.EXIT_WINDOWS]: this.exitWindows.bind(this),
+        [Command.EXIT_WINDOWS]: this.exitWindows.bind(this),
         [Command.GAME_END]: this.gameEnd.bind(this),
 
         // Text / Dialog
         [Command.PUTSTR]: this.handlePutStr.bind(this),
+        [Command.PUT_HISTORY]: this.handlePutHistory.bind(this),
         [Command.RAW_PRINT]: async (str) => this.handlePrintLine(ATTR.ATR_NONE, str),
         [Command.RAW_PRINT_BOLD]: async (str) => this.handlePrintLine(ATTR.ATR_BOLD, str),
 
@@ -284,8 +285,8 @@ export class NetHackWrapper implements NetHackJS {
             ],
             () => [
                 async () => this.updateSettings({ enableMapBorder: !this.settings.enableMapBorder }),
-                () => this.tilesetOption((tileset) => this.updateSettings({tileSetImage: tileset})),
-                () => this.tilesetOption((tileset) => this.updateSettings({rogueTileSetImage: tileset})),
+                () => this.tilesetOption((tileset) => this.updateSettings({ tileSetImage: tileset })),
+                () => this.tilesetOption((tileset) => this.updateSettings({ rogueTileSetImage: tileset })),
                 () => this.editNethackOption(),
             ]
         );
@@ -511,23 +512,7 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     private async yesNoQuestion(question: string, choices: string, defaultChoice: number) {
-        // const m = question.split(/\s+\[([\$a-zA-Z\-]+)(\sor\s[\*\?]+)\]/);
-        const m = question.split(/\s+\[([\$a-zA-Z\s\-\*\?]+)\]/);
-        if (m.length >= 2) {
-            question = m[0];
-            choices = m[1];
-        }
-
-        let allChoices: string | string[] = choices;
-        if (!!choices && !choices.includes('-') && !choices.includes(' or ') && !choices.includes('*')) {
-            allChoices = choices.split('');
-        }
-
-        if (allChoices === '' || Array.isArray(allChoices)) {
-            this.ui.openQuestion(question, String.fromCharCode(defaultChoice), ...allChoices);
-        } else {
-            this.ui.openQuestion(question, String.fromCharCode(defaultChoice), allChoices);
-        }
+        this.ui.openQuestion(question, String.fromCharCode(defaultChoice), ...choices);
 
         let c = 0;
         do {
@@ -548,10 +533,9 @@ export class NetHackWrapper implements NetHackJS {
                 break;
             }
 
-            // TODO: handle choice #, allows numbers
-        } while (Array.isArray(allChoices) && !allChoices.includes(String.fromCharCode(c)));
+        } while (choices != "" && !choices.includes(String.fromCharCode(c)));
 
-        this.ui.closeDialog(-1);
+        this.ui.answerQuestion(String.fromCharCode(c));
         return c;
     }
 
@@ -577,6 +561,10 @@ export class NetHackWrapper implements NetHackJS {
             this.ui.clearMap();
         }
         this.putStr = '';
+    }
+
+    private async exitWindows(text: string) {
+        this.ui.printLine(text);
     }
 
     private async gameEnd(status: number) {
@@ -645,8 +633,12 @@ export class NetHackWrapper implements NetHackJS {
         }
     }
 
+    private async handlePutHistory(str: string) {
+        this.ui.printLine(str);
+    }
+
     private handlePrintLine(attr: ATTR, str: string) {
-        if (str.match(/You die/)) {
+        if (str.match(/You die/)) { // For opening inventory after death, otherwise you won't notice if your possessions get identified
             this.gameState$.next(GameState.DIED);
         }
         this.ui.printLine(str);

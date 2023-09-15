@@ -4,6 +4,7 @@ import { Screen } from './screens/screen';
 import { GameState, InventoryItem, Item, NetHackUI, Status, Tile } from '../models';
 import { Gameover } from './components/gameover';
 import { Settings } from '../helper/settings';
+import { Question } from './components/question';
 
 const SPECIAL_KEY_MAP: Record<string, number> = {
     Enter: 13,
@@ -15,6 +16,7 @@ export class Game implements NetHackUI {
     private game: GameScreen;
 
     private current?: Screen;
+    private question?: Question;
 
     constructor() {
         document.body.onresize = (e) => this.current?.onResize();
@@ -55,10 +57,16 @@ export class Game implements NetHackUI {
 
     openMenu = (winid: number, prompt: string, count: number, ...items: Item[]) =>
         this.current?.onMenu(prompt, count, items);
-    openQuestion = (question: string, defaultChoice: string, ...choices: string[]) =>
-        this.game.openQuestion(question, choices, defaultChoice);
     openGetLine = (question: string, ...autocomplete: string[]) => this.current?.onLine(question, autocomplete);
     openGetTextArea = (value: string) => this.current?.onTextArea(value);
+
+    openQuestion = (question: string, defaultChoice: string, ...choices: string[]) => {
+        this.question = new Question(question, choices, defaultChoice);
+        this.game.console.append(this.question.elem);
+    };
+    answerQuestion = (choice: string) => {
+        this.question?.answered(choice);
+    }
 
     openDialog = (winid: number, text: string) => this.current?.onDialog(text);
     closeDialog = (winid: number) => this.current?.onCloseDialog();
