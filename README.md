@@ -30,6 +30,7 @@ Summary of the changes in `lib/fixes36.diff` to make Nethack 3.6 (most will not 
 	- Added rogue level flag
 	- Separate JS callbacks for some calls to improve performance (Asyncify make calls too slow)
 -   Enable wizard mode in `unixmain.c#authorize_wizard_mode`
+-	Move `iflags.suppress_price--;` above inventory update in `shk.c` (only 3.6)
 
 ## Generate
 
