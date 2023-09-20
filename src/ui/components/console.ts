@@ -11,7 +11,7 @@ export class Console {
                 this.elem.style.height = '';
                 setTimeout(() => this.scrollBottom(), 200); // Wait until transition finished
             } else {
-                this.elem.style.height = '25rem';
+                this.elem.style.height = '30rem';
             }
         }
     }
