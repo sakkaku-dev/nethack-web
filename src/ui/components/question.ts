@@ -5,9 +5,11 @@ export class Question {
     public elem: HTMLElement;
     private choices: HTMLElement;
     private text: HTMLElement;
+    private anim: Animation;
 
     constructor(question: string, choices: string[], defaultChoice: string) {
         this.elem = document.createElement('div');
+        this.elem.style.padding = '0.5rem 0';
         horiz(this.elem);
 
         this.choices = document.createElement('div');
@@ -37,10 +39,20 @@ export class Question {
 
             this.choices.innerHTML += ']';
         }
+
+        this.anim = this.elem.animate(
+            [{ background: "transparent" }, { background: '#FFFFFF33' }],
+            {
+                fill: "forwards",
+                easing: "ease-in-out",
+                duration: 500,
+            },
+        );
     }
 
     answered(choice: string) {
         this.elem.appendChild(document.createTextNode(choice))
+        this.anim.reverse();
     }
 
 }
