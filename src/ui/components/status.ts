@@ -115,11 +115,10 @@ export class StatusLine {
         this.elem.appendChild(this.createMinMaxValue(this.manaIcon, '#33D', '#006', s.power, s.powerMax));
 
         const lastRow = this.createRow();
-        const acIcon = this.createIconText(this.armorIcon, s.armor, true);
+        const acIcon = this.createIconText(this.armorIcon, s.armor);
         lastRow.appendChild(acIcon);
         if (s.armor) {
             const ac = parseInt(s.armor.text);
-            acIcon.style.color = ac < 0 ? 'yellow' : 'white';
 
             // Didn't find a way to do it via Animation
             this.armorIcon.style.backgroundPosition = ac < 0 ? '-32px' : '-64px';
