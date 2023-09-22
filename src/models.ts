@@ -22,7 +22,7 @@ export interface NetHackUI {
     moveCursor: (x: number, y: number) => void;
     centerView: (x: number, y: number) => void;
     clearMap: () => void;
-    updateMap: (...tiles: Tile[]) => void;
+    printTile: (tile: Tile) => void;
     updateStatus: (status: Status) => void;
     updateInventory: (...items: InventoryItem[]) => void;
     toggleInventory: () => void;

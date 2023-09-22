@@ -75,7 +75,7 @@ export class Game implements NetHackUI {
     moveCursor = (x: number, y: number) => this.game.tilemap.recenter({ x, y });
     centerView = (x: number, y: number) => this.game.tilemap.recenter({ x, y });
     clearMap = () => this.game.tilemap.clearMap();
-    updateMap = (...tiles: Tile[]) => this.game.tilemap.addTile(...tiles);
+    printTile = (tile: Tile) => this.game.tilemap.printTile(tile);
     updateStatus = (s: Status) => this.game.status.update(s);
     updateInventory = (...items: InventoryItem[]) => this.game.inventory.updateItems(items);
     toggleInventory = () => this.game.inventory.toggle();

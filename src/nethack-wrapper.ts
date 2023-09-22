@@ -58,7 +58,7 @@ export class NetHackWrapper implements NetHackJS {
 
         // Map
         [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph, isPet, isRogue) => {
-            this.tiles$.next([...this.tiles$.value, { x, y, tile: this.util.toTile(glyph), peaceful: isPet === 1, rogue: isRogue === 1 }]);
+            this.ui.printTile({ x, y, tile: this.util.toTile(glyph), peaceful: isPet === 1, rogue: isRogue === 1 });
             if (bkglyph !== 0 && bkglyph !== 5991) {
                 console.log(
                     `%c Background Tile found! ${bkglyph}, ${this.util.toTile(bkglyph)}`,
@@ -106,7 +106,6 @@ export class NetHackWrapper implements NetHackJS {
     private line$ = new Subject<string | null>();
 
     private inventory$ = new Subject<InventoryItem[]>();
-    private tiles$ = new BehaviorSubject<Tile[]>([]);
     private awaitingInput$ = new BehaviorSubject(false);
     private gameState$ = new BehaviorSubject(GameState.START);
     private settings$ = new BehaviorSubject<Settings>(defaultSetting);
@@ -127,16 +126,6 @@ export class NetHackWrapper implements NetHackJS {
                 skip(1), // skip first default setting
                 debounceTime(100),
                 tap((s) => saveSettings(s))
-            )
-            .subscribe();
-
-        this.tiles$
-            .pipe(
-                skip(1),
-                filter((x) => x.length > 0),
-                debounceTime(100),
-                tap((tiles) => this.ui.updateMap(...tiles)),
-                tap(() => this.tiles$.next([]))
             )
             .subscribe();
 

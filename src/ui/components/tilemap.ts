@@ -166,16 +166,15 @@ export class TileMap {
         this.cursor.style.display = 'block';
     }
 
-    addTile(...tiles: Tile[]) {
-        if (tiles.length > 0) {
-            this.setRogueLevel(tiles[0].rogue);
-        }
+    printTile(tile: Tile) {
+        this.setRogueLevel(tile.rogue); // not the most efficient way, but works
+        if (!this.tiles[tile.x]) this.tiles[tile.x] = [];
 
-        tiles.forEach((tile) => {
-            if (!this.tiles[tile.x]) this.tiles[tile.x] = [];
-            this.tiles[tile.x][tile.y] = { tile: tile.tile, peaceful: tile.peaceful };
-            this.drawTile(tile.x, tile.y);
-        });
+        const current = this.tiles[tile.x][tile.y];
+        if (current?.tile === tile.tile && current?.peaceful === tile.peaceful) return;
+
+        this.tiles[tile.x][tile.y] = { tile: tile.tile, peaceful: tile.peaceful };
+        this.drawTile(tile.x, tile.y);
     }
 
     private drawTile(x: number, y: number) {
