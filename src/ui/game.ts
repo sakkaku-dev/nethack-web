@@ -2,7 +2,6 @@ import { StartScreen } from './screens/start-screen';
 import { GameScreen } from './screens/game-screen';
 import { Screen } from './screens/screen';
 import { GameState, InventoryItem, Item, NetHackUI, Status, Tile } from '../models';
-import { Gameover } from './components/gameover';
 import { Settings } from '../helper/settings';
 import { Question } from './components/question';
 
@@ -88,9 +87,6 @@ export class Game implements NetHackUI {
             case GameState.RUNNING:
                 this.changeScreen(this.game);
                 break;
-            // case GameState.DIED:
-            //     this.game.inventory.open();
-            //     break;
             case GameState.GAMEOVER:
                 this.game.openGameover();
                 break;

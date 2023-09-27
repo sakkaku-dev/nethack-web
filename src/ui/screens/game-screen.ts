@@ -54,6 +54,7 @@ export class GameScreen extends Screen {
         }
 
         this.tilemap.setMapBorder(setting.enableMapBorder);
+        this.inventory.setEnableHint(setting.inventoryHint);
     }
 
     onResize(): void {

@@ -5,6 +5,7 @@ export interface Settings {
     tileSetImage: TileSetImage;
     rogueTileSetImage: TileSetImage;
     playerName: string;
+    inventoryHint: boolean;
     options: string;
 }
 
@@ -20,6 +21,7 @@ export const defaultSetting: Settings = {
     tileSetImage: TileSetImage.Nevanda,
     rogueTileSetImage: TileSetImage.Chozo,
     playerName: 'Unnamed',
+    inventoryHint: true,
     options: '',
 };
 

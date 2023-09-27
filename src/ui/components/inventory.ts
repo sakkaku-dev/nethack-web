@@ -8,6 +8,7 @@ export class Inventory {
     private items: InventoryItem[] = [];
     private anim: Animation;
     private ignoreNextChangeHint = true;
+    private enableHint = true;
 
     constructor(root: HTMLElement, private tileMap: TileMap) {
         this.elem = document.createElement('div');
@@ -26,6 +27,10 @@ export class Inventory {
         this.anim.cancel();
 
         tileMap.onTileSetChange$.subscribe(() => this.updateItems(this.items));
+    }
+
+    setEnableHint(enable: boolean) {
+        this.enableHint = enable;
     }
 
     private clear() {
@@ -47,7 +52,7 @@ export class Inventory {
         this.clear();
 
         // Hint that something changed in inventory, mainly for death after identifying items so player notices it
-        if (hint_change && !this.ignoreNextChangeHint) {
+        if (this.enableHint && hint_change && !this.ignoreNextChangeHint) {
             this.anim.play();
         }
         this.ignoreNextChangeHint = false;

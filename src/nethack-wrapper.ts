@@ -261,12 +261,14 @@ export class NetHackWrapper implements NetHackJS {
                 `Enable map border - [${this.settings.enableMapBorder}]`,
                 `Tileset - ${this.settings.tileSetImage}`,
                 `Rogue Level Tileset - ${this.settings.rogueTileSetImage}`,
+                `Inventory Change Hint - ${this.settings.inventoryHint}`,
                 `Nethack Options`,
             ],
             () => [
                 async () => this.updateSettings({ enableMapBorder: !this.settings.enableMapBorder }),
                 () => this.tilesetOption((tileset) => this.updateSettings({ tileSetImage: tileset })),
                 () => this.tilesetOption((tileset) => this.updateSettings({ rogueTileSetImage: tileset })),
+                () => this.updateSettings({ inventoryHint: !this.settings.inventoryHint }),
                 () => this.editNethackOption(),
             ]
         );
