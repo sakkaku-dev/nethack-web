@@ -6,12 +6,24 @@ export class Inventory {
     private elem: HTMLElement;
     private expanded = false;
     private items: InventoryItem[] = [];
+    private anim: Animation;
+    private ignoreNextChangeHint = true;
 
     constructor(root: HTMLElement, private tileMap: TileMap) {
         this.elem = document.createElement('div');
         this.elem.id = 'inventory';
         vert(this.elem);
         root.appendChild(this.elem);
+
+        this.anim = this.elem.animate(
+            [{ background: "#000000DD" }, { background: '#FFFFFF33' }, { background: '#000000DD' }],
+            {
+                fill: "forwards",
+                easing: "ease-in-out",
+                duration: 1000,
+            },
+        );
+        this.anim.cancel();
 
         tileMap.onTileSetChange$.subscribe(() => this.updateItems(this.items));
     }
@@ -22,21 +34,28 @@ export class Inventory {
 
     toggle(update = false) {
         this.expanded = !this.expanded;
+        this.ignoreNextChangeHint = true;
+
         // Update not always necessary, the toggle key (i) will automatically request a reload of the inventory
         if (update) {
             this.updateItems(this.items);
         }
     }
 
-    open() {
-        this.expanded = true;
-        this.updateItems(this.items); // This is called manually, so we need to update it
-    }
-
-    updateItems(items: InventoryItem[]) {
+    updateItems(items: InventoryItem[], hint_change = false) {
         this.items = items;
         this.clear();
-        this.elem.onclick = () => this.toggle(true);
+
+        // Hint that something changed in inventory, mainly for death after identifying items so player notices it
+        if (hint_change && !this.ignoreNextChangeHint) {
+            this.anim.play();
+        }
+        this.ignoreNextChangeHint = false;
+
+        this.elem.onclick = () => {
+            this.expanded = !this.expanded;
+            this.updateItems(this.items);
+        }
         pointer(this.elem);
         this.createInventoryRows(items);
     }

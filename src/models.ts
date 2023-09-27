@@ -34,7 +34,6 @@ export interface NetHackUI {
 export enum GameState {
     START,
     RUNNING,
-    DIED,
     GAMEOVER,
 }
 

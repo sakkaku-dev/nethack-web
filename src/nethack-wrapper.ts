@@ -1,5 +1,5 @@
 import { BehaviorSubject, Subject, debounceTime, filter, firstValueFrom, skip, tap } from 'rxjs';
-import { Item, NetHackJS, Status, NetHackUI, Tile, GameState, InventoryItem } from './models';
+import { Item, NetHackJS, Status, NetHackUI, GameState } from './models';
 import { ATTR, MENU_SELECT, STATUS_FIELD, WIN_TYPE } from './generated';
 
 // @ts-ignore
@@ -105,7 +105,6 @@ export class NetHackWrapper implements NetHackJS {
     private input$ = new Subject<number | string>();
     private line$ = new Subject<string | null>();
 
-    private inventory$ = new Subject<InventoryItem[]>();
     private awaitingInput$ = new BehaviorSubject(false);
     private gameState$ = new BehaviorSubject(GameState.START);
     private settings$ = new BehaviorSubject<Settings>(defaultSetting);
@@ -126,14 +125,6 @@ export class NetHackWrapper implements NetHackJS {
                 skip(1), // skip first default setting
                 debounceTime(100),
                 tap((s) => saveSettings(s))
-            )
-            .subscribe();
-
-        this.inventory$
-            .pipe(
-                filter((x) => x.length > 0),
-                debounceTime(100),
-                tap((items) => this.ui.updateInventory(...items))
             )
             .subscribe();
 
@@ -586,7 +577,8 @@ export class NetHackWrapper implements NetHackJS {
     private async menuSelect(winid: number, select: MENU_SELECT, selected: number) {
         if (winid === this.global.globals.WIN_INVEN) {
             const items = this.menuItems.map((i) => toInventoryItem(i));
-            this.inventory$.next(items);
+            // this.inventory$.next(items);
+            this.ui.updateInventory(...items);
             return 0;
         }
 
@@ -605,10 +597,6 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     private async handlePutStr(winid: number, attr: any, str: string) {
-        // if (winid === this.global.globals.WIN_STATUS) {
-        //   const status = this.status$.value;
-        //   parseAndMapStatus(str, status);
-        //   this.status$.next(status);
         if (winid === this.global.globals.WIN_MESSAGE) {
             this.handlePrintLine(attr, str);
         } else {
@@ -627,9 +615,6 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     private handlePrintLine(attr: ATTR, str: string) {
-        if (str.match(/You die/)) { // For opening inventory after death, otherwise you won't notice if your possessions get identified
-            this.gameState$.next(GameState.DIED);
-        }
         this.ui.printLine(str);
     }
 

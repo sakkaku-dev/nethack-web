@@ -77,7 +77,7 @@ export class Game implements NetHackUI {
     clearMap = () => this.game.tilemap.clearMap();
     printTile = (tile: Tile) => this.game.tilemap.printTile(tile);
     updateStatus = (s: Status) => this.game.status.update(s);
-    updateInventory = (...items: InventoryItem[]) => this.game.inventory.updateItems(items);
+    updateInventory = (...items: InventoryItem[]) => this.game.inventory.updateItems(items, true);
     toggleInventory = () => this.game.inventory.toggle();
 
     updateState = async (state: GameState) => {
@@ -88,9 +88,9 @@ export class Game implements NetHackUI {
             case GameState.RUNNING:
                 this.changeScreen(this.game);
                 break;
-            case GameState.DIED:
-                this.game.inventory.open();
-                break;
+            // case GameState.DIED:
+            //     this.game.inventory.open();
+            //     break;
             case GameState.GAMEOVER:
                 this.game.openGameover();
                 break;
