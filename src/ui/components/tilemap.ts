@@ -67,28 +67,37 @@ export class TileSet {
 }
 
 export class TileMap {
-    private context: CanvasRenderingContext2D;
-    private center: Vector = { x: 0, y: 0 };
-    private tiles: Pick<Tile, 'tile' | 'peaceful'>[][] = [];
-    private canvas: HTMLCanvasElement;
-    private cursor: HTMLImageElement;
-    private mapSize: Vector = { x: 79, y: 21 }; // Fixed map size? Might change in other version?
     private mapBorder = true;
     private isRogue = false;
+
+    private cursorPos: Vector = { x: 0, y: 0 };
+    private center: Vector = { x: 0, y: 0 };
+    private mapSize: Vector = { x: 79, y: 21 }; // Fixed map size? Might change in other version?
+    private tiles: Pick<Tile, 'tile' | 'peaceful'>[][] = [];
+
+    private context: CanvasRenderingContext2D;
+    private canvas: HTMLCanvasElement;
+    private cursorCtx: CanvasRenderingContext2D;
+    private cursorCanvas: HTMLCanvasElement;
+    private cursor: HTMLImageElement;
 
     onTileSetChange$ = new Subject<void>();
 
     constructor(root: HTMLElement, public tileSet?: TileSet, public rogueTileSet?: TileSet) {
         this.canvas = document.createElement('canvas');
-        this.canvas.id = 'map';
+        this.canvas.classList.add('map');
+        this.cursorCanvas = document.createElement('canvas');
+        this.cursorCanvas.classList.add('map');
+
         this.cursor = document.createElement('img');
         this.cursor.src = 'cursor.png';
-        this.cursor.id = 'cursor';
 
         root.appendChild(this.canvas);
-        root.appendChild(this.cursor);
+        root.appendChild(this.cursorCanvas);
 
         this.context = this.canvas.getContext('2d')!;
+        this.cursorCtx = this.cursorCanvas.getContext('2d')!;
+
         this.updateCanvasSize();
         this.clearCanvas();
     }
@@ -127,10 +136,42 @@ export class TileMap {
     private updateCanvasSize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        this.cursorCanvas.width = window.innerWidth;
+        this.cursorCanvas.height = window.innerHeight;
     }
 
+    // This is called before and after recenter, so it causes a glitch when doing them separately
+    // Might be on purpose to indicate movement? But does not look good
+    moveCursor(pos: Vector) {
+        this.cursorPos = pos;
+        this.clearCursor();
+        this.updateCursor();
+    }
+
+    private updateCursor() {
+        const pos = this.localToCanvas(this.cursorPos);
+        const cursorSize = 32;
+        this.cursorCtx.drawImage(
+            this.cursor,
+            0,
+            0,
+            cursorSize,
+            cursorSize,
+            pos.x,
+            pos.y,
+            this.tileSize.x,
+            this.tileSize.y
+        );
+    }
+
+    private clearCursor() {
+        this.cursorCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    // TODO: doesn't have to always center it, should be "more-or-less" centered, thus the separate moveCursor function
     recenter(c: Vector) {
         this.center = c;
+        this.cursorPos = c;
         this.rerender();
     }
 
@@ -140,8 +181,8 @@ export class TileMap {
     }
 
     private clearCanvas() {
-        this.cursor.style.display = 'none';
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.clearCursor();
 
         if (this.mapBorder) {
             const map = mult(this.mapSize, this.tileSize);
@@ -162,8 +203,7 @@ export class TileMap {
                 }
             }
         }
-
-        this.cursor.style.display = 'block';
+        this.updateCursor();
     }
 
     printTile(tile: Tile) {
@@ -232,6 +272,6 @@ export class TileMap {
     }
 
     private get canvasCenter(): Vector {
-        return { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+        return { x: Math.floor(this.canvas.width / 2), y: Math.floor(this.canvas.height / 2) };
     }
 }

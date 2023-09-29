@@ -65,7 +65,7 @@ export class Game implements NetHackUI {
     };
     answerQuestion = (choice: string) => {
         this.question?.answered(choice);
-    }
+    };
 
     openDialog = (winid: number, text: string) => this.current?.onDialog(text);
     closeDialog = (winid: number) => this.current?.onCloseDialog();
