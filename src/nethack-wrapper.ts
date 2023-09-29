@@ -60,7 +60,7 @@ export class NetHackWrapper implements NetHackJS {
         [Command.PRINT_GLYPH]: async (winid, x, y, glyph, bkglyph, isPet, isRogue) => {
             this.ui.printTile({ x, y, tile: this.util.toTile(glyph), peaceful: isPet === 1, rogue: isRogue === 1 });
             if (bkglyph !== 0 && bkglyph !== 5991) {
-                console.log(
+                this.log(
                     `%c Background Tile found! ${bkglyph}, ${this.util.toTile(bkglyph)}`,
                     'background: #222; color: #bada55'
                 );
@@ -395,7 +395,7 @@ export class NetHackWrapper implements NetHackJS {
 
     private async waitInput(type = InputType.ALL) {
         this.awaitingInput$.next(true);
-        console.log('Awaiting input', type);
+        this.log('Awaiting input', type);
         const value = await firstValueFrom(
             this.input$.pipe(
                 filter((c) => {

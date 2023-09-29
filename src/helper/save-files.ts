@@ -59,14 +59,14 @@ function loadBackupSaveFile(file: string, module: any) {
 
 function decodeData(data: StoragedSaveData) {
     const bytes = atob(data.data);
-    console.log('Decoding data of size', bytes.length);
+    // console.log('Decoding data of size', bytes.length);
     const array = new Uint8Array(bytes.length);
     for (var i = 0; i < bytes.length; ++i) array[i] = bytes.charCodeAt(i);
     return array;
 }
 
 function encodeData(data: Uint8Array) {
-    console.log('Encoding data of size', data.length);
+    // console.log('Encoding data of size', data.length);
     let encoded = '';
     for (let d of data) {
         encoded += String.fromCharCode(d);
@@ -87,7 +87,7 @@ export function syncSaveFiles(module: any, player?: string) {
 
 function saveBackupFiles(module: any, player?: string) {
     try {
-        console.log('Saving backup file for player ', player);
+        // console.log('Saving backup file for player ', player);
         const savefiles = module.FS.readdir('/nethack/save');
         for (let i = 0; i < savefiles.length; ++i) {
             let file = savefiles[i];
@@ -101,11 +101,11 @@ function saveBackupFiles(module: any, player?: string) {
                 file = SAVE_FOLDER + file;
                 var name = parsePlayerName(file);
                 if (!player || name === player) {
-                    console.log('Saving file', file);
+                    // console.log('Saving file', file);
                     try {
                         const data = readFile(module, file);
                         saveFileData(file, data);
-                        console.log('Save successful');
+                        // console.log('Save successful');
                     } catch (e) {
                         console.warn('Failed to save save file', e);
                     }
@@ -125,7 +125,7 @@ function saveFileData(file: string, data: string) {
 }
 
 function readFile(module: any, file: string) {
-    console.log('Reading file', file);
+    // console.log('Reading file', file);
     const data = module.FS.readFile(file, { encoding: 'binary' }) as Uint8Array;
     return encodeData(data);
 }
@@ -170,7 +170,7 @@ export async function importSaveFile(file: File) {
     const array = new Uint8Array(buf);
     const data = encodeData(array);
     saveFileData(SAVE_FOLDER + file.name, data);
-    console.log('Imported save file ', file.name)
+    // console.log('Imported save file ', file.name)
 }
 
 function downloadURL(data: any, fileName: string) {

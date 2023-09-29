@@ -15,4 +15,4 @@ Module.preRun = [
 ];
 
 window.module = Module;
-window.nethackJS = new NetHackWrapper(true, Module, { selectItems, toTile });
+window.nethackJS = new NetHackWrapper(false, Module, { selectItems, toTile });
