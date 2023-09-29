@@ -494,6 +494,15 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     private async yesNoQuestion(question: string, choices: string, defaultChoice: number) {
+        // Temp workaround to allow everyhing in case the question contains choices
+        // Not really sure what should be done in this case
+        // Current known is only character creation
+        const containsChoices = question.match(/\[([a-z]+)\]/g);
+        if (containsChoices) {
+            choices = containsChoices[0].replace('[', '').replace(']', '');
+            question = question.replace(containsChoices[0], '').trim();
+        }
+
         this.ui.openQuestion(question, String.fromCharCode(defaultChoice), ...choices);
 
         let c = 0;
@@ -514,8 +523,7 @@ export class NetHackWrapper implements NetHackJS {
                 c = defaultChoice;
                 break;
             }
-
-        } while (choices != "" && !choices.includes(String.fromCharCode(c)));
+        } while (choices != '' && !choices.includes(String.fromCharCode(c)));
 
         this.ui.answerQuestion(String.fromCharCode(c));
         return c;
@@ -670,7 +678,7 @@ export class NetHackWrapper implements NetHackJS {
                 count += String.fromCharCode(char);
             } else if (selectCount !== 0) {
                 toggleMenuItems(char, parseInt(count), select, items);
-                items.filter(i => !i.active).forEach(i => i.count = undefined);
+                items.filter((i) => !i.active).forEach((i) => (i.count = undefined));
 
                 count = '';
                 if (select === MENU_SELECT.PICK_ONE && items.some((i) => i.active)) {
