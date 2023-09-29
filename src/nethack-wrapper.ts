@@ -493,7 +493,7 @@ export class NetHackWrapper implements NetHackJS {
         this.ui.closeDialog(-1);
     }
 
-    private async yesNoQuestion(question: string, choices: string, defaultChoice: number) {
+    private async yesNoQuestion(question: string, choices: string | null, defaultChoice: number) {
         // Temp workaround to allow everyhing in case the question contains choices
         // Not really sure what should be done in this case
         // Current known is only character creation
@@ -502,6 +502,7 @@ export class NetHackWrapper implements NetHackJS {
             choices = containsChoices[0].replace('[', '').replace(']', '');
             question = question.replace(containsChoices[0], '').trim();
         }
+        choices = choices ?? '';
 
         this.ui.openQuestion(question, String.fromCharCode(defaultChoice), ...choices);
 

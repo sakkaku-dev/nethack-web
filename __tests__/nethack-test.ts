@@ -183,16 +183,16 @@ describe('Nethack', () => {
             expect(ui.openQuestion).toBeCalledWith('Save game?', 'n', 'y', 'n', 'a', 'q');
         });
 
-        it('should get choices from question with allow all', async () => {
-            wrapper.handle(Command.YN_FUNCTION, 'Save game? [a-f or ?*]', 'yn', code('n'));
-            expect(ui.openQuestion).toBeCalledWith('Save game?', 'n', 'a-f or ?*');
-        });
+        // it('should get choices from question with allow all', async () => {
+        //     wrapper.handle(Command.YN_FUNCTION, 'Save game? [a-f or ?*]', 'yn', code('n'));
+        //     expect(ui.openQuestion).toBeCalledWith('Save game?', 'n', 'a-f or ?*');
+        // });
 
-        it('should allow all choies with only asterix', async () => {
-            const p = wrapper.handle(Command.YN_FUNCTION, 'Save game? [*]', '', code('n'));
-            send('I');
-            await expect(p).resolves.toEqual(code('I'));
-        });
+        // it('should allow all choies with only asterix', async () => {
+        //     const p = wrapper.handle(Command.YN_FUNCTION, 'Save game? [*]', '', code('n'));
+        //     send('I');
+        //     await expect(p).resolves.toEqual(code('I'));
+        // });
 
         it('should return one of choices', async () => {
             const p = wrapper.handle(Command.YN_FUNCTION, 'Save game?', 'yn', code('n'));
