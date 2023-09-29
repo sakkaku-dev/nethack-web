@@ -11,9 +11,9 @@ const createAccel = (accel: number) => {
     return accelElem;
 };
 
-export function MenuButton(item: Item, prepend = true, tileMap?: TileMap) {
+export function MenuButton(item: Item, prepend = true, tileMap?: TileMap, disable = false) {
     const btn = document.createElement('button');
-    btn.disabled = item.identifier === 0;
+    btn.disabled = item.identifier === 0 || disable;
     btn.style.position = 'relative';
     horiz(btn);
     bucState(btn, item.str);

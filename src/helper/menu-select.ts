@@ -61,7 +61,7 @@ export function toggleMenuItems(accelOrId: number | string, count: number, menuS
 
         item.active = !item.active;
         item.count = c
-    } else if (menuSelect === MENU_SELECT.PICK_ANY) {
+    } else {
         const groups = selectable.filter((i) => i.groupAcc !== 0 && i.groupAcc === accelOrId);
         const enable = groups.some((i) => !i.active);
         groups.forEach((i) => (i.active = enable));

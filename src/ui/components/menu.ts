@@ -23,7 +23,7 @@ export class Menu {
         }
         this.menuContainer = document.createElement('div');
         vert(this.menuContainer);
-        this.createMenu(items, this.menuContainer);
+        this.createMenu(items, this.menuContainer, count === 0);
 
         this.elem.appendChild(this.menuContainer);
     }
@@ -34,12 +34,12 @@ export class Menu {
         return label;
     }
 
-    private createMenu(items: Item[], container: HTMLElement) {
+    private createMenu(items: Item[], container: HTMLElement, disable: boolean) {
         items.forEach((i) => {
             if (i.identifier !== 0) {
-                container.appendChild(MenuButton(i, true, this.tileMap));
+                container.appendChild(MenuButton(i, true, this.tileMap, disable));
             } else if (i.str !== '') {
-                container.appendChild(MenuButton(i, false, this.tileMap));
+                container.appendChild(MenuButton(i, false, this.tileMap, disable));
             }
         });
 
