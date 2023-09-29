@@ -69,7 +69,7 @@
         overflow-y: auto;
         padding: 0.5rem;
         margin: 0;
-        background: var(--bg-color);
+        /* background: var(--bg-color); */
         opacity: 0.8;
         flex-grow: 1;
     }
@@ -102,17 +102,25 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 8rem;
+        height: 12rem;
         padding: 0.5rem;
         background: var(--bg-color);
         opacity: 0.8;
         cursor: pointer;
         transition: height 0.2s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
-    #map {
+    .map {
         width: 100%;
         height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
     }
     #cursor {
         z-index: 1;

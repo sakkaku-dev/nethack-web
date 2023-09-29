@@ -1,4 +1,4 @@
-const VERSION = 'v0.0.4';
+const VERSION = 'v0.0.5';
 
 function fullScreen(elem) {
     elem.style.position = 'absolute';
@@ -57,9 +57,9 @@ const createAccel = (accel) => {
     }
     return accelElem;
 };
-function MenuButton(item, prepend = true, tileMap) {
+function MenuButton(item, prepend = true, tileMap, disable = false) {
     const btn = document.createElement('button');
-    btn.disabled = item.identifier === 0;
+    btn.disabled = item.identifier === 0 || disable;
     btn.style.position = 'relative';
     horiz(btn);
     bucState(btn, item.str);
@@ -110,7 +110,7 @@ class Menu {
         }
         this.menuContainer = document.createElement('div');
         vert(this.menuContainer);
-        this.createMenu(items, this.menuContainer);
+        this.createMenu(items, this.menuContainer, count === 0);
         this.elem.appendChild(this.menuContainer);
     }
     createLabel() {
@@ -118,13 +118,13 @@ class Menu {
         label.innerHTML = this.prompt;
         return label;
     }
-    createMenu(items, container) {
+    createMenu(items, container, disable) {
         items.forEach((i) => {
             if (i.identifier !== 0) {
-                container.appendChild(MenuButton(i, true, this.tileMap));
+                container.appendChild(MenuButton(i, true, this.tileMap, disable));
             }
             else if (i.str !== '') {
-                container.appendChild(MenuButton(i, false, this.tileMap));
+                container.appendChild(MenuButton(i, false, this.tileMap, disable));
             }
         });
         return container;
@@ -1382,12 +1382,28 @@ class Console {
                 setTimeout(() => this.scrollBottom(), 200); // Wait until transition finished
             }
             else {
-                this.elem.style.height = '25rem';
+                this.elem.style.height = '30rem';
             }
         };
     }
+    // See Dialog
+    // https://stackoverflow.com/questions/6234773/can-i-escape-html-special-chars-in-javascript
+    escapeHtml(unsafe) {
+        return unsafe
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
     appendLine(line) {
-        this.elem.innerHTML += line + '\n';
+        const text = document.createElement('span');
+        text.innerHTML = this.escapeHtml(line);
+        this.elem.appendChild(text);
+        this.scrollBottom();
+    }
+    append(elem) {
+        this.elem.appendChild(elem);
         this.scrollBottom();
     }
     scrollBottom() {
@@ -1400,30 +1416,46 @@ class Inventory {
         this.tileMap = tileMap;
         this.expanded = false;
         this.items = [];
+        this.ignoreNextChangeHint = true;
+        this.enableHint = true;
         this.elem = document.createElement('div');
         this.elem.id = 'inventory';
         vert(this.elem);
         root.appendChild(this.elem);
+        this.anim = this.elem.animate([{ background: "#000000DD" }, { background: '#FFFFFF33' }, { background: '#000000DD' }], {
+            fill: "forwards",
+            easing: "ease-in-out",
+            duration: 1000,
+        });
+        this.anim.cancel();
         tileMap.onTileSetChange$.subscribe(() => this.updateItems(this.items));
+    }
+    setEnableHint(enable) {
+        this.enableHint = enable;
     }
     clear() {
         Array.from(this.elem.children).forEach((c) => this.elem.removeChild(c));
     }
     toggle(update = false) {
         this.expanded = !this.expanded;
+        this.ignoreNextChangeHint = true;
         // Update not always necessary, the toggle key (i) will automatically request a reload of the inventory
         if (update) {
             this.updateItems(this.items);
         }
     }
-    open() {
-        this.expanded = true;
-        this.updateItems(this.items); // This is called manually, so we need to update it
-    }
-    updateItems(items) {
+    updateItems(items, hint_change = false) {
         this.items = items;
         this.clear();
-        this.elem.onclick = () => this.toggle(true);
+        // Hint that something changed in inventory, mainly for death after identifying items so player notices it
+        if (this.enableHint && hint_change && !this.ignoreNextChangeHint) {
+            this.anim.play();
+        }
+        this.ignoreNextChangeHint = false;
+        this.elem.onclick = () => {
+            this.expanded = !this.expanded;
+            this.updateItems(this.items);
+        };
         pointer(this.elem);
         this.createInventoryRows(items);
     }
@@ -1731,11 +1763,10 @@ class StatusLine {
         this.elem.appendChild(this.createMinMaxValue(this.heartIcon, '#D33', '#600', s.hp, s.hpMax));
         this.elem.appendChild(this.createMinMaxValue(this.manaIcon, '#33D', '#006', s.power, s.powerMax));
         const lastRow = this.createRow();
-        const acIcon = this.createIconText(this.armorIcon, s.armor, true);
+        const acIcon = this.createIconText(this.armorIcon, s.armor);
         lastRow.appendChild(acIcon);
         if (s.armor) {
             const ac = parseInt(s.armor.text);
-            acIcon.style.color = ac < 0 ? 'yellow' : 'white';
             // Didn't find a way to do it via Animation
             this.armorIcon.style.backgroundPosition = ac < 0 ? '-32px' : '-64px';
         }
@@ -1836,8 +1867,7 @@ var GameState;
 (function (GameState) {
     GameState[GameState["START"] = 0] = "START";
     GameState[GameState["RUNNING"] = 1] = "RUNNING";
-    GameState[GameState["DIED"] = 2] = "DIED";
-    GameState[GameState["GAMEOVER"] = 3] = "GAMEOVER";
+    GameState[GameState["GAMEOVER"] = 2] = "GAMEOVER";
 })(GameState || (GameState = {}));
 function add(v1, v2) {
     return { x: v1.x + v2.x, y: v1.y + v2.y };
@@ -1915,20 +1945,23 @@ class TileMap {
     constructor(root, tileSet, rogueTileSet) {
         this.tileSet = tileSet;
         this.rogueTileSet = rogueTileSet;
-        this.center = { x: 0, y: 0 };
-        this.tiles = [];
-        this.mapSize = { x: 79, y: 21 }; // Fixed map size? Might change in other version?
         this.mapBorder = true;
         this.isRogue = false;
+        this.cursorPos = { x: 0, y: 0 };
+        this.center = { x: 0, y: 0 };
+        this.mapSize = { x: 79, y: 21 }; // Fixed map size? Might change in other version?
+        this.tiles = [];
         this.onTileSetChange$ = new Subject();
         this.canvas = document.createElement('canvas');
-        this.canvas.id = 'map';
+        this.canvas.classList.add('map');
+        this.cursorCanvas = document.createElement('canvas');
+        this.cursorCanvas.classList.add('map');
         this.cursor = document.createElement('img');
         this.cursor.src = 'cursor.png';
-        this.cursor.id = 'cursor';
         root.appendChild(this.canvas);
-        root.appendChild(this.cursor);
+        root.appendChild(this.cursorCanvas);
         this.context = this.canvas.getContext('2d');
+        this.cursorCtx = this.cursorCanvas.getContext('2d');
         this.updateCanvasSize();
         this.clearCanvas();
     }
@@ -1959,9 +1992,28 @@ class TileMap {
     updateCanvasSize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        this.cursorCanvas.width = window.innerWidth;
+        this.cursorCanvas.height = window.innerHeight;
     }
+    // This is called before and after recenter, so it causes a glitch when doing them separately
+    // Might be on purpose to indicate movement? But does not look good
+    moveCursor(pos) {
+        this.cursorPos = pos;
+        this.clearCursor();
+        this.updateCursor();
+    }
+    updateCursor() {
+        const pos = this.localToCanvas(this.cursorPos);
+        const cursorSize = 32;
+        this.cursorCtx.drawImage(this.cursor, 0, 0, cursorSize, cursorSize, pos.x, pos.y, this.tileSize.x, this.tileSize.y);
+    }
+    clearCursor() {
+        this.cursorCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+    // TODO: doesn't have to always center it, should be "more-or-less" centered, thus the separate moveCursor function
     recenter(c) {
         this.center = c;
+        this.cursorPos = c;
         this.rerender();
     }
     clearMap() {
@@ -1969,8 +2021,8 @@ class TileMap {
         this.clearCanvas();
     }
     clearCanvas() {
-        this.cursor.style.display = 'none';
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.clearCursor();
         if (this.mapBorder) {
             const map = mult(this.mapSize, this.tileSize);
             const localPos = this.localToCanvas({ x: 1, y: 0 });
@@ -1988,18 +2040,17 @@ class TileMap {
                 }
             }
         }
-        this.cursor.style.display = 'block';
+        this.updateCursor();
     }
-    addTile(...tiles) {
-        if (tiles.length > 0) {
-            this.setRogueLevel(tiles[0].rogue);
-        }
-        tiles.forEach((tile) => {
-            if (!this.tiles[tile.x])
-                this.tiles[tile.x] = [];
-            this.tiles[tile.x][tile.y] = { tile: tile.tile, peaceful: tile.peaceful };
-            this.drawTile(tile.x, tile.y);
-        });
+    printTile(tile) {
+        this.setRogueLevel(tile.rogue); // not the most efficient way, but works
+        if (!this.tiles[tile.x])
+            this.tiles[tile.x] = [];
+        const current = this.tiles[tile.x][tile.y];
+        if (current?.tile === tile.tile && current?.peaceful === tile.peaceful)
+            return;
+        this.tiles[tile.x][tile.y] = { tile: tile.tile, peaceful: tile.peaceful };
+        this.drawTile(tile.x, tile.y);
     }
     drawTile(x, y) {
         const tile = this.tiles[x][y];
@@ -2036,31 +2087,7 @@ class TileMap {
         return { x: this.currentTileSet?.tileSize || 0, y: this.currentTileSet?.tileSize || 0 };
     }
     get canvasCenter() {
-        return { x: this.canvas.width / 2, y: this.canvas.height / 2 };
-    }
-}
-
-class Question extends Dialog {
-    constructor(question, choices, defaultChoice) {
-        super(question);
-        horiz(this.elem);
-        if (choices.length > 0) {
-            const choicesContainer = document.createElement('div');
-            horiz(choicesContainer);
-            choicesContainer.style.gap = '0';
-            choicesContainer.innerHTML = '[';
-            choices.forEach((c) => {
-                const node = document.createElement('span');
-                node.innerHTML = c;
-                if (c === defaultChoice) {
-                    node.style.fontWeight = 'bold';
-                    node.style.color = 'red';
-                }
-                choicesContainer.appendChild(node);
-            });
-            choicesContainer.innerHTML += ']';
-            this.elem.appendChild(choicesContainer);
-        }
+        return { x: Math.floor(this.canvas.width / 2), y: Math.floor(this.canvas.height / 2) };
     }
 }
 
@@ -2085,6 +2112,7 @@ var TileSetImage;
     tileSetImage: TileSetImage.Nevanda,
     rogueTileSetImage: TileSetImage.Chozo,
     playerName: 'Unnamed',
+    inventoryHint: true,
     options: '',
 });
 
@@ -2119,6 +2147,7 @@ class GameScreen extends Screen {
             this.tilemap.setTileSets(newTileset, newRogueTileSet);
         }
         this.tilemap.setMapBorder(setting.enableMapBorder);
+        this.inventory.setEnableHint(setting.inventoryHint);
     }
     onResize() {
         this.resize$.next();
@@ -2141,14 +2170,47 @@ class GameScreen extends Screen {
         }
         this.activeMenu.updateMenu(items, count);
     }
-    openQuestion(question, choices, defaultChoice) {
-        const dialog = new Question(question, choices, defaultChoice);
-        this.elem.appendChild(dialog.elem);
-    }
     openGameover() {
         const gameover = new Gameover();
         this.inputHandler = gameover;
         this.elem.appendChild(gameover.elem);
+    }
+}
+
+class Question {
+    constructor(question, choices, defaultChoice) {
+        this.elem = document.createElement('div');
+        this.elem.style.padding = '0.5rem 0';
+        horiz(this.elem);
+        this.choices = document.createElement('div');
+        horiz(this.choices);
+        this.choices.style.gap = '0';
+        this.text = document.createElement('div');
+        this.elem.appendChild(this.text);
+        this.elem.appendChild(this.choices);
+        this.text.innerHTML = question;
+        if (choices.length > 0) {
+            this.choices.innerHTML = '[';
+            choices.forEach((c) => {
+                const node = document.createElement('span');
+                node.innerHTML = c;
+                if (c === defaultChoice) {
+                    node.style.fontWeight = 'bold';
+                    node.style.color = 'red';
+                }
+                this.choices.appendChild(node);
+            });
+            this.choices.innerHTML += ']';
+        }
+        this.anim = this.elem.animate([{ background: "transparent" }, { background: '#FFFFFF33' }], {
+            fill: "forwards",
+            easing: "ease-in-out",
+            duration: 500,
+        });
+    }
+    answered(choice) {
+        this.elem.appendChild(document.createTextNode(choice));
+        this.anim.reverse();
     }
 }
 
@@ -2159,18 +2221,24 @@ const SPECIAL_KEY_MAP = {
 class Game {
     constructor() {
         this.openMenu = (winid, prompt, count, ...items) => this.current?.onMenu(prompt, count, items);
-        this.openQuestion = (question, defaultChoice, ...choices) => this.game.openQuestion(question, choices, defaultChoice);
         this.openGetLine = (question, ...autocomplete) => this.current?.onLine(question, autocomplete);
         this.openGetTextArea = (value) => this.current?.onTextArea(value);
+        this.openQuestion = (question, defaultChoice, ...choices) => {
+            this.question = new Question(question, choices, defaultChoice);
+            this.game.console.append(this.question.elem);
+        };
+        this.answerQuestion = (choice) => {
+            this.question?.answered(choice);
+        };
         this.openDialog = (winid, text) => this.current?.onDialog(text);
         this.closeDialog = (winid) => this.current?.onCloseDialog();
         this.printLine = (line) => this.game.console.appendLine(line);
         this.moveCursor = (x, y) => this.game.tilemap.recenter({ x, y });
         this.centerView = (x, y) => this.game.tilemap.recenter({ x, y });
         this.clearMap = () => this.game.tilemap.clearMap();
-        this.updateMap = (...tiles) => this.game.tilemap.addTile(...tiles);
+        this.printTile = (tile) => this.game.tilemap.printTile(tile);
         this.updateStatus = (s) => this.game.status.update(s);
-        this.updateInventory = (...items) => this.game.inventory.updateItems(items);
+        this.updateInventory = (...items) => this.game.inventory.updateItems(items, true);
         this.toggleInventory = () => this.game.inventory.toggle();
         this.updateState = async (state) => {
             switch (state) {
@@ -2179,9 +2247,6 @@ class Game {
                     break;
                 case GameState.RUNNING:
                     this.changeScreen(this.game);
-                    break;
-                case GameState.DIED:
-                    this.game.inventory.open();
                     break;
                 case GameState.GAMEOVER:
                     this.game.openGameover();
