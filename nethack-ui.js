@@ -1,4 +1,4 @@
-const VERSION = 'v0.0.5';
+const VERSION = 'v0.0.6';
 
 function fullScreen(elem) {
     elem.style.position = 'absolute';
@@ -1376,7 +1376,9 @@ class Console {
         this.elem = document.createElement('pre');
         this.elem.id = 'output';
         root.appendChild(this.elem);
-        this.elem.onclick = () => {
+        this.elem.onclick = (e) => {
+            if (e.ctrlKey)
+                return;
             if (this.elem.style.height) {
                 this.elem.style.height = '';
                 setTimeout(() => this.scrollBottom(), 200); // Wait until transition finished
@@ -1398,9 +1400,51 @@ class Console {
     }
     appendLine(line) {
         const text = document.createElement('span');
-        text.innerHTML = this.escapeHtml(line);
+        horiz(text);
+        const linkStyleUpdate = (active, child) => {
+            const style = active ? 'underline' : 'none';
+            [...text.children].forEach((x) => {
+                const c = x;
+                if (child) {
+                    if (child === c) {
+                        c.style.textDecoration = style;
+                    }
+                    else {
+                        c.style.textDecoration = 'none';
+                    }
+                }
+                else {
+                    c.style.textDecoration = style;
+                }
+            });
+        };
+        text.onkeydown = (e) => linkStyleUpdate(e.ctrlKey);
+        text.onmouseover = (e) => linkStyleUpdate(e.ctrlKey);
+        text.onmouseout = (e) => linkStyleUpdate(false);
+        text.onclick = (e) => {
+            if (!e.ctrlKey)
+                return;
+            this.openWikiLink(line);
+        };
+        line.split(' ').forEach((part) => {
+            const el = document.createElement('span');
+            el.innerHTML = this.escapeHtml(part);
+            el.onmousemove = (e) => linkStyleUpdate(e.ctrlKey, el);
+            el.onclick = (e) => {
+                if (!e.ctrlKey)
+                    return;
+                e.preventDefault();
+                e.stopPropagation();
+                this.openWikiLink(part);
+            };
+            text.appendChild(el);
+        });
         this.elem.appendChild(text);
         this.scrollBottom();
+    }
+    openWikiLink(text) {
+        const keyword = text.replaceAll(' ', '_');
+        window.open(`https://nethackwiki.com/${keyword}`, '_blank')?.focus();
     }
     append(elem) {
         this.elem.appendChild(elem);
