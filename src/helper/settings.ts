@@ -27,7 +27,6 @@ export const defaultSetting: Settings = {
 
 export function loadSettings(): Settings {
     const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? '{}');
-    console.log("loading settings", settings.options);
     return {
         ...defaultSetting,
         ...settings,
@@ -35,7 +34,6 @@ export function loadSettings(): Settings {
 }
 
 export function saveSettings(s: Settings) {
-    console.log('saving settings', s.options);
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
 }
 
