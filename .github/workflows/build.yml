@@ -34,6 +34,9 @@ jobs:
                   pushd NetHack
                   git apply ../lib/fixes36.diff
                   popd
+            
+            - name: Copy sound files
+              run: cp -r YHACSIB-v0.2/sounds NetHack/sounds
 
             - name: Build Nethack Data
               run: ./build.sh data

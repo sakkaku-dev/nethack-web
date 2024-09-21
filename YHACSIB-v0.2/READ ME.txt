@@ -1,0 +1,30 @@
+Thanks for downloading You Hear A Clicking Sound - It Bites!
+Credit to https://xoomer.virgilio.it/pid/ for the original YHACS sound pack
+Config.txt has details on how the sound system behaves
+
+HOW TO COMPILE NETHACK FOR WINDOWS WITH FMOD IN VISUAL STUDIO
+
+0. Clone NetHack 3.7 from https://github.com/NetHack/NetHack
+
+1. Go to https://www.fmod.com/download#fmodengine and install the latest Windows version
+
+
+2. Go to the install location, and copy the core folder to Nethack/lib/
+	EXAMPLE DIR: C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\core
+	
+	
+3. In Visual Studio, right click the NetHackW solution, click properties, and do the following:
+
+	I.		Go to C/C++>General>Additional Include Directories, 
+	add the path to the FMOD inc folder (*lib\fmod\api\core\inc)
+	
+	II.		Go to C/C++>Preprocessor>Preprocessor Definitions, 
+	change 'SND_LIB_WINDSOUND' to 'SND_LIB_FMOD'
+	
+	III.	Go to Linker>General>Additional Library Directories, 
+	add the path to the FMOD lib folder (*lib\fmod\api\core\lib\<target-CPU>)
+	
+	IV.		Go to Linker>Input>Additional Dependencies, add 'fmod_vc.lib' to the list
+	
+	
+Note: If you want this to work for the terminal window version, you need to repeat the above steps for the NetHack solution.
