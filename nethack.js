@@ -2164,7 +2164,7 @@ const defaultSetting = {
     options: '',
 };
 function loadSettings() {
-    const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? '{}');
     return {
         ...defaultSetting,
         ...settings,
@@ -2400,7 +2400,7 @@ class NetHackWrapper {
         this.ui.closeDialog(-1);
     }
     async mapDefaultNethackOptions(opt) {
-        if (!opt || opt.startsWith('# Default Options')) {
+        if (!opt) {
             return await loadDefaultOptions();
         }
         return opt;

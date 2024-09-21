@@ -1,7 +1,5 @@
-# Default Options
-# To make changes, then remove at least the first line containing: # Default Options
 # Changes will be applied after the game is reloaded (you can save & quit)
-# To restore this file to default, clear everything or restore the first line: # Default Options
+# To restore this file to default, clear everything
 
 # For a list of options, read http://nethackwiki.com/wiki/Options
 # Note that not all the NetHack options are supported by NethackWeb
@@ -15,3 +13,149 @@ OPTIONS=hilite_status:hitpoints/<40%/red
 OPTIONS=hilite_status:hunger/always/red&bold
 OPTIONS=hilite_status:carrying-capacity/burdened/yellow/stressed/orange
 OPTIONS=hilite_status:condition/all/bold/major_troubles/red/minor_troubles/orange
+
+# Sound effects
+SOUNDDIR=sounds
+# Base volume for all sounds, 0 - 100
+SOUNDVOL=20
+
+SOUND=MESG "This door is locked."                   "lock.wav"       100
+SOUND=MESG "The door resists!"                      "door1.wav"      100
+SOUND=MESG "The door opens."                        "door2.wav"      100
+SOUND=MESG "You hear a door open."                  "door2.wav"      50
+SOUND=MESG "The door closes."                       "door3.wav"      100
+SOUND=MESG "it crashes open"                      "crack.wav"      100
+SOUND=MESG "The door crashes open"                 "crack.wav"      100
+SOUND=MESG "The door splinters!"                  "crack.wav"      100
+SOUND=MESG "door  shatters"                      "crack.wav"      100
+SOUND=MESG "WHAMMM!!!"                              "whammm.wav"     100
+
+SOUND=MESG "You carefully open the "               "creak.wav"      50
+SOUND=MESG "Hmmm, it seems to be locked."           "lock.wav"       75
+SOUND=MESG "slams open"                           "slams.wav"      100
+SOUND=MESG "break open the lock"                  "crack.wav"      100
+SOUND=MESG "THUD!"                                  "thud.wav"       100
+
+SOUND=MESG "Klunk!"                                "metal.wav"      100
+
+SOUND=MESG "move the boulder"                     "boulder.wav"    100
+SOUND=MESG "You finish eating"                    "munch.wav"      100
+SOUND=MESG "lack of food"                         "moan.wav"       100
+SOUND=MESG "needs food, badly!"                    "moan.wav"       75
+SOUND=MESG "You are beginning to feel hungry."      "moan.wav"       50
+SOUND=MESG "You are beginning to feel weak."        "moan.wav"       75
+SOUND=MESG "puts you to sleep"                    "yawn.wav"       100
+SOUND=MESG "put to sleep by"                      "yawn.wav"       100
+SOUND=MESG "Yak - dog food!"                      "yak.wav"        100
+SOUND=MESG "vomit"                                "vomit.wav"      100
+SOUND=MESG "Blecch!"                               "blecch.wav"     100
+SOUND=MESG "Maud"                                 "maud.wav"       100
+
+SOUND=MESG "crumbles and turns to dust"           "crumble.wav"    100
+SOUND=MESG "You begin to memorize the runes"       "book.wav"       100
+
+SOUND=MESG "You swing your  through thin air."     "air.wav"        100
+SOUND=MESG "You kick at empty space."               "air.wav"        100
+SOUND=MESG "You attack thin air."                   "air.wav"        100
+SOUND=MESG "Snap!"                                  "snap.wav"       100
+
+SOUND=MESG "You succeed in cutting away"          "rocks.wav"      100
+SOUND=MESG "You make an opening in the"           "rockl.wav"      100
+SOUND=MESG "You start digging downward"            "rockl.wav"      100
+SOUND=MESG "This wall is too hard"                "vault.wav"      100
+SOUND=MESG "The boulder fills a pit."               "fills.wav"      100
+
+SOUND=MESG "glows silver"                         "harp.wav"       100
+SOUND=MESG "glows blue"                           "harp.wav"       100
+SOUND=MESG "surrounded by a shimmering light"     "shimmer.wav"    100
+SOUND=MESG "Magical energies course through "     "shimmer.wav"    100
+SOUND=MESG "glows black"                          "black.wav"      100
+SOUND=MESG "You feel like someone is helping"     "helping.wav"    100
+SOUND=MESG "coalesces in your mind"               "helping.wav"    100
+
+SOUND=MESG "door  shatters"                      "crack.wav"      100
+SOUND=MESG "shatter"                              "shatter.wav"    100
+SOUND=MESG "breaks into shards"                   "shatter.wav"    100
+SOUND=MESG "applause"                             "applause.wav"   100
+
+SOUND=MESG "You bought "                           "register.wav"   100
+SOUND=MESG " gold pieces."                         "coins.wav"      100
+SOUND=MESG "You hear someone counting money."       "coinsfall.wav"  50
+SOUND=MESG "Your purse feels lighter."              "coins.wav"      25
+SOUND=MESG "punished for your misbehavior"        "chain.wav"      100
+
+SOUND=MESG "magic missilehits"                   "missile.wav"    100
+SOUND=MESG "lightning bolthits"                  "lightning.wav"  100
+SOUND=MESG "magic missilebounces"                "missile.wav"    100
+SOUND=MESG "lightning boltbounces"               "lightning.wav"  100
+SOUND=MESG "The  bounces!"                       "bounces.wav"    100
+SOUND=MESG "blinded by the flash"                 "camera.wav"     100
+
+SOUND=MESG "You hit the"                          "hit1.wav"       100
+SOUND=MESG "You smite the"                        "hit1.wav"       100
+SOUND=MESG "You kick the"                         "hit1.wav"       100
+SOUND=MESG "You destroy the"                      "hit2.wav"       100
+SOUND=MESG "You kill the"                         "hit2.wav"       100
+SOUND=MESG "The  hits"                           "scream1.wav"    100
+SOUND=MESG "The  bites"                          "growl.wav"      100
+SOUND=MESG "bits the"                             "hit1.wav"       100
+SOUND=MESG "bites the"                            "growl.wav"      100
+SOUND=MESG "Ouch!"                                "ouch.wav"       100
+SOUND=MESG "You get zapped"                       "spark.wav"      100
+SOUND=MESG "You miss the"                         "swing.wav"      100
+SOUND=MESG "The  misses"                         "swing.wav"      100
+SOUND=MESG "You are splashed by"                  "slop.wav"       100
+
+SOUND=MESG "You die..."                            "evil.wav"       100
+
+SOUND=MESG "gush of water hits"                   "gush.wav"       100
+SOUND=MESG "You hear the splashing of a naiad."     "naiad.wav"      100
+SOUND=MESG "You hear bubbling water."               "bubbs.wav"      100
+SOUND=MESG "You hear a strange wind."               "wind.wav"       100
+SOUND=MESG "You hear a slow drip"                 "drip.wav"       100
+SOUND=MESG "a monster behind the boulder"         "bison.wav"      100
+SOUND=MESG "Water gushes forth"                    "water.wav"      100
+SOUND=MESG "You fall into water!"                  "dive.wav"       100
+SOUND=MESG "almost hit by"                        "almost.wav"     100
+SOUND=MESG "You are hit by a dart"               "dart.wav"       100
+SOUND=MESG "You are hit by an arrow"              "arrow.wav"      100
+SOUND=MESG "You feel self-knowledgeable..."         "magic1.wav"     100
+SOUND=MESG "You  the presence of"                 "magic1.wav"     100
+SOUND=MESG "nose tingles and you smell"           "sniff.wav"      100
+SOUND=MESG "movingfaster"                        "faster.wav"     100
+SOUND=MESG "You speed up."                          "faster.wav"     100
+
+SOUND=MESG "You hearnoises in the distance."       "skrap.wav"      50
+SOUND=MESG "howling of the CwnAnnwn..."            "howling.wav"    100
+SOUND=MESG "cool draught refreshes you"           "draught.wav"    100
+
+SOUND=MESG "You feel very attracted to"            "crowd-groan.wav" 100
+
+SOUND=MESG "You make a lot of noise"              "noise.wav"      100
+SOUND=MESG "You hear a gurgling noise."             "gurgling.wav"   100
+SOUND=MESG "gushes up from the drain"             "gurgling.wav"   100
+SOUND=MESG "You hear  cash register."              "register.wav"   75
+SOUND=MESG "You hear the footsteps"                "footsteps.wav"  75
+SOUND=MESG "You hear a crashing sound"             "crack.wav"      50
+SOUND=MESG " suddenly disappears!"                 "beam.wav"       50
+SOUND=MESG "teleporter trap"                      "beam.wav"       100
+SOUND=MESG "explosion"                            "explosion.wav"  100
+SOUND=MESG "bear trap closes"                     "beartrap.wav"   100
+SOUND=MESG "KABOOM!!"                             "kaboom.wav"     100
+SOUND=MESG "Yecch! You've been creamed"            "cream.wav"      100
+SOUND=MESG "opening the tin"                      "tin.wav"        100
+
+SOUND=MESG "more confident in your  skills"      "circus.wav"     100
+SOUND=MESG "You are now more skilled in "          "circus.wav"     100
+
+SOUND=MESG "ghost touches you"                    "ghost1.wav"     100
+SOUND=MESG "You destroy  ghost!"                 "ghost2.wav"     100
+SOUND=MESG "You missghost"                       "swing.wav"      100
+SOUND=MESG "ghost misses"                         "swing.wav"      100
+
+SOUND=MESG "Welcome to experience level"          "firework.wav"   100
+SOUND=MESG "Welcome to"                           "shopdoor.wav"   100
+SOUND=MESG "Welcome again to"                     "shopdoor.wav"   100
+SOUND=MESG "Delphi"                               "fanfare.wav"    100
+
+SOUND=MESG "monkey stole"                         "monkey.wav"     100

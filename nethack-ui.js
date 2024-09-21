@@ -1,4 +1,4 @@
-const VERSION = 'v0.0.6';
+const VERSION = 'v0.0.7';
 
 function fullScreen(elem) {
     elem.style.position = 'absolute';
@@ -2258,12 +2258,79 @@ class Question {
     }
 }
 
+class SoundManager {
+    constructor() {
+        this.soundDir = 'sounds';
+        this.soundMap = {};
+        this.soundBaseVol = 0.5;
+    }
+    parseOptions(options) {
+        this.soundDir = 'sounds';
+        this.soundMap = {};
+        const lines = options.split('\n');
+        for (const line of lines) {
+            if (line.trim().startsWith('SOUNDDIR')) {
+                this.soundDir = line.split('=').pop()?.trim() ?? 'sounds';
+            }
+            else if (line.trim().startsWith('SOUNDVOL')) {
+                const value = line.split('=').pop();
+                const volume = parseFloat(value?.trim() ?? '');
+                if (isNaN(volume)) {
+                    console.error('Invalid sound volume:', value);
+                    continue;
+                }
+                this.soundBaseVol = volume / 100;
+            }
+            else if (line.trim().startsWith('SOUND')) {
+                const value = line.split('=').pop();
+                const parts = Array.from(value?.match(/(?:[^\s"]+|"[^"]*")+/g) ?? []);
+                if (parts.length < 4) {
+                    console.error('Invalid sound line:', line);
+                    continue;
+                }
+                const regex = parts[1].trim().replaceAll('"', '');
+                if (regex === '') {
+                    console.error('Invalid sound regex:', parts[1]);
+                    continue;
+                }
+                const file = parts[2].trim().replaceAll('"', '');
+                if (file === '') {
+                    console.error('Invalid sound file:', parts[2]);
+                    continue;
+                }
+                const volume = parseInt(parts[3].trim());
+                if (isNaN(volume)) {
+                    console.error('Invalid sound volume:', parts[3]);
+                    continue;
+                }
+                this.soundMap[regex] = { file, volume };
+            }
+        }
+        console.log('Sound options:', this.soundDir, this.soundMap);
+    }
+    playSoundForMessage(message) {
+        for (const [regex, soundData] of Object.entries(this.soundMap)) {
+            if (new RegExp(regex).test(message)) {
+                this.playSound(soundData);
+                break;
+            }
+        }
+    }
+    playSound(sound) {
+        const audio = new Audio(`${this.soundDir}/${sound.file}`);
+        audio.volume = (sound.volume / 100) * this.soundBaseVol;
+        audio.play();
+        console.log(`Playing sound: ${sound.file} at volume ${sound.volume} with base volume ${this.soundBaseVol}`);
+    }
+}
+
 const SPECIAL_KEY_MAP = {
     Enter: 13,
     Escape: 27,
 };
 class Game {
     constructor() {
+        this.soundManager = new SoundManager();
         this.openMenu = (winid, prompt, count, ...items) => this.current?.onMenu(prompt, count, items);
         this.openGetLine = (question, ...autocomplete) => this.current?.onLine(question, autocomplete);
         this.openGetTextArea = (value) => this.current?.onTextArea(value);
@@ -2276,7 +2343,10 @@ class Game {
         };
         this.openDialog = (winid, text) => this.current?.onDialog(text);
         this.closeDialog = (winid) => this.current?.onCloseDialog();
-        this.printLine = (line) => this.game.console.appendLine(line);
+        this.printLine = (line) => {
+            this.soundManager.playSoundForMessage(line);
+            this.game.console.appendLine(line);
+        };
         this.moveCursor = (x, y) => this.game.tilemap.recenter({ x, y });
         this.centerView = (x, y) => this.game.tilemap.recenter({ x, y });
         this.clearMap = () => this.game.tilemap.clearMap();
@@ -2299,6 +2369,7 @@ class Game {
         };
         this.updateSettings = (settings) => {
             this.current?.onSettingsChange(settings);
+            this.soundManager.parseOptions(settings.options);
         };
         document.body.onresize = (e) => this.current?.onResize();
         document.body.onkeydown = (e) => {
