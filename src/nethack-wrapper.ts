@@ -308,7 +308,7 @@ export class NetHackWrapper implements NetHackJS {
     }
 
     private async mapDefaultNethackOptions(opt: string) {
-        if (!opt || opt.startsWith('# Default Options')) {
+        if (!opt) {
             return await loadDefaultOptions();
         }
 

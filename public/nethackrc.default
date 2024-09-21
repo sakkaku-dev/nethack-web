@@ -1,7 +1,5 @@
-# Default Options
-# To make changes, then remove at least the first line containing: # Default Options
 # Changes will be applied after the game is reloaded (you can save & quit)
-# To restore this file to default, clear everything or restore the first line: # Default Options
+# To restore this file to default, clear everything
 
 # For a list of options, read http://nethackwiki.com/wiki/Options
 # Note that not all the NetHack options are supported by NethackWeb
@@ -16,8 +14,10 @@ OPTIONS=hilite_status:hunger/always/red&bold
 OPTIONS=hilite_status:carrying-capacity/burdened/yellow/stressed/orange
 OPTIONS=hilite_status:condition/all/bold/major_troubles/red/minor_troubles/orange
 
-# This enabled sound effects for nethack
+# Sound effects
 SOUNDDIR=sounds
+# Base volume for all sounds, 0 - 100
+SOUNDVOL=20
 
 SOUND=MESG "This door is locked."                   "lock.wav"       100
 SOUND=MESG "The door resists!"                      "door1.wav"      100

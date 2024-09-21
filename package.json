@@ -6,7 +6,7 @@
     "scripts": {
         "build:nethack:tiles": "cd NetHack/win/share && gcc tilemap.c -I ../../include -o ../tilemap.o && cd ../ && ./tilemap.o",
         "build:js": "rollup -c rollup.config.js && cp lib/nethack.wasm lib/nethack.data build",
-        "build:web": "npm run build:js && cp public/* build",
+        "build:web": "npm run build:js && cp public/* build -r",
         "build:watch": "rollup -c rollup.config.js --watch",
         "format:write": "prettier --write .",
         "changelog": "changelog",

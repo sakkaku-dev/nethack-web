@@ -9,5 +9,5 @@
 npm run build:web
 # npx rollup -c rollup.config.js
 
-sudo mkdir -p /srv/http/nethack
-sudo cp build/* /srv/http/nethack
+sudo rm /srv/http/nethack -r
+sudo cp build /srv/http/nethack -r

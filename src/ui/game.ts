@@ -4,6 +4,7 @@ import { Screen } from './screens/screen';
 import { GameState, InventoryItem, Item, NetHackUI, Status, Tile } from '../models';
 import { Settings } from '../helper/settings';
 import { Question } from './components/question';
+import { SoundManager } from '../helper/sounds';
 
 const SPECIAL_KEY_MAP: Record<string, number> = {
     Enter: 13,
@@ -13,6 +14,7 @@ const SPECIAL_KEY_MAP: Record<string, number> = {
 export class Game implements NetHackUI {
     private start: StartScreen;
     private game: GameScreen;
+    private soundManager = new SoundManager();
 
     private current?: Screen;
     private question?: Question;
@@ -70,7 +72,10 @@ export class Game implements NetHackUI {
     openDialog = (winid: number, text: string) => this.current?.onDialog(text);
     closeDialog = (winid: number) => this.current?.onCloseDialog();
 
-    printLine = (line: string) => this.game.console.appendLine(line);
+    printLine = (line: string) => {
+        this.soundManager.playSoundForMessage(line);
+        this.game.console.appendLine(line);
+    }
     moveCursor = (x: number, y: number) => this.game.tilemap.recenter({ x, y });
     centerView = (x: number, y: number) => this.game.tilemap.recenter({ x, y });
     clearMap = () => this.game.tilemap.clearMap();
@@ -95,6 +100,7 @@ export class Game implements NetHackUI {
 
     updateSettings = (settings: Settings) => {
         this.current?.onSettingsChange(settings);
+        this.soundManager.parseOptions(settings.options);
     };
 
     changeScreen(screen: Screen) {

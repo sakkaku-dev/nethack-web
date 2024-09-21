@@ -8,14 +8,17 @@ See [build.yml](./.github/workflows/build.yml) workflow for exact steps.
 
 Current build is from `NetHack-3.6.7_Released (ed600d9f0)`
 
-Install Emscripten `v2.0.34 (0d24418f0eac4828f096ee070dae8472d427edaa)` and activate
+Install Emscripten `v2.0.34 (0d24418f0eac4828f096ee070dae8472d427edaa)` and activate.
+NodeJS v16 is required to fix ERR_INVALID_URL error
 
 ```
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 git pull
 ./emsdk install 2.0.34
+./emsdk install node-16.20.0-64bit
 ./emsdk activate 2.0.34
+./emsdk activate node-16.20.0-64bit
 source ./emsdk_env.sh
 ```
  
@@ -42,6 +45,7 @@ To run `tools/generate.js`, remove `type: module` from `package.json`. To lazy t
 -   `Nevanda.png` -  https://nethackwiki.com/mediawiki/images/2/26/Nevanda.png
 -   `dawnhack_32.bmp` - https://www.deviantart.com/dragondeplatino/art/DawnHack-NetHack-3-6-1-UnNetHack-5-1-0-416312313
 -   `Chozo32-360.png` -  https://nethackwiki.com/wiki/File:Chozo32-360.png
+-	Sound effects from https://www.reddit.com/r/nethack/comments/16rcdxz/yhacsib_v02_a_continuation_of_the_2004_yhacs/
 
 ## References
 
